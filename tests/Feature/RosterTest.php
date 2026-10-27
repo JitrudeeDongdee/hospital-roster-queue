@@ -68,28 +68,39 @@ class RosterTest extends TestCase
             ->assertJsonPath('errors.shift.0', fn ($m) => str_contains($m, 'เวรซ้อน'));
     }
 
-    public function test_minimum_rest_between_shifts_is_enforced(): void
+    public function test_short_rest_is_allowed_with_a_warning_on_both_shifts(): void
     {
         $doctor = $this->doctor();
-        $this->assign($doctor, $this->morning, '2026-11-02')->assertCreated(); // 08–16
+        $morning = $this->assign($doctor, $this->morning, '2026-11-02')->assertCreated()->assertJsonPath('warnings', [])->json('id'); // 08–16
 
-        // บ่ายวันเดียวกัน 16–24 = พัก 0 ชม.
-        $this->assign($doctor, $this->evening, '2026-11-02')->assertUnprocessable()
-            ->assertJsonPath('errors.shift.0', fn ($m) => str_contains($m, 'พักน้อยกว่า 8'));
-        // ดึกคืนถัดไป 00–08 = พักพอดี 8 ชม. → ลงได้
-        $this->assign($doctor, $this->night, '2026-11-03')->assertCreated();
+        // บ่ายวันเดียวกัน 16–24 = พัก 0 ชม. → แอดมินลงได้ แต่ได้คำเตือนกลับมา
+        $evening = $this->assign($doctor, $this->evening, '2026-11-02')->assertCreated()
+            ->assertJsonPath('warnings.0', fn ($m) => str_contains($m, 'พักน้อยกว่า 8'))->json('id');
+        // ดึกคืนถัดไป 00–08 = พักพอดี 8 ชม. → ไม่มีคำเตือน
+        $night = $this->assign($doctor, $this->night, '2026-11-04')->assertCreated()->assertJsonPath('warnings', [])->json('id');
+
+        // ตารางเวรติดคำเตือนทั้งเวรก่อนและเวรหลัง (ชิปสีแดง) ส่วนเวรที่ไม่เกี่ยวไม่ติด
+        $warnings = collect($this->getJson("/api/hospitals/{$this->hospital->id}/departments/{$this->opd->id}/roster?from=2026-11-01&to=2026-11-30")->json('shifts'))
+            ->mapWithKeys(fn ($s) => [$s['id'] => $s['warnings']]);
+        $this->assertStringContainsString('พักน้อยกว่า 8', $warnings[$morning][0]);
+        $this->assertStringContainsString('พักน้อยกว่า 8', $warnings[$evening][0]);
+        $this->assertSame([], $warnings[$night]);
     }
 
-    public function test_weekly_hour_limit_is_enforced(): void
+    public function test_weekly_hour_limit_is_allowed_with_a_warning_on_that_week(): void
     {
         $doctor = $this->doctor(); // max 40 ชม./สัปดาห์ = 5 เวร
         foreach (['2026-11-02', '2026-11-03', '2026-11-04', '2026-11-05', '2026-11-06'] as $date) {
-            $this->assign($doctor, $this->morning, $date)->assertCreated();
+            $this->assign($doctor, $this->morning, $date)->assertCreated()->assertJsonPath('warnings', []);
         }
 
-        $this->assign($doctor, $this->morning, '2026-11-07')->assertUnprocessable()
-            ->assertJsonPath('errors.shift.0', fn ($m) => str_contains($m, 'เกิน 40'));
-        $this->assign($doctor, $this->morning, '2026-11-09')->assertCreated(); // สัปดาห์ใหม่
+        $this->assign($doctor, $this->morning, '2026-11-07')->assertCreated()
+            ->assertJsonPath('warnings.0', fn ($m) => str_contains($m, 'เกิน 40'));
+        $this->assign($doctor, $this->morning, '2026-11-09')->assertCreated()->assertJsonPath('warnings', []); // สัปดาห์ใหม่
+
+        $shifts = collect($this->getJson("/api/hospitals/{$this->hospital->id}/departments/{$this->opd->id}/roster?from=2026-11-01&to=2026-11-30")->json('shifts'));
+        $this->assertSame(6, $shifts->filter(fn ($s) => $s['warnings'])->count()); // ทั้ง 6 เวรของสัปดาห์ที่เกิน
+        $this->assertSame([], $shifts->firstWhere('shift_date', '2026-11-09')['warnings']);
     }
 
     public function test_unavailable_day_is_respected(): void

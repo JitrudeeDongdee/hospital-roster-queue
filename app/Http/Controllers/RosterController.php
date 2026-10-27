@@ -44,12 +44,13 @@ class RosterController extends Controller
         $template = ShiftTemplate::whereIn('department_id', $hospital->departments()->select('id'))
             ->findOrFail($data['shift_template_id']);
 
-        $errors = $this->roster->violations($staff, $template, $data['date']);
+        // ซ้อนเวลา / วันลา / คนละแผนก = ห้ามลง · พักไม่พอ / ชั่วโมงเกิน = ลงได้ แต่ส่งคำเตือนกลับไปให้แอดมินปรับ
+        [$errors, $warnings] = $this->roster->problems($staff, $template, $data['date']);
         if ($errors) {
             throw ValidationException::withMessages(['shift' => $errors]);
         }
 
-        return response()->json($this->roster->assign($staff, $template, $data['date']), 201);
+        return response()->json($this->roster->assign($staff, $template, $data['date'])->toArray() + ['warnings' => $warnings], 201);
     }
 
     // DELETE /api/hospitals/{hospital}/shifts/{shift}

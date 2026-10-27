@@ -166,10 +166,17 @@ function daysBetween(from, to) {
 }
 
 function violations(member, template, date, leaveStatuses = ['approved'], ignoreShiftIds = []) {
+    const [hard, soft] = problems(member, template, date, leaveStatuses, ignoreShiftIds);
+    return [...hard, ...soft];
+}
+
+// [hard, soft] เหมือน RosterService::problems — hard = ห้ามลง · soft = ลงได้แต่ชิปเป็นสีแดง
+function problems(member, template, date, leaveStatuses = ['approved'], ignoreShiftIds = []) {
     const hospital = db.hospitals.find((h) => h.id === member.hospital_id);
     const [start, end] = windowOf(template, date);
     const rest = hospital.min_rest_hours * HOUR;
     const errors = [];
+    const soft = [];
 
     if (template.department_id !== member.department_id) errors.push('แพทย์ไม่ได้อยู่ในแผนกของเวรนี้');
     if (db.unavailabilities.some((u) => u.staff_id === member.id && u.date === date && leaveStatuses.includes(u.status))) errors.push('แพทย์แจ้งลา/ไม่สะดวกในวันนี้');
@@ -179,7 +186,7 @@ function violations(member, template, date, leaveStatuses = ['approved'], ignore
         const os = new Date(other.starts_at);
         const oe = new Date(other.ends_at);
         if (os < end && oe > start) errors.push(`เวรซ้อนกับเวร ${fmt(os)}–${fmt(oe).slice(-5)}`);
-        else if (os.getTime() < end.getTime() + rest && oe.getTime() > start.getTime() - rest) errors.push(`พักน้อยกว่า ${hospital.min_rest_hours} ชม. ก่อน/หลังเวร ${fmt(os)}`);
+        else if (os.getTime() < end.getTime() + rest && oe.getTime() > start.getTime() - rest) soft.push(`พักน้อยกว่า ${hospital.min_rest_hours} ชม. ก่อน/หลังเวร ${fmt(os)}`);
     }
 
     const weekStart = new Date(start);
@@ -189,9 +196,9 @@ function violations(member, template, date, leaveStatuses = ['approved'], ignore
     const total = mine
         .filter((s) => new Date(s.starts_at) >= weekStart && new Date(s.starts_at) < weekEnd)
         .reduce((sum, s) => sum + (new Date(s.ends_at) - new Date(s.starts_at)) / HOUR, (end - start) / HOUR);
-    if (total > hospital.max_weekly_hours) errors.push(`ชั่วโมงสัปดาห์นี้จะเป็น ${total} ชม. เกิน ${hospital.max_weekly_hours} ชม.`);
+    if (total > hospital.max_weekly_hours) soft.push(`ชั่วโมงสัปดาห์นี้จะเป็น ${total} ชม. เกิน ${hospital.max_weekly_hours} ชม.`);
 
-    return errors;
+    return [errors, soft];
 }
 
 function assignShift(member, template, date) {
@@ -226,12 +233,30 @@ function rosterOf(department, from, to) {
     return {
         rules: { min_rest_hours: hospital.min_rest_hours, max_weekly_hours: hospital.max_weekly_hours },
         templates,
-        shifts: shifts.map((s) => ({ id: s.id, shift_template_id: s.shift_template_id, shift_date: s.shift_date, staff_id: s.staff_id, staff_name: staffOf(s).name })),
+        shifts: shifts.map((s) => ({ id: s.id, shift_template_id: s.shift_template_id, shift_date: s.shift_date, staff_id: s.staff_id, staff_name: staffOf(s).name, warnings: warningsOf(s, hospital) })),
         gaps,
         preferences: db.preferences
             .filter((p) => templates.some((t) => t.id === p.shift_template_id) && p.date >= from && p.date <= to)
             .map(({ staff_id, shift_template_id, date, kind }) => ({ staff_id, shift_template_id, date, kind })),
     };
+}
+
+// เวรที่ผิดกติกาแบบเตือน (พักไม่พอ / ชั่วโมงต่อสัปดาห์เกิน) — เหมือน RosterService::shiftWarnings
+function warningsOf(shift, hospital) {
+    const out = [];
+    const rest = hospital.min_rest_hours * HOUR;
+    const mine = db.shifts.filter((x) => x.staff_id === shift.staff_id).sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+    const i = mine.indexOf(shift);
+    for (const [a, b] of [[mine[i - 1], shift], [shift, mine[i + 1]]]) {
+        if (a && b && new Date(b.starts_at) - new Date(a.ends_at) < rest) out.push(`พักน้อยกว่า ${hospital.min_rest_hours} ชม. ระหว่างเวร ${fmt(new Date(a.starts_at))} กับ ${fmt(new Date(b.starts_at))}`);
+    }
+    const weekStart = new Date(shift.starts_at);
+    weekStart.setHours(0, 0, 0, 0);
+    weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
+    const weekEnd = new Date(weekStart.getTime() + 7 * 24 * HOUR);
+    const hours = mine.filter((x) => new Date(x.starts_at) >= weekStart && new Date(x.starts_at) < weekEnd).reduce((sum, x) => sum + (new Date(x.ends_at) - new Date(x.starts_at)) / HOUR, 0);
+    if (hours > hospital.max_weekly_hours) out.push(`สัปดาห์ ${pad(weekStart.getDate())}/${pad(weekStart.getMonth() + 1)} รวม ${hours} ชม. เกิน ${hospital.max_weekly_hours} ชม.`);
+    return out;
 }
 
 function generateRoster(department, from, to) {
@@ -512,9 +537,9 @@ const routes = [
         const template = db.templates.find((t) => t.id === Number(body.shift_template_id));
         if (!template) throw new HttpError(404, 'Not Found');
         findIn(db.departments, template.department_id, h);
-        const errors = violations(member, template, body.date);
+        const [errors, warnings] = problems(member, template, body.date);
         if (errors.length) throw new HttpError(422, errors[0], { shift: errors });
-        return assignShift(member, template, body.date);
+        return { ...assignShift(member, template, body.date), warnings };
     }],
     ['DELETE', /^\/hospitals\/(\d+)\/shifts\/(\d+)$/, ([h, id]) => {
         const shift = findIn(db.shifts, id, h);

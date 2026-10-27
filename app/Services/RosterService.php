@@ -23,6 +23,16 @@ class RosterService
      */
     public function violations(Staff $staff, ShiftTemplate $template, string $date, array $ignoreShiftIds = []): array
     {
+        return array_merge(...$this->problems($staff, $template, $date, $ignoreShiftIds));
+    }
+
+    /**
+     * แยกปัญหาตอนแอดมินลงเวรเอง: hard = ห้ามลง (ซ้อนเวลา, วันลา, คนละแผนก) · soft = ลงได้แต่ชิปเป็นสีแดง (พักไม่พอ, ชั่วโมงเกิน)
+     *
+     * @return array{0: list<string>, 1: list<string>}
+     */
+    public function problems(Staff $staff, ShiftTemplate $template, string $date, array $ignoreShiftIds = []): array
+    {
         [$start] = $template->window($date);
         [$from, $to] = $this->contextRange($start, $staff->hospital);
 
@@ -32,7 +42,7 @@ class RosterService
         // บังคับเฉพาะวันลาที่อนุมัติแล้ว (คำขอที่รออนุมัติ แอดมินยังลงเวรเองได้)
         $leave = $staff->unavailabilities()->where('status', 'approved')->whereDate('date', $date)->exists() ? [$date] : [];
 
-        return $this->check($staff, $template, $date, $shifts->all(), $leave, $staff->hospital);
+        return $this->checkDetailed($staff, $template, $date, $shifts->all(), $leave, $staff->hospital);
     }
 
     public function assign(Staff $staff, ShiftTemplate $template, string $date): Shift
@@ -90,6 +100,7 @@ class RosterService
         }
 
         $hospital = $department->hospital;
+        $warnings = $this->shiftWarnings($shifts->pluck('staff_id')->unique()->all(), $from, $to, $hospital);
         $preferences = ShiftPreference::query()
             ->whereIn('shift_template_id', $templates->pluck('id'))
             ->whereBetween('date', [$from, $to])
@@ -104,6 +115,8 @@ class RosterService
                 'shift_date' => $s->shift_date->toDateString(),
                 'staff_id' => $s->staff_id,
                 'staff_name' => $s->staff->name,
+                // เวรที่แอดมินลงทั้งที่ผิดกติกาแบบเตือน — หน้าเว็บแสดงชิปสีแดงให้รู้ว่าต้องปรับ
+                'warnings' => $warnings[$s->id] ?? [],
             ])->values(),
             'gaps' => $gaps,
             // เวรที่แพทย์อยากลง/ไม่สะดวก — ให้แอดมินเห็นในตารางก่อนจัดร่าง
@@ -236,9 +249,16 @@ class RosterService
      */
     private function check(Staff $staff, ShiftTemplate $template, string $date, array $shifts, array $leaveDates, Hospital $hospital): array
     {
+        return array_merge(...$this->checkDetailed($staff, $template, $date, $shifts, $leaveDates, $hospital));
+    }
+
+    /** @return array{0: list<string>, 1: list<string>} [hard, soft] */
+    private function checkDetailed(Staff $staff, ShiftTemplate $template, string $date, array $shifts, array $leaveDates, Hospital $hospital): array
+    {
         [$start, $end] = $template->window($date);
         $rest = $hospital->min_rest_hours;
         $errors = [];
+        $soft = [];
 
         if ($template->department_id !== $staff->department_id) {
             $errors[] = 'แพทย์ไม่ได้อยู่ในแผนกของเวรนี้';
@@ -256,7 +276,7 @@ class RosterService
             if ($otherStart < $end && $otherEnd > $start) {
                 $errors[] = "เวรซ้อนกับเวร {$otherStart->format('d/m H:i')}–{$otherEnd->format('H:i')}";
             } elseif ($otherStart < $end->addHours($rest) && $otherEnd > $start->subHours($rest)) {
-                $errors[] = "พักน้อยกว่า {$rest} ชม. ก่อน/หลังเวร {$otherStart->format('d/m H:i')}";
+                $soft[] = "พักน้อยกว่า {$rest} ชม. ก่อน/หลังเวร {$otherStart->format('d/m H:i')}";
             }
 
             if ($otherStart->between($weekStart, $weekEnd)) {
@@ -265,10 +285,47 @@ class RosterService
         }
 
         if ($total > $hospital->max_weekly_hours) {
-            $errors[] = "ชั่วโมงสัปดาห์นี้จะเป็น {$total} ชม. เกิน {$hospital->max_weekly_hours} ชม.";
+            $soft[] = "ชั่วโมงสัปดาห์นี้จะเป็น {$total} ชม. เกิน {$hospital->max_weekly_hours} ชม.";
         }
 
-        return $errors;
+        return [$errors, $soft];
+    }
+
+    /**
+     * หาเวรที่ผิดกติกาแบบเตือน (พักไม่พอ / ชั่วโมงต่อสัปดาห์เกิน) จากเวรที่มีอยู่จริง
+     *
+     * @param  list<int>  $staffIds
+     * @return array<int, list<string>> shift_id => ข้อความ
+     */
+    private function shiftWarnings(array $staffIds, string $from, string $to, Hospital $hospital): array
+    {
+        [$loadFrom] = $this->contextRange(CarbonImmutable::parse($from), $hospital);
+        [, $loadTo] = $this->contextRange(CarbonImmutable::parse($to)->addDay(), $hospital);
+        $rest = $hospital->min_rest_hours;
+        $out = [];
+
+        $all = Shift::whereIn('staff_id', $staffIds)->whereBetween('starts_at', [$loadFrom, $loadTo])->orderBy('starts_at')->get(['id', 'staff_id', 'starts_at', 'ends_at']);
+        foreach ($all->groupBy('staff_id') as $own) {
+            $own = $own->values();
+            for ($i = 1; $i < $own->count(); $i++) {
+                [$a, $b] = [$own[$i - 1], $own[$i]];
+                if ($a->ends_at->diffInMinutes($b->starts_at, false) < $rest * 60) {
+                    $text = "พักน้อยกว่า {$rest} ชม. ระหว่างเวร {$a->starts_at->format('d/m H:i')} กับ {$b->starts_at->format('d/m H:i')}";
+                    $out[$a->id][] = $text;
+                    $out[$b->id][] = $text;
+                }
+            }
+            foreach ($own->groupBy(fn (Shift $s) => $s->starts_at->startOfWeek()->toDateString()) as $week => $inWeek) {
+                $hours = $inWeek->sum(fn (Shift $s) => $s->starts_at->diffInMinutes($s->ends_at) / 60);
+                if ($hours > $hospital->max_weekly_hours) {
+                    foreach ($inWeek as $s) {
+                        $out[$s->id][] = 'สัปดาห์ '.CarbonImmutable::parse($week)->format('d/m')." รวม {$hours} ชม. เกิน {$hospital->max_weekly_hours} ชม.";
+                    }
+                }
+            }
+        }
+
+        return $out;
     }
 
     /** ช่วงเวลาที่ต้องรู้เวรเดิมเพื่อตรวจกติกาของเวรที่เริ่ม $start: ทั้งสัปดาห์ + เผื่อเวลาพักและเวรข้ามคืน */

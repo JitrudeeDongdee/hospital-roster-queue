@@ -163,7 +163,7 @@ function AllDay({ shifts, templates, templateIndex, highlight }) {
                     <div key={t.id} className={`truncate rounded border px-1 py-0.5 ${SHIFT_STYLES[templateIndex[t.id] % 3]}`}>
                         <span className="font-semibold">{t.code}</span>{' '}
                         {people.map((s, i) => (
-                            <span key={s.id} className={s.staff_id === highlight ? 'font-bold underline' : ''}>
+                            <span key={s.id} title={s.warnings?.join('\n') || undefined} className={`${s.staff_id === highlight ? 'font-bold underline' : ''} ${s.warnings?.length ? 'rounded bg-red-600 px-0.5 text-white' : ''}`}>
                                 {i > 0 && ', '}{shortName(s.staff_name)}
                             </span>
                         ))}
@@ -185,8 +185,8 @@ function DoctorDay({ shifts, templateById, templateIndex, leave }) {
             {shifts.map((s) => {
                 const t = templateById[s.shift_template_id];
                 return (
-                    <div key={s.id} className={`rounded border px-1 py-0.5 ${SHIFT_STYLES[templateIndex[t.id] % 3]}`}>
-                        <div className="font-semibold">{t.name}</div>
+                    <div key={s.id} title={s.warnings?.join('\n') || undefined} className={`rounded border px-1 py-0.5 ${s.warnings?.length ? 'border-red-700 bg-red-600 text-white' : SHIFT_STYLES[templateIndex[t.id] % 3]}`}>
+                        <div className="font-semibold">{s.warnings?.length > 0 && '⚠ '}{t.name}</div>
                         <div>{t.start_time.slice(0, 5)}–{t.end_time.slice(0, 5)}</div>
                     </div>
                 );

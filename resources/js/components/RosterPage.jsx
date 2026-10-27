@@ -91,7 +91,8 @@ export default function RosterPage({ hospitalId, view }) {
 
     const assign = useMutation({
         mutationFn: (body) => api(`/hospitals/${hospitalId}/shifts`, { method: 'POST', body }),
-        onSuccess: () => { setProblems(null); refresh(); },
+        // พักไม่พอ / ชั่วโมงเกิน = ลงได้ แต่บอกแอดมินว่าต้องปรับ (ชิปของแพทย์คนนั้นจะเป็นสีแดง)
+        onSuccess: (shift) => { setProblems(shift.warnings?.length ? ['ลงเวรแล้ว แต่ผิดกติกา ต้องปรับ (ชิปสีแดง):', ...shift.warnings] : null); refresh(); },
         onError: (error) => setProblems(errorMessages(error)),
     });
 
@@ -113,6 +114,8 @@ export default function RosterPage({ hospitalId, view }) {
         return map;
     }, [roster.data]);
     const staffName = Object.fromEntries(doctors.map((d) => [d.id, d.name]));
+    // แพทย์ที่มีเวรผิดกติกาแบบเตือนในเดือนนี้ — แผงชั่วโมงแสดงเป็นสีแดง
+    const warned = new Set((roster.data?.shifts ?? []).filter((s) => s.warnings?.length && s.shift_date >= from && s.shift_date <= to).map((s) => s.staff_id));
     const hours = useMemo(() => {
         const perDoctor = {};
         const templates = Object.fromEntries((roster.data?.templates ?? []).map((t) => [t.id, t]));
@@ -222,9 +225,14 @@ export default function RosterPage({ hospitalId, view }) {
                                                 <td key={t.id} className={`p-2 ${gaps[key] ? 'bg-red-50' : ''}`}>
                                                     <div className="flex flex-wrap gap-1">
                                                         {assigned.filter((s) => isShown(s.staff_id)).map((s) => (
-                                                            <span key={s.id} className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs ${s.staff_id === user.staff_id ? 'bg-emerald-100 text-emerald-900 ring-1 ring-emerald-400' : 'bg-indigo-50 text-indigo-800'}`}>
+                                                            <span
+                                                                key={s.id}
+                                                                title={s.warnings?.length ? s.warnings.join('\n') : undefined}
+                                                                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs ${s.warnings?.length ? 'bg-red-600 text-white ring-1 ring-red-700' : s.staff_id === user.staff_id ? 'bg-emerald-100 text-emerald-900 ring-1 ring-emerald-400' : 'bg-indigo-50 text-indigo-800'}`}
+                                                            >
+                                                                {s.warnings?.length > 0 && <span aria-label="ผิดกติกา">⚠</span>}
                                                                 {s.staff_name}
-                                                                {canManage && <button className="text-indigo-400 hover:text-red-600" onClick={() => remove.mutate(s.id)} aria-label={`เอา ${s.staff_name} ออกจากเวร`}>✕</button>}
+                                                                {canManage && <button className={s.warnings?.length ? 'text-red-100 hover:text-white' : 'text-indigo-400 hover:text-red-600'} onClick={() => remove.mutate(s.id)} aria-label={`เอา ${s.staff_name} ออกจากเวร`}>✕</button>}
                                                             </span>
                                                         ))}
                                                     </div>
@@ -257,8 +265,9 @@ export default function RosterPage({ hospitalId, view }) {
                     <p className="mb-3 text-xs text-slate-500">กติกา: ไม่เกินชั่วโมงต่อสัปดาห์ที่โรงพยาบาลกำหนด · พักระหว่างเวรขั้นต่ำ</p>
                     <ul className="space-y-2 text-sm">
                         {doctors.map((d) => (
-                            <li key={d.id} className={`flex items-center justify-between gap-2 ${isShown(d.id) ? '' : 'opacity-40'}`}>
+                            <li key={d.id} className={`flex items-center justify-between gap-2 ${isShown(d.id) ? '' : 'opacity-40'} ${warned.has(d.id) ? 'font-medium text-red-700' : ''}`}>
                                 <span>
+                                    {warned.has(d.id) && <span title="มีเวรผิดกติกา ต้องปรับ">⚠ </span>}
                                     {d.name}
                                     <span className="ml-1 text-xs text-slate-400">{d.skills.map((s) => s.code).join(', ')}</span>
                                 </span>
