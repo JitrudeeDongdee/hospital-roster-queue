@@ -14,18 +14,20 @@ class TicketController extends Controller
 {
     public function __construct(private QueueService $queue) {}
 
-    // GET /api/hospitals/{hospital}/tickets?status=waiting&date=2026-10-27&cursor=...
+    // GET /api/hospitals/{hospital}/tickets?status=waiting&department_id=1&date=2026-10-27&cursor=...
     public function index(Request $request, Hospital $hospital)
     {
         $request->validate([
             'status' => 'nullable|in:waiting,called,completed',
             'date' => 'nullable|date',
+            'department_id' => 'nullable|integer',
         ]);
 
         return $hospital->tickets()
-            ->select(['id', 'department_id', 'number', 'priority', 'status', 'staff_id', 'service_date', 'created_at', 'called_at'])
+            ->select(['id', 'department_id', 'required_skill_id', 'number', 'priority', 'status', 'staff_id', 'service_date', 'created_at', 'called_at'])
             ->where('service_date', $request->input('date', now()->toDateString()))
             ->when($request->status, fn ($q, $status) => $q->where('status', $status))
+            ->when($request->department_id, fn ($q, $id) => $q->where('department_id', $id))
             ->orderBy('id')
             ->cursorPaginate(50); // keyset: WHERE id > ? แทน OFFSET จึงเร็วเท่าเดิมแม้หน้าลึก
     }

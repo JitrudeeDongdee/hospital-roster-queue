@@ -116,7 +116,7 @@ class QueueTest extends TestCase
 
     public function test_daily_stats_are_aggregated_and_rerunnable(): void
     {
-        $this->artisan('queue:seed-demo', ['--hospitals' => 2, '--tickets' => 3000, '--days' => 3, '--batch' => 500])
+        $this->artisan('queue:seed-demo', ['--hospitals' => 2, '--tickets' => 3000, '--days' => 3, '--batch' => 500, '--today' => 0])
             ->assertSuccessful();
 
         $from = now()->subDays(3)->toDateString();
@@ -134,7 +134,7 @@ class QueueTest extends TestCase
 
     public function test_purge_deletes_only_old_tickets(): void
     {
-        $this->artisan('queue:seed-demo', ['--hospitals' => 1, '--tickets' => 1200, '--days' => 30, '--batch' => 500]);
+        $this->artisan('queue:seed-demo', ['--hospitals' => 1, '--tickets' => 1200, '--days' => 30, '--batch' => 500, '--today' => 0]);
         $old = QueueTicket::where('service_date', '<', now()->subDays(10)->toDateString())->count();
 
         $this->artisan('queue:purge', ['--days' => 10, '--chunk' => 100])->assertSuccessful();
