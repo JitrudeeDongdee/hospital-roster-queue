@@ -35,7 +35,7 @@ const db = (() => {
     const counters = {};
 
     for (let h = 1; h <= 15; h++) {
-        hospitals.push({ id: h, code: `H${String(h).padStart(3, '0')}`, name: `Demo Hospital ${h}`, min_rest_hours: 8, max_weekly_hours: 60 });
+        hospitals.push({ id: h, code: `H${String(h).padStart(3, '0')}`, name: `Demo Hospital ${h}`, min_rest_hours: 8, appointment_open: '08:00', appointment_close: '16:00', appointment_slot_minutes: 30, appointments_per_doctor: 3, appointment_early_minutes: 15, appointment_late_minutes: 30, max_weekly_hours: 60 });
 
         for (const [i, [code, name]] of [['OPD', 'ผู้ป่วยนอก'], ['LAB', 'ห้องแล็บ'], ['XRAY', 'เอกซเรย์']].entries()) {
             const department = { id: departments.length + 1, hospital_id: h, code, name, queue_prefix: i + 1 };
@@ -105,7 +105,7 @@ const db = (() => {
         }
     }
 
-    return { skills, hospitals, departments, staff, tickets, counters, templates, shifts, unavailabilities, users, shiftRequests: [], preferences: [] };
+    return { skills, hospitals, departments, staff, tickets, counters, templates, shifts, unavailabilities, users, appointments: [], shiftRequests: [], preferences: [] };
 })();
 
 // ---- สิทธิ์: สำเนาของ App\\Enums\\Role ใน backend ----
@@ -118,6 +118,7 @@ const PERMISSIONS = {
     'shift.request.own': 'ขอย้าย/แลกเวรของตัวเอง · ตอบรับคำขอแลก · ส่งเวรที่อยากลง',
     'shift.request.resolve': 'เคลียร์คำขอย้าย/แลกเวรที่ติดกติกา',
     'staff.manage': 'ดูรายละเอียดแพทย์ · เพิ่มแพทย์ · แก้ชื่อ/ความเชี่ยวชาญ',
+    'appointment.manage': 'ลงนัด · check-in ผู้ป่วยนัด · ยกเลิกนัด',
     'queue.view': 'ดูรายการคิว',
     'ticket.issue': 'ออกบัตรคิว',
     'ticket.triage': 'กำหนดความเร่งด่วน / ความเชี่ยวชาญ (คัดกรอง)',
@@ -125,10 +126,10 @@ const PERMISSIONS = {
     'stats.view': 'ดูสถิติ',
 };
 const ROLES = [
-    { value: 'admin', label: 'แอดมิน / หัวหน้าแผนก', permissions: ['roster.view', 'roster.manage', 'leave.manage.any', 'leave.approve', 'shift.request.resolve', 'staff.manage', 'queue.view', 'ticket.issue', 'ticket.triage', 'stats.view'] },
+    { value: 'admin', label: 'แอดมิน / หัวหน้าแผนก', permissions: ['roster.view', 'roster.manage', 'leave.manage.any', 'leave.approve', 'shift.request.resolve', 'staff.manage', 'appointment.manage', 'queue.view', 'ticket.issue', 'ticket.triage', 'stats.view'] },
     { value: 'doctor', label: 'แพทย์', permissions: ['roster.view', 'leave.manage.own', 'shift.request.own', 'queue.view', 'ticket.call'] },
-    { value: 'nurse', label: 'พยาบาล', permissions: ['roster.view', 'queue.view', 'ticket.issue', 'ticket.triage'] },
-    { value: 'registration', label: 'เวชระเบียน / ตู้คิว', permissions: ['ticket.issue'] },
+    { value: 'nurse', label: 'พยาบาล', permissions: ['roster.view', 'appointment.manage', 'queue.view', 'ticket.issue', 'ticket.triage'] },
+    { value: 'registration', label: 'เวชระเบียน / ตู้คิว', permissions: ['ticket.issue', 'appointment.manage'] },
 ];
 const roleOf = (user) => ROLES.find((r) => r.value === user.role);
 const can = (user, permission) => roleOf(user).permissions.includes(permission);
@@ -446,6 +447,27 @@ for (const t of db.tickets) {
     if (duty.length) t.staff_id = duty[t.id % duty.length].staff_id;
 }
 
+// นัดของวันนี้ (โรงพยาบาลแรก): ช่วงที่ผ่านมาแล้วส่วนใหญ่ check-in และตรวจเสร็จ บางส่วนไม่มา · ช่วงที่ยังไม่ถึงยังรออยู่
+for (const department of db.departments.filter((d) => d.hospital_id === 1)) {
+    appointmentSlots(department, today).forEach((slot, i) => {
+        for (let k = 0; k < Math.min(2, slot.capacity); k++) {
+            const a = bookAppointment(department, {
+                slot_start: slot.start, staff_id: k === 0 ? slot.doctors[i % slot.doctors.length]?.id : null,
+                patient_ref: `HN${String(Math.floor(random() * 999999)).padStart(6, '0')}`, source: k === 0 ? 'his' : 'manual',
+            }, { seeding: true });
+            const start = new Date(slot.start.replace(' ', 'T'));
+            if (start.getTime() < Date.now() - 45 * 60000) {
+                if (random() < 0.2) a.status = 'no_show';
+                else {
+                    const t = issueTicket(department, { patient_ref: a.patient_ref, appointment_at: slot.start.replace(' ', 'T') + ':00', requested_staff_id: a.staff_id });
+                    Object.assign(t, { status: 'completed', staff_id: a.staff_id ?? slot.doctors[0]?.id ?? null, created_at: localIso(new Date(start.getTime() - 600000)), called_at: localIso(new Date(start.getTime() + 300000)) });
+                    Object.assign(a, { status: 'checked_in', ticket_id: t.id, checked_in_at: t.created_at });
+                }
+            }
+        }
+    });
+}
+
 function isoOf(d) {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
@@ -455,6 +477,102 @@ const leaveOf = (member, month) => db.unavailabilities
     .sort((a, b) => a.date.localeCompare(b.date))
     .map((u) => ({ date: u.date, status: u.status }));
 const monthLocked = (member, month) => db.shifts.some((x) => x.department_id === member.department_id && x.shift_date.startsWith(month));
+
+// ---- คิว + นัดหมาย: ตรรกะเดียวกับ QueueService / AppointmentService ----
+function issueTicket(department, data) {
+    const counterKey = `${department.id}|${today}`;
+    db.counters[counterKey] = (db.counters[counterKey] ?? 0) + 1;
+    const ticket = {
+        id: db.tickets.length + 1, hospital_id: department.hospital_id, department_id: department.id,
+        required_skill_id: data.required_skill_id ?? null, number: db.counters[counterKey], priority: Number(data.priority ?? 0),
+        status: 'waiting', staff_id: null, service_date: today, created_at: new Date().toISOString(), called_at: null,
+        appointment_at: data.appointment_at ?? null, requested_staff_id: data.requested_staff_id ?? null,
+    };
+    db.tickets.push(ticket);
+    return ticket;
+}
+
+// คิวที่แพทย์รับได้ เรียงตามลำดับที่จะถูกเรียก: ความเร่งด่วน → นัดที่ถึงเวลา → มาก่อนได้ก่อน
+function eligibleFor(member) {
+    const skillIds = member.skills.map((k) => k.id);
+    const hospital = db.hospitals.find((x) => x.id === member.hospital_id);
+    const dueBy = new Date(Date.now() + hospital.appointment_early_minutes * 60000);
+    const due = (t) => (t.appointment_at && new Date(t.appointment_at) <= dueBy ? 0 : 1);
+    return db.tickets
+        .filter((t) => t.department_id === member.department_id && t.status === 'waiting' && t.service_date === today
+            && (t.required_skill_id === null || skillIds.includes(t.required_skill_id))
+            && (t.requested_staff_id == null || t.requested_staff_id === member.id))
+        .sort((a, b) => b.priority - a.priority || due(a) - due(b) || a.id - b.id);
+}
+
+function hm(d) { return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+function ymdhm(d) { return `${isoOf(d)} ${hm(d)}`; }
+
+function appointmentSlots(department, date) {
+    const hospital = db.hospitals.find((x) => x.id === department.hospital_id);
+    const open = new Date(`${date}T${hospital.appointment_open}:00`);
+    const close = new Date(`${date}T${hospital.appointment_close}:00`);
+    const shifts = db.shifts.filter((x) => x.department_id === department.id && new Date(x.starts_at) < close && new Date(x.ends_at) > open);
+    const out = [];
+    for (let start = open; start < close; start = new Date(start.getTime() + hospital.appointment_slot_minutes * 60000)) {
+        const end = new Date(start.getTime() + hospital.appointment_slot_minutes * 60000);
+        const ids = [...new Set(shifts.filter((x) => new Date(x.starts_at) <= start && new Date(x.ends_at) >= end).map((x) => x.staff_id))];
+        const inSlot = db.appointments.filter((a) => a.department_id === department.id && a.slot_start === ymdhm(start) && ['booked', 'checked_in'].includes(a.status));
+        out.push({
+            start: ymdhm(start), end: ymdhm(end), capacity: ids.length * hospital.appointments_per_doctor, booked: inSlot.length,
+            doctors: ids.map((id) => ({ id, name: staffById(id).name, booked: inSlot.filter((a) => a.staff_id === id).length })),
+        });
+    }
+    return out;
+}
+
+function markNoShows() {
+    for (const a of db.appointments) {
+        const late = db.hospitals.find((x) => x.id === a.hospital_id).appointment_late_minutes;
+        if (a.status === 'booked' && Date.now() > new Date(a.slot_end.replace(' ', 'T')).getTime() + late * 60000) a.status = 'no_show';
+    }
+}
+
+function presentAppointment(a) {
+    const ticket = a.ticket_id ? db.tickets.find((t) => t.id === a.ticket_id) : null;
+    return { ...a, staff_name: a.staff_id ? staffById(a.staff_id).name : null, ticket: ticket ? { id: ticket.id, number: ticket.number, status: ticket.status } : null };
+}
+
+function bookAppointment(department, body, { seeding = false } = {}) {
+    const hospital = db.hospitals.find((x) => x.id === department.hospital_id);
+    const fail = (m) => fail422('slot_start', [m]);
+    if (!body.patient_ref) fail422('patient_ref', ['กรุณาใส่รหัสผู้ป่วย']);
+    if (!seeding && new Date(body.slot_start.replace(' ', 'T')) < new Date(Date.now() - 60000)) fail('ช่วงเวลานี้ผ่านไปแล้ว');
+    const slot = appointmentSlots(department, body.slot_start.slice(0, 10)).find((x) => x.start === body.slot_start);
+    if (!slot) fail(`นัดได้เฉพาะช่วง ${hospital.appointment_open}–${hospital.appointment_close} ทุก ${hospital.appointment_slot_minutes} นาที`);
+    if (slot.capacity === 0) fail('ช่วงนี้ไม่มีแพทย์อยู่เวร');
+    if (body.staff_id) {
+        const doctor = slot.doctors.find((x) => x.id === Number(body.staff_id));
+        if (!doctor) fail('แพทย์ที่เลือกไม่ได้อยู่เวรตลอดช่วงนี้');
+        if (doctor.booked >= hospital.appointments_per_doctor) fail(`แพทย์คนนี้รับนัดช่วงนี้ครบ ${hospital.appointments_per_doctor} คนแล้ว`);
+    }
+    if (slot.booked >= slot.capacity) fail('ช่วงนี้นัดเต็มแล้ว');
+    const a = {
+        id: (db.appointments.at(-1)?.id ?? 0) + 1, hospital_id: department.hospital_id, department_id: department.id,
+        staff_id: body.staff_id ? Number(body.staff_id) : null, patient_ref: body.patient_ref, slot_start: slot.start, slot_end: slot.end,
+        status: 'booked', source: body.source ?? 'manual', note: body.note ?? null, ticket_id: null, checked_in_at: null,
+    };
+    db.appointments.push(a);
+    return a;
+}
+
+function checkInAppointment(a, triage = {}) {
+    if (a.status !== 'booked') fail422('appointment', [`นัดนี้ check-in ไม่ได้ (สถานะ: ${a.status})`]);
+    if (!a.slot_start.startsWith(today)) fail422('appointment', ['check-in ได้เฉพาะนัดของวันนี้']);
+    const hospital = db.hospitals.find((x) => x.id === a.hospital_id);
+    const late = Date.now() > new Date(a.slot_end.replace(' ', 'T')).getTime() + hospital.appointment_late_minutes * 60000;
+    const ticket = issueTicket(db.departments.find((x) => x.id === a.department_id), {
+        patient_ref: a.patient_ref, priority: triage.priority ?? 0, required_skill_id: triage.required_skill_id ?? null,
+        appointment_at: late ? null : a.slot_start.replace(' ', 'T') + ':00', requested_staff_id: late ? null : a.staff_id,
+    });
+    Object.assign(a, { status: 'checked_in', ticket_id: ticket.id, checked_in_at: new Date().toISOString() });
+    return { ticket, late };
+}
 
 function preferencesOf(member, month) {
     return {
@@ -542,23 +660,7 @@ const routes = [
         const department = findIn(db.departments, d, h);
         forbid((Number(body?.priority) > 0 || body?.required_skill_id) && !can(user, 'ticket.triage'), 'ต้องเป็นพยาบาลคัดกรองจึงกำหนดความเร่งด่วน/ความเชี่ยวชาญได้');
         if (!body?.patient_ref) throw new HttpError(422, 'The patient ref field is required.');
-        const counterKey = `${department.id}|${today}`;
-        db.counters[counterKey] = (db.counters[counterKey] ?? 0) + 1;
-        const ticket = {
-            id: db.tickets.length + 1,
-            hospital_id: department.hospital_id,
-            department_id: department.id,
-            required_skill_id: body.required_skill_id ?? null,
-            number: db.counters[counterKey],
-            priority: body.priority ?? 0,
-            status: 'waiting',
-            staff_id: null,
-            service_date: today,
-            created_at: new Date().toISOString(),
-            called_at: null,
-        };
-        db.tickets.push(ticket);
-        return { ...ticket };
+        return { ...issueTicket(department, body) };
     }],
 
     ['POST', /^\/hospitals\/(\d+)\/staff\/(\d+)\/call-next$/, ([h, s], _q, _b, user) => {
@@ -566,12 +668,7 @@ const routes = [
         forbid(user.staff_id !== member.id, 'เรียกคิวได้เฉพาะในชื่อของตัวเอง');
         // ตรวจได้ทีละคิว — เหมือน QueueService::callNext
         if (db.tickets.some((t) => t.staff_id === member.id && t.status === 'called')) fail422('ticket', ['ยังมีคิวที่กำลังตรวจอยู่ กดเสร็จสิ้นก่อนจึงเรียกคิวถัดไปได้']);
-        const skillIds = member.skills.map((skill) => skill.id);
-        // เหมือน QueueService::callNext — คิวที่ไม่ระบุความเชี่ยวชาญหรือที่ตรงกับเจ้าหน้าที่, priority DESC แล้ว id ASC
-        const next = db.tickets
-            .filter((t) => t.department_id === member.department_id && t.status === 'waiting' && t.service_date === today
-                && (t.required_skill_id === null || skillIds.includes(t.required_skill_id)))
-            .sort((a, b) => b.priority - a.priority || a.id - b.id)[0];
+        const next = eligibleFor(member)[0];
         if (!next) throw new HttpError(404, 'No waiting tickets for this staff member.');
         Object.assign(next, { status: 'called', staff_id: member.id, called_at: new Date().toISOString() });
         return { ...next };
@@ -686,6 +783,29 @@ const routes = [
         }
         if (body.skill_ids) member.skills = body.skill_ids.map((id) => db.skills.find((k) => k.id === id) ?? fail422('skill_ids', ['ความเชี่ยวชาญไม่ถูกต้อง']));
         return { id: member.id, name: member.name, department_id: member.department_id, is_active: true, skills: member.skills };
+    }],
+    ['GET', /^\/hospitals\/(\d+)\/appointments$/, ([h], query) => {
+        markNoShows();
+        const date = query.get('date') ?? today;
+        const dept = Number(query.get('department_id') ?? 0);
+        const list = db.appointments.filter((a) => a.hospital_id === Number(h) && a.slot_start.startsWith(date) && (!dept || a.department_id === dept))
+            .sort((a, b) => a.slot_start.localeCompare(b.slot_start) || a.id - b.id);
+        const counts = {};
+        for (const a of list) counts[a.status] = (counts[a.status] ?? 0) + 1;
+        return { date, counts, data: list.map(presentAppointment) };
+    }],
+    ['GET', /^\/hospitals\/(\d+)\/departments\/(\d+)\/appointment-slots$/, ([h, d], query) => appointmentSlots(findIn(db.departments, d, h), query.get('date'))],
+    ['POST', /^\/hospitals\/(\d+)\/departments\/(\d+)\/appointments$/, ([h, d], _q, body) => presentAppointment(bookAppointment(findIn(db.departments, d, h), body ?? {}))],
+    ['POST', /^\/hospitals\/(\d+)\/appointments\/(\d+)\/(check-in|cancel)$/, ([h, id, action], _q, body, user) => {
+        const a = findIn(db.appointments, id, h);
+        if (action === 'cancel') {
+            if (a.status !== 'booked') throw new HttpError(422, 'ยกเลิกได้เฉพาะนัดที่ยังไม่ check-in');
+            a.status = 'cancelled';
+            return presentAppointment(a);
+        }
+        forbid((Number(body?.priority) > 0 || body?.required_skill_id) && !can(user, 'ticket.triage'), 'ต้องเป็นพยาบาลคัดกรองจึงกำหนดความเร่งด่วน/ความเชี่ยวชาญได้');
+        const { ticket, late } = checkInAppointment(a, body ?? {});
+        return { appointment: presentAppointment(a), ticket: { ...ticket }, late };
     }],
     ['GET', /^\/hospitals\/(\d+)\/on-duty$/, ([h]) => {
         const now = new Date();
@@ -803,14 +923,12 @@ const routes = [
     ['GET', /^\/hospitals\/(\d+)\/staff\/(\d+)\/my-queue$/, ([h, s], _q, _b, user) => {
         const member = findIn(db.staff, s, h);
         forbid(user.staff_id !== null && user.staff_id !== member.id, 'ดูได้เฉพาะคิวของตัวเอง');
-        const skillIds = member.skills.map((k) => k.id);
         const now = new Date();
+        markNoShows();
         return {
             current: db.tickets.find((t) => t.staff_id === member.id && t.status === 'called') ?? null,
-            waiting: db.tickets
-                .filter((t) => t.department_id === member.department_id && t.status === 'waiting' && t.service_date === today && (t.required_skill_id === null || skillIds.includes(t.required_skill_id)))
-                .sort((a, b) => b.priority - a.priority || a.id - b.id)
-                .slice(0, 20),
+            waiting: eligibleFor(member).slice(0, 20),
+            appointments_left: db.appointments.filter((a) => a.staff_id === member.id && a.slot_start.startsWith(today) && a.status === 'booked').length,
             next_shifts: db.shifts
                 .filter((x) => x.staff_id === member.id && new Date(x.ends_at) > now)
                 .sort((a, b) => a.starts_at.localeCompare(b.starts_at))
@@ -844,6 +962,10 @@ const ROUTE_PERMISSIONS = [
     ['PATCH', /\/triage$/, 'ticket.triage'],
     ['GET', /\/my-queue$/, 'queue.view'],
     ['GET', /\/on-duty$/, 'queue.view'],
+    ['GET', /\/appointments$/, 'appointment.manage'],
+    ['GET', /\/appointment-slots$/, 'appointment.manage'],
+    ['POST', /\/departments\/\d+\/appointments$/, 'appointment.manage'],
+    ['POST', /\/appointments\/\d+\/(check-in|cancel)$/, 'appointment.manage'],
     ['GET', /\/staff-directory$/, 'staff.manage'],
     ['POST', /\/staff$/, 'staff.manage'],
     ['PATCH', /\/staff\/\d+$/, 'staff.manage'],

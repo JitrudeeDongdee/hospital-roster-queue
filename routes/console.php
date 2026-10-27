@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 
 // สรุปยอดของเมื่อวานทุกคืน
 Schedule::command('queue:aggregate-stats')->dailyAt('00:30');
+Schedule::command('appointments:mark-no-shows')->everyFifteenMinutes();

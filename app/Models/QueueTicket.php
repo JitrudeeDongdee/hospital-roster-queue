@@ -14,13 +14,14 @@ class QueueTicket extends Model
     protected $fillable = [
         'hospital_id', 'department_id', 'required_skill_id', 'staff_id',
         'service_date', 'number', 'patient_ref', 'priority', 'status',
-        'called_at', 'completed_at',
+        'called_at', 'completed_at', 'appointment_at', 'requested_staff_id',
     ];
 
     protected $casts = [
         'service_date' => 'date:Y-m-d',
         'called_at' => 'datetime',
         'completed_at' => 'datetime',
+        'appointment_at' => 'datetime',
     ];
 
     public function department(): BelongsTo

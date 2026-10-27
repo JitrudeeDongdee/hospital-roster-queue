@@ -8,6 +8,8 @@ use App\Models\ShiftPreference;
 use App\Models\ShiftTemplate;
 use App\Models\Skill;
 use App\Models\Staff;
+use App\Models\Appointment;
+use App\Services\AppointmentService;
 use App\Services\RosterService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -145,6 +147,42 @@ class SeedDemoQueue extends Command
         }
 
         $this->linkTicketsToDoctorsOnDuty();
+        // --today=0 = ไม่สร้างข้อมูลของวันนี้เลย (รวมนัดที่ check-in แล้วซึ่งออกบัตรคิววันนี้)
+        if ((int) $this->option('today') > 0) {
+            $this->seedAppointments();
+        }
+    }
+
+    // นัดของวันนี้ (โรงพยาบาลแรก): ช่วงที่ผ่านมาแล้วบางส่วน check-in บางส่วนไม่มา · ช่วงที่ยังไม่ถึงยังรออยู่
+    private function seedAppointments(): void
+    {
+        $appointments = app(AppointmentService::class);
+        $queue = app(\App\Services\QueueService::class);
+        $today = now()->toDateString();
+        foreach (Department::where('hospital_id', Hospital::min('id'))->get() as $department) {
+            foreach ($appointments->slots($department, $today) as $i => $slot) {
+                $doctors = collect($slot['doctors']);
+                for ($k = 0; $k < min(2, $slot['capacity']); $k++) {
+                    $start = now()->parse($slot['start']);
+                    $a = Appointment::create([
+                        'hospital_id' => $department->hospital_id, 'department_id' => $department->id,
+                        'staff_id' => $k === 0 ? $doctors->get($i % max(1, $doctors->count()))['id'] ?? null : null,
+                        'patient_ref' => 'HN'.str_pad((string) random_int(1, 999999), 6, '0', STR_PAD_LEFT),
+                        'slot_start' => $start, 'slot_end' => now()->parse($slot['end']), 'status' => Appointment::BOOKED, 'source' => $k === 0 ? 'his' : 'manual',
+                    ]);
+                    if ($start->lt(now()->subMinutes(45))) {
+                        // ผ่านมาแล้ว: ส่วนใหญ่มาตามนัด (ออกบัตรแล้วตรวจเสร็จ) บางส่วนไม่มา
+                        if (random_int(0, 4) === 0) {
+                            $a->update(['status' => Appointment::NO_SHOW]);
+                        } else {
+                            $ticket = $queue->issue($department, ['patient_ref' => $a->patient_ref, 'appointment_at' => $a->slot_start, 'requested_staff_id' => $a->staff_id]);
+                            $ticket->update(['status' => 'completed', 'staff_id' => $a->staff_id ?? $doctors->first()['id'] ?? null, 'called_at' => $start->copy()->addMinutes(5), 'completed_at' => $start->copy()->addMinutes(20), 'created_at' => $start->copy()->subMinutes(10)]);
+                            $a->update(['status' => Appointment::CHECKED_IN, 'ticket_id' => $ticket->id, 'checked_in_at' => $start->copy()->subMinutes(10)]);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     // คิวของโรงพยาบาลแรกที่ออกระหว่างมีตารางเวร: ให้คิวที่ตรวจแล้วมีชื่อแพทย์ที่อยู่เวรตอนนั้น

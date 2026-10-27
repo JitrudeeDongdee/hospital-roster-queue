@@ -125,6 +125,7 @@ export default function StaffPanel({ hospitalId }) {
                         <span className="flex items-center gap-2">
                             <span className="font-mono text-2xl font-bold text-emerald-900">{queueNo(departments[member.department_id], myQueue.data.waiting[0].number)}</span>
                             <span className={`rounded-full px-2 text-xs ${PRIORITY[myQueue.data.waiting[0].priority].className}`}>{PRIORITY[myQueue.data.waiting[0].priority].label}</span>
+                            {myQueue.data.waiting[0].appointment_at && <span className="rounded-full bg-sky-100 px-2 text-xs text-sky-800">นัด {clock(myQueue.data.waiting[0].appointment_at)}</span>}
                         </span>
                     ) : (
                         <span className="text-sm text-slate-400">ไม่มีคิวที่รับได้</span>
@@ -134,12 +135,16 @@ export default function StaffPanel({ hospitalId }) {
 
             {member && myQueue.data && (
                 <div className="mt-5 border-t border-slate-200 pt-4 text-sm">
+                    {myQueue.data.appointments_left > 0 && <p className="mb-2 text-xs text-sky-800">นัดของ{isOwn ? 'คุณ' : 'แพทย์คนนี้'}วันนี้ที่ยังไม่มา {myQueue.data.appointments_left} คน</p>}
                     <h3 className="mb-2 font-medium">คิวที่รอคุณ ({myQueue.data.waiting.length}{myQueue.data.waiting.length === 20 ? '+' : ''})</h3>
                     <ol className="max-h-48 space-y-1 overflow-auto">
                         {myQueue.data.waiting.map((t) => (
                             <li key={t.id} className="flex justify-between">
                                 <span className="font-mono">{queueNo(departments[member.department_id], t.number)}</span>
-                                <span className={`rounded-full px-2 text-xs ${PRIORITY[t.priority].className}`}>{PRIORITY[t.priority].label}</span>
+                                <span className="flex gap-1">
+                                    {t.appointment_at && <span className="rounded-full bg-sky-100 px-2 text-xs text-sky-800">นัด {clock(t.appointment_at)}</span>}
+                                    <span className={`rounded-full px-2 text-xs ${PRIORITY[t.priority].className}`}>{PRIORITY[t.priority].label}</span>
+                                </span>
                             </li>
                         ))}
                         {myQueue.data.waiting.length === 0 && <li className="text-slate-400">ไม่มีคิวที่คุณรับได้</li>}
