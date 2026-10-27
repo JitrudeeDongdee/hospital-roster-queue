@@ -120,6 +120,20 @@ export default function StaffPanel({ hospitalId }) {
             )}
 
             {member && myQueue.data && (
+                <div className="mt-3 flex items-center justify-between rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2.5">
+                    <span className="text-xs font-medium text-emerald-800">{isOwn ? 'คิวถัดไปของคุณ' : 'คิวถัดไป'}</span>
+                    {myQueue.data.waiting[0] ? (
+                        <span className="flex items-center gap-2">
+                            <span className="font-mono text-2xl font-bold text-emerald-900">{queueNo(departments[member.department_id], myQueue.data.waiting[0].number)}</span>
+                            <span className={`rounded-full px-2 text-xs ${PRIORITY[myQueue.data.waiting[0].priority].className}`}>{PRIORITY[myQueue.data.waiting[0].priority].label}</span>
+                        </span>
+                    ) : (
+                        <span className="text-sm text-slate-400">ไม่มีคิวที่รับได้</span>
+                    )}
+                </div>
+            )}
+
+            {member && myQueue.data && (
                 <div className="mt-5 border-t border-slate-200 pt-4 text-sm">
                     <h3 className="mb-2 font-medium">คิวที่รอคุณ ({myQueue.data.waiting.length}{myQueue.data.waiting.length === 20 ? '+' : ''})</h3>
                     <ol className="max-h-48 space-y-1 overflow-auto">

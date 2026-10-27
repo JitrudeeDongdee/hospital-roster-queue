@@ -18,16 +18,24 @@ class TicketController extends Controller
     public function index(Request $request, Hospital $hospital)
     {
         $request->validate([
-            'status' => 'nullable|in:waiting,called,completed',
+            'status' => 'nullable|in:waiting,called,completed,active', // active = รอเรียก + กำลังตรวจ (ยังไม่เสร็จ)
             'date' => 'nullable|date',
             'department_id' => 'nullable|integer',
+            // ค้นหา/กรอง: เลขคิวในแผนก (หน้าเว็บแปลง 1004 → แผนกหลัก 1 + เลข 4 ให้แล้ว) · ความเร่งด่วน · แพทย์ที่เรียกคิว
+            'number' => 'nullable|integer|min:1',
+            'priority' => 'nullable|integer|in:0,1,2',
+            'staff_id' => 'nullable|integer',
         ]);
 
         return $hospital->tickets()
             ->select(['id', 'department_id', 'required_skill_id', 'number', 'priority', 'status', 'staff_id', 'service_date', 'created_at', 'called_at', 'completed_at'])
             ->where('service_date', $request->input('date', now()->toDateString()))
-            ->when($request->status, fn ($q, $status) => $q->where('status', $status))
+            ->when($request->status === 'active', fn ($q) => $q->whereIn('status', [QueueTicket::WAITING, QueueTicket::CALLED]))
+            ->when($request->status && $request->status !== 'active', fn ($q) => $q->where('status', $request->status))
             ->when($request->department_id, fn ($q, $id) => $q->where('department_id', $id))
+            ->when($request->filled('number'), fn ($q) => $q->where('number', $request->integer('number')))
+            ->when($request->filled('priority'), fn ($q) => $q->where('priority', $request->integer('priority')))
+            ->when($request->filled('staff_id'), fn ($q) => $q->where('staff_id', $request->integer('staff_id')))
             ->orderBy('id')
             ->cursorPaginate(50); // keyset: WHERE id > ? แทน OFFSET จึงเร็วเท่าเดิมแม้หน้าลึก
     }

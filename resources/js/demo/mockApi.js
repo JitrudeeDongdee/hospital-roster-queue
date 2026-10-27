@@ -479,7 +479,7 @@ function findIn(list, id, hospitalId) {
 const routes = [
     
     ['GET', /^\/skills$/, () => db.skills, {}],
-    ['GET', /^\/demo-users$/, () => db.users.filter((u) => u.hospital_id === 1 && (u.role !== 'doctor' || /-[12]$/.test(u.name))).map(present), { public: true }],
+    ['GET', /^\/demo-users$/, () => db.users.filter((u) => u.hospital_id === 1).map(present), { public: true }],
     ['POST', /^\/demo-login$/, (_p, _q, body) => {
         const user = db.users.find((u) => u.id === Number(body.user_id));
         if (!user) throw new HttpError(404, 'Not Found');
@@ -495,13 +495,19 @@ const routes = [
         const after = Number(query.get('cursor') ?? 0); // keyset: id > cursor
         const status = query.get('status');
         const departmentId = Number(query.get('department_id') ?? 0);
+        const number = Number(query.get('number') ?? 0);
+        const priority = query.get('priority');
+        const staffId = Number(query.get('staff_id') ?? 0);
         const date = query.get('date') ?? today;
         const page = [];
 
         for (const t of db.tickets) {
             if (t.id <= after || t.hospital_id !== Number(h) || t.service_date !== date) continue;
-            if (status && t.status !== status) continue;
+            if (status === 'active' ? t.status === 'completed' : status && t.status !== status) continue;
             if (departmentId && t.department_id !== departmentId) continue;
+            if (number && t.number !== number) continue;
+            if (priority !== null && priority !== '' && t.priority !== Number(priority)) continue;
+            if (staffId && t.staff_id !== staffId) continue;
             page.push(t);
             if (page.length > PAGE_SIZE) break;
         }

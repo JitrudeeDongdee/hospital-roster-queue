@@ -56,7 +56,7 @@ export const PRIORITY = {
 
 export const STATUS = {
     waiting: { label: 'รอเรียก', className: 'bg-sky-100 text-sky-800' },
-    called: { label: 'เรียกแล้ว', className: 'bg-violet-100 text-violet-800' },
+    called: { label: 'กำลังตรวจ', className: 'bg-violet-100 text-violet-800' },
     completed: { label: 'เสร็จสิ้น', className: 'bg-emerald-100 text-emerald-800' },
 };
 

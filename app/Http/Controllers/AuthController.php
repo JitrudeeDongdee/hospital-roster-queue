@@ -15,7 +15,7 @@ class AuthController extends Controller
 
         return User::with('hospital:id,code,name')
             ->whereHas('hospital', fn ($q) => $q->where('code', 'H001'))
-            ->where(fn ($q) => $q->where('role', '!=', Role::Doctor)->orWhereIn('staff_id', fn ($s) => $s->select('id')->from('staff')->where(fn ($n) => $n->where('name', 'like', '%-1')->orWhere('name', 'like', '%-2')))) // แพทย์ 2 คนต่อแผนก ให้ลองแลกเวรกันได้
+            // แพทย์ทุกคนของโรงพยาบาลแรก — ชื่อที่เห็นในคิวและตารางเวรล็อกอินเข้าไปดูได้จริง
             ->orderBy('id')
             ->get(['id', 'name', 'role', 'hospital_id'])
             ->map(fn (User $u) => $this->present($u));

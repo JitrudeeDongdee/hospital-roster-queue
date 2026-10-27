@@ -150,6 +150,37 @@ class QueueTest extends TestCase
             ->assertOk()->assertJsonCount(10, 'data');
     }
 
+    public function test_active_filter_lists_waiting_and_called_but_not_completed(): void
+    {
+        [$hospital, $opd] = $this->hospitalWithDepartment();
+        $doctor = Staff::create(['hospital_id' => $hospital->id, 'department_id' => $opd->id, 'name' => 'Dr. A']);
+        $done = $this->issue($hospital, $opd);
+        $called = $this->issue($hospital, $opd);
+        $waiting = $this->issue($hospital, $opd);
+        QueueTicket::whereKey($done['id'])->update(['status' => 'completed', 'staff_id' => $doctor->id]);
+        QueueTicket::whereKey($called['id'])->update(['status' => 'called', 'staff_id' => $doctor->id]);
+
+        $this->getJson("/api/hospitals/{$hospital->id}/tickets?status=active")->assertOk()
+            ->assertJsonPath('data.*.id', [$called['id'], $waiting['id']]);
+        $this->getJson("/api/hospitals/{$hospital->id}/tickets?status=completed")->assertJsonPath('data.*.id', [$done['id']]);
+    }
+
+    public function test_ticket_list_searches_by_number_priority_and_doctor(): void
+    {
+        [$hospital, $opd] = $this->hospitalWithDepartment();
+        $doctor = Staff::create(['hospital_id' => $hospital->id, 'department_id' => $opd->id, 'name' => 'Dr. A']);
+        $first = $this->issue($hospital, $opd);
+        $urgent = $this->issue($hospital, $opd, ['priority' => 2]);
+        $third = $this->issue($hospital, $opd);
+        QueueTicket::whereKey($third['id'])->update(['status' => 'called', 'staff_id' => $doctor->id]);
+        $url = "/api/hospitals/{$hospital->id}/tickets?status=";
+
+        $this->getJson("{$url}&number=1")->assertJsonPath('data.*.id', [$first['id']]);
+        $this->getJson("{$url}&priority=2")->assertJsonPath('data.*.id', [$urgent['id']]);
+        $this->getJson("{$url}&staff_id={$doctor->id}")->assertJsonPath('data.*.id', [$third['id']]);
+        $this->getJson("{$url}&priority=9")->assertUnprocessable();
+    }
+
     public function test_complete_requires_a_called_ticket(): void
     {
         [$hospital, $opd] = $this->hospitalWithDepartment();

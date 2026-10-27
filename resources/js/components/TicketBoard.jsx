@@ -14,7 +14,9 @@ export const waitMinutes = (t) => (t.called_at ? Math.round((new Date(t.called_a
 export default function TicketBoard({ hospitalId, date }) {
     // ตัวกรองอยู่ใน URL (/queue/list?date=&status=waiting&dept=1) — แชร์ลิงก์/กด back ได้
     const [params, setParams] = useSearchParams();
-    const status = params.has('status') ? params.get('status') : 'waiting';
+    // ค่าเริ่มต้น '' = ทั้งหมด: คิวที่ยังไม่เสร็จ (กำลังตรวจ + รอเรียก) ก่อน แล้วคิวที่เสร็จแล้วต่อท้ายเป็นสีเทา
+    const status = params.get('status') ?? '';
+    const all = status === '';
     const departmentId = params.get('dept') ?? '';
     const isToday = date === isoDate(new Date());
     const setFilter = (key, value) => {
@@ -22,7 +24,29 @@ export default function TicketBoard({ hospitalId, date }) {
         next.set(key, value);
         setParams(next, { replace: true });
     };
-    const departments = byId(useDepartments(hospitalId).data);
+    const departmentList = useDepartments(hospitalId).data ?? [];
+    const departments = byId(departmentList);
+    // ค้นหา/กรอง (อยู่ใน URL): q = เลขคิวที่ผู้ป่วยเห็น เช่น 1004 → แผนกที่ขึ้นต้นด้วย 1 + คิวที่ 4 · pri = ความเร่งด่วน · doc = แพทย์
+    const q = params.get('q') ?? '';
+    const priority = params.get('pri') ?? '';
+    const doctor = params.get('doc') ?? '';
+    const search = (() => {
+        const n = Number(q);
+        if (!/^\d+$/.test(q) || n < 1) return {};
+        const dept = q.length >= 4 ? departmentList.find((d) => d.queue_prefix === Math.floor(n / 1000)) : null;
+        return dept ? { department_id: String(dept.id), number: String(n % 1000) } : { number: String(n) };
+    })();
+    const filters = {
+        ...(departmentId ? { department_id: departmentId } : {}),
+        ...search,
+        ...(priority ? { priority } : {}),
+        ...(doctor ? { staff_id: doctor } : {}),
+    };
+    const setOrClear = (key, value) => {
+        const next = new URLSearchParams(params);
+        value ? next.set(key, value) : next.delete(key);
+        setParams(next, { replace: true });
+    };
     const skillList = useSkills().data ?? [];
     const skills = byId(skillList);
     const staff = byId(useStaff(hospitalId).data);
@@ -52,26 +76,46 @@ export default function TicketBoard({ hospitalId, date }) {
     });
 
     // ตัวกรองส่งไปให้ server กรอง — ไม่โหลดทุกคิวมากรองใน browser
-    const tickets = useInfiniteQuery({
-        queryKey: ['tickets', hospitalId, date, status, departmentId],
-        queryFn: ({ pageParam, signal }) => {
-            const params = new URLSearchParams({ date });
-            if (status) params.set('status', status);
-            if (departmentId) params.set('department_id', departmentId);
-            if (pageParam) params.set('cursor', pageParam);
-            return api(`/hospitals/${hospitalId}/tickets?${params}`, { signal });
-        },
+    const page = (statusParam) => ({ pageParam, signal }) => {
+        const params = new URLSearchParams({ date, status: statusParam, ...filters });
+        if (pageParam) params.set('cursor', pageParam);
+        return api(`/hospitals/${hospitalId}/tickets?${params}`, { signal });
+    };
+    const paging = {
         initialPageParam: null,
         getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined, // keyset cursor จาก Laravel
         refetchInterval: isToday ? 15_000 : false, // เฉพาะวันนี้ · เดโมใช้ polling; ระบบจริงใช้ WebSocket (Laravel Reverb)
+    };
+    // ตัวกรองส่งไปให้ server กรอง — ไม่โหลดทุกคิวมากรองใน browser
+    const tickets = useInfiniteQuery({ queryKey: ['tickets', hospitalId, date, all ? 'active' : status, filters], queryFn: page(all ? 'active' : status), ...paging });
+    // โหมดทั้งหมด: โหลดคิวที่เสร็จแล้วหลังโหลดคิวที่ยังไม่เสร็จครบ
+    const done = useInfiniteQuery({
+        queryKey: ['tickets', hospitalId, date, 'completed', filters],
+        queryFn: page('completed'),
+        enabled: all && tickets.isSuccess && !tickets.hasNextPage,
+        ...paging,
     });
 
-    const rows = tickets.data?.pages.flatMap((page) => page.data) ?? [];
+    // คิวถัดไปของแพทย์ที่ล็อกอิน (เรียงแบบเดียวกับตอนกดเรียก) — ติดป้าย "ถัดไป" ในรายการ
+    const { user, can } = useAuth();
+    const myQueue = useQuery({
+        queryKey: ['my-queue', hospitalId, user.staff_id],
+        queryFn: () => api(`/hospitals/${hospitalId}/staff/${user.staff_id}/my-queue`),
+        enabled: isToday && !!user.staff_id && can('ticket.call'),
+        refetchInterval: 15_000,
+    });
+    const nextId = myQueue.data?.waiting[0]?.id;
+
+    const activeRows = tickets.data?.pages.flatMap((p) => p.data) ?? [];
+    const doneRows = all ? done.data?.pages.flatMap((p) => p.data) ?? [] : [];
+    const rows = doneRows.length ? [...activeRows, { divider: true }, ...doneRows] : activeRows;
+    const hasMore = tickets.hasNextPage || (all && (!done.isSuccess || done.hasNextPage));
+    const fetching = tickets.isFetchingNextPage || done.isFetchingNextPage || (all && done.isFetching && !done.data);
     const scrollRef = useRef(null);
 
     // วาดเฉพาะแถวที่อยู่บนจอ (+ overscan) แม้โหลดมาหลายพันแถว
     const virtualizer = useVirtualizer({
-        count: tickets.hasNextPage ? rows.length + 1 : rows.length,
+        count: hasMore ? rows.length + 1 : rows.length,
         getScrollElement: () => scrollRef.current,
         estimateSize: () => ROW_HEIGHT,
         overscan: 8,
@@ -81,10 +125,10 @@ export default function TicketBoard({ hospitalId, date }) {
     // infinite scroll: เลื่อนถึงแถวสุดท้ายแล้วค่อยโหลดหน้าถัดไป
     const lastIndex = items.at(-1)?.index ?? 0;
     useEffect(() => {
-        if (lastIndex >= rows.length - 1 && tickets.hasNextPage && !tickets.isFetchingNextPage) {
-            tickets.fetchNextPage();
-        }
-    }, [lastIndex, rows.length, tickets.hasNextPage, tickets.isFetchingNextPage, tickets.fetchNextPage]);
+        if (lastIndex < rows.length - 1 || fetching) return;
+        if (tickets.hasNextPage) tickets.fetchNextPage();
+        else if (all && done.hasNextPage) done.fetchNextPage();
+    }, [lastIndex, rows.length, fetching, tickets.hasNextPage, tickets.fetchNextPage, all, done.hasNextPage, done.fetchNextPage]);
 
     return (
         <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -92,8 +136,26 @@ export default function TicketBoard({ hospitalId, date }) {
                 <h2 className="mr-auto text-lg font-semibold">
                     {isToday ? 'คิววันนี้' : `คิววันที่ ${new Date(`${date}T00:00:00`).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}`}
                 </h2>
+                <input
+                    className="w-32 rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                    type="search"
+                    inputMode="numeric"
+                    placeholder="ค้นหาเลขคิว"
+                    value={q}
+                    onChange={(e) => setOrClear('q', e.target.value.replace(/\D/g, ''))}
+                    aria-label="ค้นหาเลขคิว"
+                />
+                <select className="rounded-md border border-slate-300 px-2 py-1.5 text-sm" value={priority} onChange={(e) => setOrClear('pri', e.target.value)} aria-label="ความเร่งด่วน">
+                    <option value="">ทุกความเร่งด่วน</option>
+                    {Object.entries(PRIORITY).map(([value, p]) => <option key={value} value={value}>{p.label}</option>)}
+                </select>
+                <select className="rounded-md border border-slate-300 px-2 py-1.5 text-sm" value={doctor} onChange={(e) => setOrClear('doc', e.target.value)} aria-label="แพทย์">
+                    <option value="">ทุกแพทย์</option>
+                    {Object.values(staff).filter((m) => !departmentId || m.department_id === Number(departmentId)).map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                </select>
+                {(q || priority || doctor) && <button className="text-xs text-slate-500 underline" onClick={() => { const next = new URLSearchParams(params); ['q', 'pri', 'doc'].forEach((k) => next.delete(k)); setParams(next, { replace: true }); }}>ล้างตัวกรอง</button>}
                 <select className="rounded-md border border-slate-300 px-2 py-1.5 text-sm" value={status} onChange={(e) => setFilter('status', e.target.value)} aria-label="สถานะ">
-                    <option value="">ทุกสถานะ</option>
+                    <option value="">ทั้งหมด (เสร็จแล้วอยู่ล่าง)</option>
                     {Object.entries(STATUS).map(([value, s]) => <option key={value} value={value}>{s.label}</option>)}
                 </select>
             </div>
@@ -105,20 +167,32 @@ export default function TicketBoard({ hospitalId, date }) {
             <div ref={scrollRef} className="h-[520px] overflow-auto">
                 {tickets.isPending && <p className="p-4 text-sm text-slate-500">กำลังโหลด…</p>}
                 {tickets.isError && <p className="p-4 text-sm text-red-600">{tickets.error.message}</p>}
-                {tickets.isSuccess && rows.length === 0 && <p className="p-4 text-sm text-slate-500">ไม่มีคิว</p>}
+                {tickets.isSuccess && rows.length === 0 && !hasMore && <p className="p-4 text-sm text-slate-500">ไม่มีคิว</p>}
 
                 <div style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
                     {items.map((item) => {
                         const t = rows[item.index];
+                        if (t?.divider) {
+                            return (
+                                <div key={item.key} className="absolute left-0 flex w-full items-end bg-slate-100 px-4 pb-1.5 text-xs font-medium text-slate-500" style={{ height: ROW_HEIGHT, transform: `translateY(${item.start}px)` }}>
+                                    เสร็จแล้ว ({doneRows.length}{done.hasNextPage ? '+' : ''})
+                                </div>
+                            );
+                        }
+                        // กำลังตรวจ = ม่วงอ่อน · เสร็จแล้ว = เทา · คิวถัดไปของฉัน = ขอบเขียว
+                        const tone = t?.status === 'called' ? 'bg-violet-50' : t?.status === 'completed' ? 'bg-slate-50 text-slate-400' : t?.id === nextId ? 'bg-emerald-50' : '';
                         return (
                             <div
                                 key={item.key}
-                                className="absolute left-0 grid w-full grid-cols-[56px_1fr_1fr_1fr_1.3fr_52px_52px_44px_84px] items-center gap-2 border-b border-slate-100 px-4 text-sm"
+                                className={`absolute left-0 grid w-full grid-cols-[56px_1fr_1fr_1fr_1.3fr_52px_52px_44px_84px] items-center gap-2 border-b border-slate-100 px-4 text-sm ${tone}`}
                                 style={{ height: ROW_HEIGHT, transform: `translateY(${item.start}px)` }}
                             >
                                 {t ? (
                                     <>
-                                        <span className="font-mono font-semibold">{queueNo(departments[t.department_id], t.number)}</span>
+                                        <span className="flex flex-col font-mono font-semibold leading-tight">
+                                            {queueNo(departments[t.department_id], t.number)}
+                                            {t.id === nextId && <span className="font-sans text-[10px] font-medium text-emerald-700">ถัดไป</span>}
+                                        </span>
                                         <span>{departments[t.department_id]?.name ?? '…'}</span>
                                         {canTriage && t.status === 'waiting' ? (
                                             <>
@@ -166,8 +240,8 @@ export default function TicketBoard({ hospitalId, date }) {
             {canTriage && <p className="border-t border-slate-200 bg-sky-50 px-4 py-2 text-xs text-sky-900">คัดกรอง: เปลี่ยนความเร่งด่วน/ความเชี่ยวชาญของคิวที่ยังรอเรียกได้ในแถวเลย แพทย์จะได้คิวตามค่าใหม่ทันที</p>}
             {triage.isError && <p className="border-t border-slate-200 bg-rose-50 px-4 py-2 text-xs text-rose-800">{errorMessages(triage.error).join(' ')}</p>}
             <p className="border-t border-slate-200 px-4 py-2 text-xs text-slate-500">
-                โหลดแล้ว {rows.length.toLocaleString()} คิว ({tickets.data?.pages.length ?? 0} หน้า) · แถวที่วาดใน DOM จริง {items.length}
-                {tickets.isFetching && ' · กำลังอัปเดต…'}
+                โหลดแล้ว {(activeRows.length + doneRows.length).toLocaleString()} คิว ({(tickets.data?.pages.length ?? 0) + (done.data?.pages.length ?? 0)} หน้า) · แถวที่วาดใน DOM จริง {items.length}
+                {(tickets.isFetching || done.isFetching) && ' · กำลังอัปเดต…'}
             </p>
         </section>
     );
