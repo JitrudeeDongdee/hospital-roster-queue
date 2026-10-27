@@ -1,0 +1,139 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 756 456" width="756" height="456" font-family="Sarabun, 'Noto Sans Thai', Thonburi, 'Helvetica Neue', sans-serif">
+<title>ER diagram: ย้าย/แลกเวร และเวรที่อยากลง</title>
+<rect width="756" height="456" fill="#fff"/>
+<path d="M212,29.0 H278" stroke="#3b4a6b" stroke-width="1.2" fill="none"/>
+<path d="M219,22.0 L219,36.0" stroke="#3b4a6b" stroke-width="1.3"/><path d="M224,22.0 L224,36.0" stroke="#3b4a6b" stroke-width="1.3"/><path d="M266,29.0 L278,36.0 M266,29.0 L278,29.0 M266,29.0 L278,22.0" stroke="#3b4a6b" stroke-width="1.3" fill="none"/><circle cx="261" cy="29.0" r="3.5" fill="#fff" stroke="#3b4a6b" stroke-width="1.1"/>
+<text x="245.0" y="23.0" font-size="11" fill="#7a2e2e" text-anchor="middle" paint-order="stroke" stroke="#fff" stroke-width="3">อยู่เวร</text>
+<path d="M544,29.0 H478" stroke="#3b4a6b" stroke-width="1.2" fill="none"/>
+<path d="M537,36.0 L537,22.0" stroke="#3b4a6b" stroke-width="1.3"/><path d="M532,36.0 L532,22.0" stroke="#3b4a6b" stroke-width="1.3"/><path d="M490,29.0 L478,22.0 M490,29.0 L478,29.0 M490,29.0 L478,36.0" stroke="#3b4a6b" stroke-width="1.3" fill="none"/><circle cx="495" cy="29.0" r="3.5" fill="#fff" stroke="#3b4a6b" stroke-width="1.1"/>
+<text x="511.0" y="23.0" font-size="11" fill="#7a2e2e" text-anchor="middle" paint-order="stroke" stroke="#fff" stroke-width="3">แม่แบบ</text>
+<path d="M112.0,95 V174" stroke="#3b4a6b" stroke-width="1.2" fill="none"/>
+<path d="M119.0,102 L105.0,102" stroke="#3b4a6b" stroke-width="1.3"/><path d="M119.0,107 L105.0,107" stroke="#3b4a6b" stroke-width="1.3"/><path d="M112.0,162 L105.0,174 M112.0,162 L112.0,174 M112.0,162 L119.0,174" stroke="#3b4a6b" stroke-width="1.3" fill="none"/><circle cx="112.0" cy="157" r="3.5" fill="#fff" stroke="#3b4a6b" stroke-width="1.1"/>
+<text x="118.0" y="138.5" font-size="11" fill="#7a2e2e" text-anchor="middle" paint-order="stroke" stroke="#fff" stroke-width="3">อยากลง</text>
+<path d="M378.0,112 V174" stroke="#3b4a6b" stroke-width="1.2" fill="none"/>
+<path d="M385.0,119 L371.0,119" stroke="#3b4a6b" stroke-width="1.3"/><path d="M385.0,124 L371.0,124" stroke="#3b4a6b" stroke-width="1.3"/><path d="M378.0,162 L371.0,174 M378.0,162 L378.0,174 M378.0,162 L385.0,174" stroke="#3b4a6b" stroke-width="1.3" fill="none"/><circle cx="378.0" cy="157" r="3.5" fill="#fff" stroke="#3b4a6b" stroke-width="1.1"/>
+<text x="384.0" y="147.0" font-size="11" fill="#7a2e2e" text-anchor="middle" paint-order="stroke" stroke="#fff" stroke-width="3">ขอย้าย/แลก</text>
+<path d="M544,191.0 H478" stroke="#3b4a6b" stroke-width="1.2" fill="none"/>
+<path d="M537,198.0 L537,184.0" stroke="#3b4a6b" stroke-width="1.3"/><path d="M532,198.0 L532,184.0" stroke="#3b4a6b" stroke-width="1.3"/><path d="M490,191.0 L478,184.0 M490,191.0 L478,191.0 M490,191.0 L478,198.0" stroke="#3b4a6b" stroke-width="1.3" fill="none"/><circle cx="495" cy="191.0" r="3.5" fill="#fff" stroke="#3b4a6b" stroke-width="1.1"/>
+<text x="511.0" y="185.0" font-size="11" fill="#7a2e2e" text-anchor="middle" paint-order="stroke" stroke="#fff" stroke-width="3">ตัดสิน</text>
+<rect x="12" y="12" width="200" height="83" rx="5" fill="#fff" stroke="#3b4a6b" stroke-width="1.3" stroke-dasharray="4 3"/>
+<path d="M12,38 H212" stroke="#3b4a6b" stroke-width="0.8"/>
+<rect x="12.6" y="12.6" width="198.8" height="25" rx="5" fill="#f1f1f1"/>
+<text x="112.0" y="29" text-anchor="middle" font-size="12.5" font-weight="700" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">staff</text>
+<text x="20" y="52" font-size="9.5" font-weight="700" fill="#a23b3b">PK</text>
+<text x="46" y="52" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">id</text>
+<text x="204" y="52" font-size="10.5" text-anchor="end" fill="#666">bigint</text>
+<text x="20" y="69" font-size="9.5" font-weight="700" fill="#2b5ea8">FK</text>
+<text x="46" y="69" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">department_id</text>
+<text x="204" y="69" font-size="10.5" text-anchor="end" fill="#666">bigint</text>
+<text x="20" y="86" font-size="9.5" font-weight="700" fill="#999"></text>
+<text x="46" y="86" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">name</text>
+<text x="204" y="86" font-size="10.5" text-anchor="end" fill="#666">string</text>
+<rect x="278" y="12" width="200" height="100" rx="5" fill="#fff" stroke="#3b4a6b" stroke-width="1.3" stroke-dasharray="4 3"/>
+<path d="M278,38 H478" stroke="#3b4a6b" stroke-width="0.8"/>
+<rect x="278.6" y="12.6" width="198.8" height="25" rx="5" fill="#f1f1f1"/>
+<text x="378.0" y="29" text-anchor="middle" font-size="12.5" font-weight="700" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">shifts</text>
+<text x="286" y="52" font-size="9.5" font-weight="700" fill="#a23b3b">PK</text>
+<text x="312" y="52" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">id</text>
+<text x="470" y="52" font-size="10.5" text-anchor="end" fill="#666">bigint</text>
+<text x="286" y="69" font-size="9.5" font-weight="700" fill="#2b5ea8">FK</text>
+<text x="312" y="69" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">staff_id</text>
+<text x="470" y="69" font-size="10.5" text-anchor="end" fill="#666">bigint</text>
+<text x="286" y="86" font-size="9.5" font-weight="700" fill="#2b5ea8">FK</text>
+<text x="312" y="86" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">shift_template_id</text>
+<text x="470" y="86" font-size="10.5" text-anchor="end" fill="#666">bigint</text>
+<text x="286" y="103" font-size="9.5" font-weight="700" fill="#999"></text>
+<text x="312" y="103" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">shift_date</text>
+<text x="470" y="103" font-size="10.5" text-anchor="end" fill="#666">date</text>
+<rect x="544" y="12" width="200" height="83" rx="5" fill="#fff" stroke="#3b4a6b" stroke-width="1.3" stroke-dasharray="4 3"/>
+<path d="M544,38 H744" stroke="#3b4a6b" stroke-width="0.8"/>
+<rect x="544.6" y="12.6" width="198.8" height="25" rx="5" fill="#f1f1f1"/>
+<text x="644.0" y="29" text-anchor="middle" font-size="12.5" font-weight="700" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">shift_templates</text>
+<text x="552" y="52" font-size="9.5" font-weight="700" fill="#a23b3b">PK</text>
+<text x="578" y="52" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">id</text>
+<text x="736" y="52" font-size="10.5" text-anchor="end" fill="#666">bigint</text>
+<text x="552" y="69" font-size="9.5" font-weight="700" fill="#2b5ea8">FK</text>
+<text x="578" y="69" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">department_id</text>
+<text x="736" y="69" font-size="10.5" text-anchor="end" fill="#666">bigint</text>
+<text x="552" y="86" font-size="9.5" font-weight="700" fill="#999"></text>
+<text x="578" y="86" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">start_time</text>
+<text x="736" y="86" font-size="10.5" text-anchor="end" fill="#666">time</text>
+<rect x="12" y="174" width="200" height="117" rx="5" fill="#fff" stroke="#3b4a6b" stroke-width="1.3"/>
+<path d="M12,200 H212" stroke="#3b4a6b" stroke-width="0.8"/>
+<rect x="12.6" y="174.6" width="198.8" height="25" rx="5" fill="#e3e9f5"/>
+<text x="112.0" y="191" text-anchor="middle" font-size="12.5" font-weight="700" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">shift_preferences</text>
+<text x="20" y="214" font-size="9.5" font-weight="700" fill="#a23b3b">PK</text>
+<text x="46" y="214" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">id</text>
+<text x="204" y="214" font-size="10.5" text-anchor="end" fill="#666">bigint</text>
+<text x="20" y="231" font-size="9.5" font-weight="700" fill="#2b5ea8">FK</text>
+<text x="46" y="231" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">staff_id</text>
+<text x="204" y="231" font-size="10.5" text-anchor="end" fill="#666">bigint</text>
+<text x="20" y="248" font-size="9.5" font-weight="700" fill="#2b5ea8">FK</text>
+<text x="46" y="248" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">shift_template_id</text>
+<text x="204" y="248" font-size="10.5" text-anchor="end" fill="#666">bigint</text>
+<text x="20" y="265" font-size="9.5" font-weight="700" fill="#2e7d4f">UK</text>
+<text x="46" y="265" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">date</text>
+<text x="204" y="265" font-size="10.5" text-anchor="end" fill="#666">+staff+tmpl</text>
+<text x="20" y="282" font-size="9.5" font-weight="700" fill="#999"></text>
+<text x="46" y="282" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">kind</text>
+<text x="204" y="282" font-size="10.5" text-anchor="end" fill="#666">prefer/avoid</text>
+<rect x="278" y="174" width="200" height="270" rx="5" fill="#fff" stroke="#3b4a6b" stroke-width="1.3"/>
+<path d="M278,200 H478" stroke="#3b4a6b" stroke-width="0.8"/>
+<rect x="278.6" y="174.6" width="198.8" height="25" rx="5" fill="#e3e9f5"/>
+<text x="378.0" y="191" text-anchor="middle" font-size="12.5" font-weight="700" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">shift_change_requests</text>
+<text x="286" y="214" font-size="9.5" font-weight="700" fill="#a23b3b">PK</text>
+<text x="312" y="214" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">id</text>
+<text x="470" y="214" font-size="10.5" text-anchor="end" fill="#666">bigint</text>
+<text x="286" y="231" font-size="9.5" font-weight="700" fill="#2b5ea8">FK</text>
+<text x="312" y="231" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">hospital_id</text>
+<text x="470" y="231" font-size="10.5" text-anchor="end" fill="#666">bigint</text>
+<text x="286" y="248" font-size="9.5" font-weight="700" fill="#999"></text>
+<text x="312" y="248" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">type</text>
+<text x="470" y="248" font-size="10.5" text-anchor="end" fill="#666">move/swap</text>
+<text x="286" y="265" font-size="9.5" font-weight="700" fill="#2b5ea8">FK</text>
+<text x="312" y="265" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">requester_staff_id</text>
+<text x="470" y="265" font-size="10.5" text-anchor="end" fill="#666">staff</text>
+<text x="286" y="282" font-size="9.5" font-weight="700" fill="#2b5ea8">FK</text>
+<text x="312" y="282" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">shift_id</text>
+<text x="470" y="282" font-size="10.5" text-anchor="end" fill="#666">shifts</text>
+<text x="286" y="299" font-size="9.5" font-weight="700" fill="#999"></text>
+<text x="312" y="299" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">from_date</text>
+<text x="470" y="299" font-size="10.5" text-anchor="end" fill="#666">date</text>
+<text x="286" y="316" font-size="9.5" font-weight="700" fill="#2b5ea8">FK</text>
+<text x="312" y="316" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">from_template_id</text>
+<text x="470" y="316" font-size="10.5" text-anchor="end" fill="#666">tmpl</text>
+<text x="286" y="333" font-size="9.5" font-weight="700" fill="#2b5ea8">FK</text>
+<text x="312" y="333" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">target_shift_id</text>
+<text x="470" y="333" font-size="10.5" text-anchor="end" fill="#666">nullable</text>
+<text x="286" y="350" font-size="9.5" font-weight="700" fill="#2b5ea8">FK</text>
+<text x="312" y="350" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">target_staff_id</text>
+<text x="470" y="350" font-size="10.5" text-anchor="end" fill="#666">nullable</text>
+<text x="286" y="367" font-size="9.5" font-weight="700" fill="#999"></text>
+<text x="312" y="367" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">to_date</text>
+<text x="470" y="367" font-size="10.5" text-anchor="end" fill="#666">date</text>
+<text x="286" y="384" font-size="9.5" font-weight="700" fill="#2b5ea8">FK</text>
+<text x="312" y="384" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">to_template_id</text>
+<text x="470" y="384" font-size="10.5" text-anchor="end" fill="#666">tmpl</text>
+<text x="286" y="401" font-size="9.5" font-weight="700" fill="#999"></text>
+<text x="312" y="401" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">status</text>
+<text x="470" y="401" font-size="10.5" text-anchor="end" fill="#666">pending_peer/…</text>
+<text x="286" y="418" font-size="9.5" font-weight="700" fill="#999"></text>
+<text x="312" y="418" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">problems</text>
+<text x="470" y="418" font-size="10.5" text-anchor="end" fill="#666">json</text>
+<text x="286" y="435" font-size="9.5" font-weight="700" fill="#2b5ea8">FK</text>
+<text x="312" y="435" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">decided_by</text>
+<text x="470" y="435" font-size="10.5" text-anchor="end" fill="#666">users</text>
+<rect x="544" y="174" width="200" height="83" rx="5" fill="#fff" stroke="#3b4a6b" stroke-width="1.3" stroke-dasharray="4 3"/>
+<path d="M544,200 H744" stroke="#3b4a6b" stroke-width="0.8"/>
+<rect x="544.6" y="174.6" width="198.8" height="25" rx="5" fill="#f1f1f1"/>
+<text x="644.0" y="191" text-anchor="middle" font-size="12.5" font-weight="700" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">users</text>
+<text x="552" y="214" font-size="9.5" font-weight="700" fill="#a23b3b">PK</text>
+<text x="578" y="214" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">id</text>
+<text x="736" y="214" font-size="10.5" text-anchor="end" fill="#666">bigint</text>
+<text x="552" y="231" font-size="9.5" font-weight="700" fill="#2b5ea8">FK</text>
+<text x="578" y="231" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">staff_id</text>
+<text x="736" y="231" font-size="10.5" text-anchor="end" fill="#666">nullable</text>
+<text x="552" y="248" font-size="9.5" font-weight="700" fill="#999"></text>
+<text x="578" y="248" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">role</text>
+<text x="736" y="248" font-size="10.5" text-anchor="end" fill="#666">admin/doctor/…</text>
+</svg>

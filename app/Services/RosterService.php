@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Department;
 use App\Models\Hospital;
 use App\Models\Shift;
+use App\Models\ShiftPreference;
 use App\Models\ShiftTemplate;
 use App\Models\Staff;
 use Carbon\CarbonImmutable;
@@ -17,15 +18,16 @@ class RosterService
     /**
      * กติกาที่ห้ามผิด (ผิดแล้วลงเวรไม่ได้): เวรซ้อน, พักไม่พอ, เกินชั่วโมงต่อสัปดาห์, ตรงวันลา
      *
+     * @param  list<int>  $ignoreShiftIds  เวรที่จะถูกย้าย/สลับออกไป — ไม่นับเป็นเวรเดิมของแพทย์
      * @return list<string> ข้อความที่ผิดกติกา — ว่าง = ลงเวรได้
      */
-    public function violations(Staff $staff, ShiftTemplate $template, string $date): array
+    public function violations(Staff $staff, ShiftTemplate $template, string $date, array $ignoreShiftIds = []): array
     {
         [$start] = $template->window($date);
         [$from, $to] = $this->contextRange($start, $staff->hospital);
 
         // โหลดเฉพาะเวรของแพทย์คนนี้ในช่วงที่กติกาต้องใช้ (สัปดาห์นั้น ± เวลาพัก) — ใช้ index (staff_id, starts_at)
-        $shifts = $staff->shifts()->whereBetween('starts_at', [$from, $to])->get(['starts_at', 'ends_at'])
+        $shifts = $staff->shifts()->whereBetween('starts_at', [$from, $to])->whereNotIn('id', $ignoreShiftIds)->get(['starts_at', 'ends_at'])
             ->map(fn (Shift $s) => [CarbonImmutable::instance($s->starts_at), CarbonImmutable::instance($s->ends_at)]);
         // บังคับเฉพาะวันลาที่อนุมัติแล้ว (คำขอที่รออนุมัติ แอดมินยังลงเวรเองได้)
         $leave = $staff->unavailabilities()->where('status', 'approved')->whereDate('date', $date)->exists() ? [$date] : [];
@@ -46,6 +48,20 @@ class RosterService
             'starts_at' => $start,
             'ends_at' => $end,
         ]);
+    }
+
+    /**
+     * ช่องเวรนี้จะขาดคนหรือขาดความเชี่ยวชาญไหม ถ้าเอา $leaving ออกและใส่ $joining เข้าแทน
+     */
+    public function coverageAfter(ShiftTemplate $template, string $date, ?int $leaving, ?Staff $joining): ?string
+    {
+        $doctors = Staff::query()
+            ->whereIn('id', Shift::where('shift_template_id', $template->id)->whereDate('shift_date', $date)->select('staff_id'))
+            ->with('skills:id')
+            ->get()
+            ->reject(fn (Staff $d) => $d->id === $leaving);
+
+        return $this->coverageProblem($template, $joining ? $doctors->push($joining->loadMissing('skills:id')) : $doctors);
     }
 
     /**
@@ -74,6 +90,10 @@ class RosterService
         }
 
         $hospital = $department->hospital;
+        $preferences = ShiftPreference::query()
+            ->whereIn('shift_template_id', $templates->pluck('id'))
+            ->whereBetween('date', [$from, $to])
+            ->get(['staff_id', 'shift_template_id', 'date', 'kind']);
 
         return [
             'rules' => ['min_rest_hours' => $hospital->min_rest_hours, 'max_weekly_hours' => $hospital->max_weekly_hours],
@@ -86,12 +106,20 @@ class RosterService
                 'staff_name' => $s->staff->name,
             ])->values(),
             'gaps' => $gaps,
+            // เวรที่แพทย์อยากลง/ไม่สะดวก — ให้แอดมินเห็นในตารางก่อนจัดร่าง
+            'preferences' => $preferences->map(fn (ShiftPreference $p) => [
+                'staff_id' => $p->staff_id,
+                'shift_template_id' => $p->shift_template_id,
+                'date' => $p->date->toDateString(),
+                'kind' => $p->kind,
+            ])->values(),
         ];
     }
 
     /**
      * สร้างตารางเวรอัตโนมัติทั้งเดือน (greedy): เติมเฉพาะช่องที่ยังขาด ไม่ลบเวรที่แอดมินลงไว้แล้ว
-     * ลำดับเลือกหมอ: ผ่านกติกา → มีความเชี่ยวชาญที่ช่องนั้นยังขาด → ชั่วโมงสะสมในช่วงนี้น้อยสุด (กระจายเวรให้เท่า ๆ กัน)
+     * ลำดับเลือกหมอ: ผ่านกติกา → มีความเชี่ยวชาญที่ช่องนั้นยังขาด → อยากลงช่องนี้ก่อน ไม่สะดวกไว้ท้ายสุด
+     * → ไม่ไปกันช่องอื่นที่ตัวเองอยากลง → ชั่วโมงสะสมในช่วงนี้น้อยสุด (กระจายเวรให้เท่า ๆ กัน)
      *
      * โหลดเวรและวันลาของทุกคนมาครั้งเดียว แล้วตรวจกติกาใน memory ด้วย check() ตัวเดียวกับตอนลงเวรเอง
      * — จัดทั้งเดือนจึงใช้ query คงที่ ไม่ได้ยิงฐานข้อมูลทุกครั้งที่ลองหมอแต่ละคน
@@ -118,9 +146,36 @@ class RosterService
         $hours = $doctors->mapWithKeys(fn (Staff $d) => [$d->id => $existing->where('staff_id', $d->id)
             ->filter(fn (Shift $s) => $s->shift_date->between($from, $to))
             ->sum(fn (Shift $s) => $s->starts_at->diffInMinutes($s->ends_at) / 60)])->all();
+        // ความต้องการของแพทย์: "staff|template|date" => prefer/avoid
+        $wish = ShiftPreference::query()
+            ->whereIn('staff_id', $doctors->pluck('id'))
+            ->whereBetween('date', [$from, $to])
+            ->get()
+            ->mapWithKeys(fn (ShiftPreference $p) => ["{$p->staff_id}|{$p->shift_template_id}|{$p->date->toDateString()}" => $p->kind])
+            ->all();
+        $templateById = $templates->keyBy('id');
+        $preferOf = [];
+        foreach ($wish as $key => $kind) {
+            [$staffId, $templateId, $date] = explode('|', $key);
+            if ($kind === ShiftPreference::PREFER) {
+                $preferOf[$staffId][] = $templateById[$templateId]->window($date);
+            }
+        }
+        // ลงช่องนี้แล้วจะชนหรือพักไม่พอกับช่องอื่นที่หมอคนนี้อยากลงไหม — ถ้าชน ให้คนอื่นที่ไม่ชนได้ช่องนี้ก่อน
+        $blocksWish = function (Staff $d, ShiftTemplate $template, string $date) use ($preferOf, $hospital) {
+            [$start, $end] = $template->window($date);
+            foreach ($preferOf[$d->id] ?? [] as [$wishStart, $wishEnd]) {
+                $same = $wishStart->equalTo($start);
+                if (! $same && $wishStart < $end->addHours($hospital->min_rest_hours) && $wishEnd > $start->subHours($hospital->min_rest_hours)) {
+                    return 1;
+                }
+            }
+
+            return 0;
+        };
         $created = 0;
 
-        DB::transaction(function () use ($templates, $doctors, $from, $to, $hospital, &$shiftsOf, $leaveOf, &$slots, &$hours, &$created) {
+        DB::transaction(function () use ($templates, $doctors, $from, $to, $hospital, $wish, &$shiftsOf, $leaveOf, &$slots, &$hours, &$created, $blocksWish) {
             foreach (CarbonPeriod::create($from, $to) as $day) {
                 $date = $day->toDateString();
                 foreach ($templates as $template) {
@@ -134,6 +189,12 @@ class RosterService
                             ->filter(fn (Staff $d) => $this->check($d, $template, $date, $shiftsOf[$d->id], $leaveOf[$d->id] ?? [], $hospital) === [])
                             ->sortBy(fn (Staff $d) => [
                                 $needSkill && ! $d->skills->contains('id', $template->required_skill_id) ? 1 : 0,
+                                match ($wish["{$d->id}|{$template->id}|{$date}"] ?? null) {
+                                    ShiftPreference::PREFER => 0,
+                                    ShiftPreference::AVOID => 2,
+                                    default => 1,
+                                },
+                                $blocksWish($d, $template, $date),
                                 $hours[$d->id],
                                 $d->id,
                             ])
@@ -155,7 +216,16 @@ class RosterService
             }
         });
 
-        return ['created' => $created] + $this->roster($department, $from, $to);
+        // สรุปให้แอดมินเห็นว่าตารางร่างตรงกับความต้องการแค่ไหน
+        $stats = ['prefer_total' => 0, 'prefer_met' => 0, 'avoid_total' => 0, 'avoid_used' => 0];
+        foreach ($wish as $key => $kind) {
+            [$staffId, $templateId, $date] = explode('|', $key);
+            $got = ($slots["{$templateId}|{$date}"] ?? collect())->contains('id', (int) $staffId);
+            $stats["{$kind}_total"]++;
+            $stats[$kind === ShiftPreference::PREFER ? 'prefer_met' : 'avoid_used'] += $got ? 1 : 0;
+        }
+
+        return ['created' => $created, 'preference_stats' => $stats] + $this->roster($department, $from, $to);
     }
 
     /**

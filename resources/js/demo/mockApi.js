@@ -105,7 +105,7 @@ const db = (() => {
         }
     }
 
-    return { skills, hospitals, departments, staff, tickets, counters, templates, shifts, unavailabilities, users };
+    return { skills, hospitals, departments, staff, tickets, counters, templates, shifts, unavailabilities, users, shiftRequests: [], preferences: [] };
 })();
 
 // ---- สิทธิ์: สำเนาของ App\\Enums\\Role ใน backend ----
@@ -115,6 +115,8 @@ const PERMISSIONS = {
     'leave.manage.any': 'บันทึกวันลาให้แพทย์ทุกคน (อนุมัติทันที)',
     'leave.manage.own': 'ขอลา / ยกเลิกคำขอของตัวเอง',
     'leave.approve': 'อนุมัติ / ไม่อนุมัติคำขอลา',
+    'shift.request.own': 'ขอย้าย/แลกเวรของตัวเอง · ตอบรับคำขอแลก · ส่งเวรที่อยากลง',
+    'shift.request.resolve': 'เคลียร์คำขอย้าย/แลกเวรที่ติดกติกา',
     'queue.view': 'ดูรายการคิว',
     'ticket.issue': 'ออกบัตรคิว',
     'ticket.triage': 'กำหนดความเร่งด่วน / ความเชี่ยวชาญ (คัดกรอง)',
@@ -122,8 +124,8 @@ const PERMISSIONS = {
     'stats.view': 'ดูสถิติ',
 };
 const ROLES = [
-    { value: 'admin', label: 'แอดมิน / หัวหน้าแผนก', permissions: ['roster.view', 'roster.manage', 'leave.manage.any', 'leave.approve', 'queue.view', 'ticket.issue', 'ticket.triage', 'stats.view'] },
-    { value: 'doctor', label: 'แพทย์', permissions: ['roster.view', 'leave.manage.own', 'queue.view', 'ticket.call'] },
+    { value: 'admin', label: 'แอดมิน / หัวหน้าแผนก', permissions: ['roster.view', 'roster.manage', 'leave.manage.any', 'leave.approve', 'shift.request.resolve', 'queue.view', 'ticket.issue', 'ticket.triage', 'stats.view'] },
+    { value: 'doctor', label: 'แพทย์', permissions: ['roster.view', 'leave.manage.own', 'shift.request.own', 'queue.view', 'ticket.call'] },
     { value: 'nurse', label: 'พยาบาล', permissions: ['roster.view', 'queue.view', 'ticket.issue', 'ticket.triage'] },
     { value: 'registration', label: 'เวชระเบียน / ตู้คิว', permissions: ['ticket.issue'] },
 ];
@@ -163,7 +165,7 @@ function daysBetween(from, to) {
     return days;
 }
 
-function violations(member, template, date, leaveStatuses = ['approved']) {
+function violations(member, template, date, leaveStatuses = ['approved'], ignoreShiftIds = []) {
     const hospital = db.hospitals.find((h) => h.id === member.hospital_id);
     const [start, end] = windowOf(template, date);
     const rest = hospital.min_rest_hours * HOUR;
@@ -172,7 +174,7 @@ function violations(member, template, date, leaveStatuses = ['approved']) {
     if (template.department_id !== member.department_id) errors.push('แพทย์ไม่ได้อยู่ในแผนกของเวรนี้');
     if (db.unavailabilities.some((u) => u.staff_id === member.id && u.date === date && leaveStatuses.includes(u.status))) errors.push('แพทย์แจ้งลา/ไม่สะดวกในวันนี้');
 
-    const mine = db.shifts.filter((s) => s.staff_id === member.id);
+    const mine = db.shifts.filter((s) => s.staff_id === member.id && !ignoreShiftIds.includes(s.id));
     for (const other of mine) {
         const os = new Date(other.starts_at);
         const oe = new Date(other.ends_at);
@@ -226,6 +228,9 @@ function rosterOf(department, from, to) {
         templates,
         shifts: shifts.map((s) => ({ id: s.id, shift_template_id: s.shift_template_id, shift_date: s.shift_date, staff_id: s.staff_id, staff_name: staffOf(s).name })),
         gaps,
+        preferences: db.preferences
+            .filter((p) => templates.some((t) => t.id === p.shift_template_id) && p.date >= from && p.date <= to)
+            .map(({ staff_id, shift_template_id, date, kind }) => ({ staff_id, shift_template_id, date, kind })),
     };
 }
 
@@ -234,6 +239,21 @@ function generateRoster(department, from, to) {
     const doctors = db.staff.filter((m) => m.department_id === department.id);
     const hours = Object.fromEntries(doctors.map((d) => [d.id, 0]));
     for (const s of db.shifts) if (s.shift_date >= from && s.shift_date <= to && s.staff_id in hours) hours[s.staff_id] += (new Date(s.ends_at) - new Date(s.starts_at)) / HOUR;
+    const wish = Object.fromEntries(db.preferences
+        .filter((p) => p.staff_id in hours && p.date >= from && p.date <= to)
+        .map((p) => [`${p.staff_id}|${p.shift_template_id}|${p.date}`, p.kind]));
+    const wishRank = (d, t, date) => ({ prefer: 0, avoid: 2 })[wish[`${d.id}|${t.id}|${date}`]] ?? 1;
+    const rest = db.hospitals.find((h) => h.id === department.hospital_id).min_rest_hours * HOUR;
+    const preferOf = {};
+    for (const [key, kind] of Object.entries(wish)) {
+        const [staffId, templateId, date] = key.split('|');
+        if (kind === 'prefer') (preferOf[staffId] ??= []).push(windowOf(templateOf(Number(templateId)), date));
+    }
+    // ลงช่องนี้แล้วจะชนหรือพักไม่พอกับช่องอื่นที่หมอคนนี้อยากลงไหม — เหมือน RosterService::generate
+    const blocksWish = (d, t, date) => {
+        const [start, end] = windowOf(t, date);
+        return (preferOf[d.id] ?? []).some(([ws, we]) => ws.getTime() !== start.getTime() && ws.getTime() < end.getTime() + rest && we.getTime() > start.getTime() - rest) ? 1 : 0;
+    };
     let created = 0;
 
     for (const date of daysBetween(from, to)) {
@@ -241,10 +261,10 @@ function generateRoster(department, from, to) {
             const assigned = db.shifts.filter((s) => s.shift_template_id === t.id && s.shift_date === date).map((s) => db.staff.find((m) => m.id === s.staff_id));
             while (coverageProblem(t, assigned)) {
                 const needSkill = t.required_skill_id && !assigned.some((d) => d.skills.some((k) => k.id === t.required_skill_id));
-                const rank = (d) => [needSkill && !d.skills.some((k) => k.id === t.required_skill_id) ? 1 : 0, hours[d.id], d.id];
+                const rank = (d) => [needSkill && !d.skills.some((k) => k.id === t.required_skill_id) ? 1 : 0, wishRank(d, t, date), blocksWish(d, t, date), hours[d.id], d.id];
                 const pick = doctors
                     .filter((d) => !assigned.includes(d) && violations(d, t, date, ['approved', 'pending']).length === 0)
-                    .sort((a, b) => { const [x, y] = [rank(a), rank(b)]; return x[0] - y[0] || x[1] - y[1] || x[2] - y[2]; })[0];
+                    .sort((a, b) => { const [x, y] = [rank(a), rank(b)]; return x[0] - y[0] || x[1] - y[1] || x[2] - y[2] || x[3] - y[3] || x[4] - y[4]; })[0];
                 if (!pick) break;
                 const shift = assignShift(pick, t, date);
                 hours[pick.id] += (new Date(shift.ends_at) - new Date(shift.starts_at)) / HOUR;
@@ -254,7 +274,133 @@ function generateRoster(department, from, to) {
         }
     }
 
-    return { created, ...rosterOf(department, from, to) };
+    const stats = { prefer_total: 0, prefer_met: 0, avoid_total: 0, avoid_used: 0 };
+    for (const [key, kind] of Object.entries(wish)) {
+        const [staffId, templateId, date] = key.split('|');
+        const got = db.shifts.some((s) => s.staff_id === Number(staffId) && s.shift_template_id === Number(templateId) && s.shift_date === date);
+        stats[`${kind}_total`]++;
+        if (got) stats[kind === 'prefer' ? 'prefer_met' : 'avoid_used']++;
+    }
+
+    return { created, preference_stats: stats, ...rosterOf(department, from, to) };
+}
+
+// ---- ย้าย/แลกเวร: ตรรกะเดียวกับ ShiftChangeService.php ----
+const templateOf = (id) => db.templates.find((t) => t.id === id);
+const staffById = (id) => db.staff.find((m) => m.id === id);
+
+function coverageAfter(template, date, leavingId, joining) {
+    const doctors = db.shifts
+        .filter((s) => s.shift_template_id === template.id && s.shift_date === date && s.staff_id !== leavingId)
+        .map((s) => staffById(s.staff_id));
+    return coverageProblem(template, joining ? [...doctors, joining] : doctors);
+}
+
+const slotProblem = (template, date, problem) => (problem ? `${template.name} ${date.slice(8)}/${date.slice(5, 7)}: ${problem}` : null);
+
+function evaluateChange(r) {
+    const requester = staffById(r.requester_staff_id);
+    const from = templateOf(r.from_template_id);
+    const to = templateOf(r.to_template_id);
+    const shift = db.shifts.find((s) => s.id === r.shift_id);
+    if (!shift || shift.staff_id !== requester.id || shift.shift_template_id !== from.id || shift.shift_date !== r.from_date) {
+        return { blocking: ['เวรเดิมของผู้ขอถูกเปลี่ยนไปแล้ว'], coverage: [] };
+    }
+    if (r.type === 'move') {
+        if (from.id === to.id && r.from_date === r.to_date) return { blocking: ['ช่องใหม่ต้องไม่ใช่ช่องเดิม'], coverage: [] };
+        return {
+            blocking: violations(requester, to, r.to_date, ['approved'], [shift.id]),
+            coverage: [slotProblem(from, r.from_date, coverageAfter(from, r.from_date, requester.id, null))].filter(Boolean),
+        };
+    }
+    const friend = staffById(r.target_staff_id);
+    const target = db.shifts.find((s) => s.id === r.target_shift_id);
+    if (!target || target.staff_id !== friend.id || target.shift_template_id !== to.id || target.shift_date !== r.to_date) {
+        return { blocking: [`เวรของ ${friend.name} ถูกเปลี่ยนไปแล้ว`], coverage: [] };
+    }
+    const ignore = [shift.id, target.id];
+    return {
+        blocking: [
+            ...violations(requester, to, r.to_date, ['approved'], ignore).map((e) => `${requester.name}: ${e}`),
+            ...violations(friend, from, r.from_date, ['approved'], ignore).map((e) => `${friend.name}: ${e}`),
+        ],
+        coverage: [
+            slotProblem(from, r.from_date, coverageAfter(from, r.from_date, requester.id, friend)),
+            slotProblem(to, r.to_date, coverageAfter(to, r.to_date, friend.id, requester)),
+        ].filter(Boolean),
+    };
+}
+
+function applyChange(r, attributes) {
+    const { blocking } = evaluateChange(r);
+    if (blocking.length) throw new HttpError(422, blocking[0], { request: blocking });
+    const shift = db.shifts.find((s) => s.id === r.shift_id);
+    if (r.type === 'move') {
+        const [start, end] = windowOf(templateOf(r.to_template_id), r.to_date);
+        Object.assign(shift, { shift_template_id: r.to_template_id, shift_date: r.to_date, starts_at: localIso(start), ends_at: localIso(end) });
+    } else {
+        const target = db.shifts.find((s) => s.id === r.target_shift_id);
+        [shift.staff_id, target.staff_id] = [r.target_staff_id, r.requester_staff_id];
+    }
+    Object.assign(r, { status: 'approved', decided_at: new Date().toISOString(), updated_at: Date.now() }, attributes);
+}
+
+const isOpen = (r) => ['pending_peer', 'needs_admin'].includes(r.status);
+
+function presentChange(r) {
+    const slot = (templateId, date) => {
+        const t = templateOf(templateId);
+        return { date, shift_template_id: t.id, name: t.name, start_time: t.start_time.slice(0, 5), end_time: t.end_time.slice(0, 5) };
+    };
+    const person = (id) => (id ? { id, name: staffById(id).name } : null);
+    return {
+        id: r.id, type: r.type, status: r.status, department_id: r.department_id,
+        requester: person(r.requester_staff_id), target_staff: person(r.target_staff_id),
+        from: slot(r.from_template_id, r.from_date), to: slot(r.to_template_id, r.to_date),
+        reason: r.reason, problems: r.problems ?? [], decided_by_name: r.decided_by_name ?? null, decision_note: r.decision_note ?? null,
+        created_at: r.created_at, decided_at: r.decided_at ?? null,
+    };
+}
+
+function findChange(id, hospitalId) {
+    const r = db.shiftRequests.find((x) => x.id === Number(id));
+    if (!r || r.hospital_id !== Number(hospitalId)) throw new HttpError(404, 'Not Found');
+    return r;
+}
+
+const fail422 = (field, messages) => { throw new HttpError(422, messages[0], { [field]: messages }); };
+
+// เดโม: โรงพยาบาลแรกมีเวรเดือนนี้แล้ว (ลองขอย้าย/แลกได้เลย) · เดือนหน้ามีเวรที่แพทย์อยากลงไว้ให้ลองจัดร่าง
+{
+    const now = new Date();
+    const first = isoOf(new Date(now.getFullYear(), now.getMonth(), 1));
+    const last = isoOf(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+    const next = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    for (const department of db.departments.filter((d) => d.hospital_id === 1)) {
+        generateRoster(department, first, last);
+        const templates = db.templates.filter((t) => t.department_id === department.id);
+        db.staff.filter((m) => m.department_id === department.id).forEach((doctor, i) => {
+            for (const offset of [2, 8, 14]) {
+                const d = new Date(next);
+                d.setDate(d.getDate() + offset + i);
+                db.preferences.push({ staff_id: doctor.id, shift_template_id: templates[(i + offset) % templates.length].id, date: isoOf(d), kind: offset === 14 ? 'avoid' : 'prefer' });
+            }
+        });
+    }
+}
+
+function isoOf(d) {
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+function preferencesOf(member, month) {
+    return {
+        month,
+        locked: db.shifts.some((x) => x.department_id === member.department_id && x.shift_date.startsWith(month)),
+        items: db.preferences.filter((p) => p.staff_id === member.id && p.date.startsWith(month))
+            .sort((a, b) => a.date.localeCompare(b.date))
+            .map(({ date, shift_template_id, kind }) => ({ date, shift_template_id, kind })),
+    };
 }
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -268,7 +414,7 @@ function findIn(list, id, hospitalId) {
 const routes = [
     
     ['GET', /^\/skills$/, () => db.skills, {}],
-    ['GET', /^\/demo-users$/, () => db.users.filter((u) => u.hospital_id === 1 && (u.role !== 'doctor' || u.name.endsWith('-1'))).map(present), { public: true }],
+    ['GET', /^\/demo-users$/, () => db.users.filter((u) => u.hospital_id === 1 && (u.role !== 'doctor' || /-[12]$/.test(u.name))).map(present), { public: true }],
     ['POST', /^\/demo-login$/, (_p, _q, body) => {
         const user = db.users.find((u) => u.id === Number(body.user_id));
         if (!user) throw new HttpError(404, 'Not Found');
@@ -431,6 +577,102 @@ const routes = [
         return null;
     }],
 
+    ['GET', /^\/hospitals\/(\d+)\/shift-requests$/, ([h], _q, _b, user) => {
+        const own = can(user, 'shift.request.own') && user.staff_id;
+        const resolve = can(user, 'shift.request.resolve');
+        forbid(!own && !resolve, 'This action is unauthorized.');
+        const ours = db.shiftRequests.filter((r) => r.hospital_id === Number(h));
+        const newest = (a, b) => b.id - a.id;
+        return {
+            mine: own ? ours.filter((r) => r.requester_staff_id === user.staff_id).sort(newest).slice(0, 50).map(presentChange) : [],
+            incoming: own ? ours.filter((r) => r.target_staff_id === user.staff_id && r.status === 'pending_peer').map(presentChange) : [],
+            needs_admin: resolve ? ours.filter((r) => r.status === 'needs_admin').map(presentChange) : [],
+            recent: resolve ? ours.filter((r) => !isOpen(r)).sort((a, b) => b.updated_at - a.updated_at).slice(0, 30).map(presentChange) : [],
+        };
+    }],
+    ['POST', /^\/hospitals\/(\d+)\/shift-requests$/, ([h], _q, body, user) => {
+        const shift = findIn(db.shifts, body.shift_id, h);
+        forbid(user.staff_id !== shift.staff_id, 'ขอย้าย/แลกได้เฉพาะเวรของตัวเอง');
+        if (new Date(shift.starts_at) <= new Date()) fail422('shift_id', ['เวรนี้เริ่มไปแล้ว ขอย้าย/แลกไม่ได้']);
+        if (db.shiftRequests.some((r) => r.shift_id === shift.id && isOpen(r))) fail422('shift_id', ['เวรนี้มีคำขอที่ยังไม่จบอยู่แล้ว']);
+        const r = {
+            id: (db.shiftRequests.at(-1)?.id ?? 0) + 1, hospital_id: Number(h), department_id: shift.department_id, type: body.type,
+            requester_staff_id: shift.staff_id, shift_id: shift.id, from_date: shift.shift_date, from_template_id: shift.shift_template_id,
+            target_shift_id: null, target_staff_id: null, reason: body.reason || null, created_at: new Date().toISOString(), updated_at: Date.now(),
+        };
+        if (body.type === 'move') {
+            const template = db.templates.find((t) => t.id === Number(body.to_template_id) && t.department_id === shift.department_id);
+            if (!template) throw new HttpError(404, 'Not Found');
+            if (!body.to_date || body.to_date < today) fail422('to_date', ['วันที่ใหม่ต้องไม่ใช่วันที่ผ่านมาแล้ว']);
+            Object.assign(r, { to_date: body.to_date, to_template_id: template.id });
+            const { blocking, coverage } = evaluateChange(r);
+            if (blocking.length) fail422('to_date', blocking);
+            Object.assign(r, { status: 'needs_admin', problems: coverage });
+            db.shiftRequests.push(r);
+            if (!coverage.length) applyChange(r, { problems: [] });
+        } else {
+            const target = db.shifts.find((s) => s.id === Number(body.target_shift_id) && s.department_id === shift.department_id);
+            if (!target) throw new HttpError(404, 'Not Found');
+            if (target.staff_id === shift.staff_id) fail422('target_shift_id', ['เลือกเวรของแพทย์คนอื่น']);
+            if (new Date(target.starts_at) <= new Date()) fail422('target_shift_id', ['เวรของเพื่อนเริ่มไปแล้ว']);
+            Object.assign(r, { target_shift_id: target.id, target_staff_id: target.staff_id, to_date: target.shift_date, to_template_id: target.shift_template_id });
+            const { blocking, coverage } = evaluateChange(r);
+            Object.assign(r, { status: 'pending_peer', problems: [...blocking, ...coverage] });
+            db.shiftRequests.push(r);
+        }
+        return presentChange(r);
+    }],
+    ['POST', /^\/hospitals\/(\d+)\/shift-requests\/(\d+)\/(accept|decline)$/, ([h, id, action], _q, _b, user) => {
+        const r = findChange(id, h);
+        forbid(user.staff_id !== r.target_staff_id, 'ตอบได้เฉพาะคำขอที่ส่งถึงคุณ');
+        if (r.status !== 'pending_peer') throw new HttpError(422, 'คำขอนี้ตอบไปแล้ว');
+        if (action === 'decline') {
+            Object.assign(r, { status: 'declined', updated_at: Date.now() });
+        } else {
+            const { blocking, coverage } = evaluateChange(r);
+            const problems = [...blocking, ...coverage];
+            if (problems.length) Object.assign(r, { status: 'needs_admin', problems, updated_at: Date.now() });
+            else applyChange(r, { problems: [] });
+        }
+        return presentChange(r);
+    }],
+    ['POST', /^\/hospitals\/(\d+)\/shift-requests\/(\d+)\/(approve|reject)$/, ([h, id, action], _q, body, user) => {
+        const r = findChange(id, h);
+        if (action === 'approve') {
+            if (r.status !== 'needs_admin') throw new HttpError(422, 'คำขอนี้ไม่ได้รอแอดมินเคลียร์');
+            applyChange(r, { decided_by_name: user.name, decision_note: body?.note || null });
+        } else {
+            if (!isOpen(r)) throw new HttpError(422, 'คำขอนี้จบไปแล้ว');
+            Object.assign(r, { status: 'rejected', decided_by_name: user.name, decided_at: new Date().toISOString(), decision_note: body?.note || null, updated_at: Date.now() });
+        }
+        return presentChange(r);
+    }],
+    ['DELETE', /^\/hospitals\/(\d+)\/shift-requests\/(\d+)$/, ([h, id], _q, _b, user) => {
+        const r = findChange(id, h);
+        forbid(user.staff_id !== r.requester_staff_id || !isOpen(r), 'ยกเลิกได้เฉพาะคำขอของตัวเองที่ยังไม่จบ');
+        db.shiftRequests.splice(db.shiftRequests.indexOf(r), 1);
+        return null;
+    }],
+
+    ['GET', /^\/hospitals\/(\d+)\/staff\/(\d+)\/preferences$/, ([h, s], query, _b, user) => {
+        const member = findIn(db.staff, s, h);
+        forbid(!(can(user, 'roster.manage') || (can(user, 'shift.request.own') && user.staff_id === member.id)), 'This action is unauthorized.');
+        return preferencesOf(member, query.get('month'));
+    }],
+    ['PUT', /^\/hospitals\/(\d+)\/staff\/(\d+)\/preferences$/, ([h, s], query, body, user) => {
+        const member = findIn(db.staff, s, h);
+        forbid(user.staff_id !== member.id, 'ส่งได้เฉพาะของตัวเอง');
+        const month = query.get('month');
+        if (preferencesOf(member, month).locked) fail422('month', ['เดือนนี้แผนกจัดเวรแล้ว ถ้าต้องการเปลี่ยนให้ขอย้าย/แลกเวรแทน']);
+        for (const i of body.items) {
+            if (!i.date.startsWith(month)) fail422('items', ['วันที่ต้องอยู่ในเดือนที่เลือก']);
+            if (!db.templates.some((t) => t.id === i.shift_template_id && t.department_id === member.department_id)) fail422('items', ['ช่วงเวรไม่ถูกต้อง']);
+        }
+        db.preferences = db.preferences.filter((p) => !(p.staff_id === member.id && p.date.startsWith(month)));
+        db.preferences.push(...body.items.map((i) => ({ staff_id: member.id, shift_template_id: i.shift_template_id, date: i.date, kind: i.kind })));
+        return preferencesOf(member, month);
+    }],
+
     ['GET', /^\/hospitals\/(\d+)\/staff\/(\d+)\/my-queue$/, ([h, s], _q, _b, user) => {
         const member = findIn(db.staff, s, h);
         forbid(user.staff_id !== null && user.staff_id !== member.id, 'ดูได้เฉพาะคิวของตัวเอง');
@@ -473,6 +715,11 @@ const ROUTE_PERMISSIONS = [
     ['GET', /\/unavailabilities$/, 'roster.view'],
     ['GET', /\/leave-requests$/, 'leave.approve'],
     ['POST', /\/leave-requests\/\d+\/(approve|reject)$/, 'leave.approve'],
+    ['POST', /\/shift-requests$/, 'shift.request.own'],
+    ['POST', /\/shift-requests\/\d+\/(accept|decline)$/, 'shift.request.own'],
+    ['POST', /\/shift-requests\/\d+\/(approve|reject)$/, 'shift.request.resolve'],
+    ['DELETE', /\/shift-requests\/\d+$/, 'shift.request.own'],
+    ['PUT', /\/preferences$/, 'shift.request.own'],
 ];
 
 export async function mockApi(path, { method = 'GET', body, token } = {}) {

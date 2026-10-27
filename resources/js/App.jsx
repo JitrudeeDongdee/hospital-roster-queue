@@ -7,10 +7,14 @@ import LoginScreen from './components/LoginScreen';
 import PermissionMatrix from './components/PermissionMatrix';
 import LeavePage, { usePendingLeaveCount } from './components/LeavePage';
 import QueuePage from './components/QueuePage';
+import ShiftRequestsPage, { useShiftRequestCount } from './components/ShiftRequestsPage';
+import PreferencesPage from './components/PreferencesPage';
 
 // เมนูหลัก: path + สิทธิ์ที่ต้องมี (ซ่อนเมนูที่ไม่มีสิทธิ์ และ RequirePermission กันการพิมพ์ URL เข้าตรง ๆ)
 const SECTIONS = [
     { path: '/roster/table', match: '/roster', label: 'จัดเวรแพทย์', allowed: (can) => can('roster.view') },
+    { path: '/shifts', match: '/shifts', label: 'ย้าย/แลกเวร', allowed: (can) => can('shift.request.own') || can('shift.request.resolve') },
+    { path: '/preferences', match: '/preferences', label: 'เวรที่อยากลง', allowed: (can) => can('shift.request.own') },
     { path: '/leave', match: '/leave', label: 'การลา', allowed: (can) => can('leave.approve') || can('leave.manage.own') },
     { path: '/queue/list', match: '/queue', label: 'คิวผู้ป่วย', allowed: (can) => can('queue.view') || can('ticket.issue') },
     { path: '/roles', match: '/roles', label: 'สิทธิ์ตามบทบาท', allowed: () => true },
@@ -46,6 +50,12 @@ export default function App() {
                         </Route>
                         <Route element={<RequirePermission allowed={(can) => can('leave.approve') || can('leave.manage.own')} />}>
                             <Route path="leave" element={<LeaveRoute />} />
+                        </Route>
+                        <Route element={<RequirePermission allowed={(can) => can('shift.request.own') || can('shift.request.resolve')} />}>
+                            <Route path="shifts" element={<ShiftsRoute />} />
+                        </Route>
+                        <Route element={<RequirePermission allowed={(can) => can('shift.request.own')} />}>
+                            <Route path="preferences" element={<PreferencesRoute />} />
                         </Route>
                         <Route path="roles" element={<PermissionMatrix />} />
                         <Route path="*" element={<Message title="ไม่พบหน้านี้ (404)" text="ลิงก์อาจผิด หรือหน้านี้ถูกย้ายไปแล้ว" />} />
@@ -87,6 +97,8 @@ function Layout() {
     const { user, logout, can } = useAuth();
     const location = useLocation();
     const pending = usePendingLeaveCount(user.hospital.id, can('leave.approve')).data ?? 0;
+    const shiftRequests = useShiftRequestCount(user.hospital.id, can('shift.request.own') || can('shift.request.resolve'));
+    const badges = { '/leave': [pending, `รออนุมัติ ${pending} รายการ`], '/shifts': [shiftRequests, `รอดำเนินการ ${shiftRequests} รายการ`] };
 
     return (
         <div className="mx-auto max-w-7xl px-4 py-6">
@@ -103,8 +115,8 @@ function Layout() {
                             className={`rounded-md px-4 py-1.5 ${location.pathname.startsWith(s.match) ? 'bg-slate-800 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
                         >
                             {s.label}
-                            {s.path === '/leave' && pending > 0 && (
-                                <span className="ml-1.5 rounded-full bg-rose-600 px-1.5 text-xs text-white" aria-label={`รออนุมัติ ${pending} รายการ`}>{pending}</span>
+                            {badges[s.path]?.[0] > 0 && (
+                                <span className="ml-1.5 rounded-full bg-rose-600 px-1.5 text-xs text-white" aria-label={badges[s.path][1]}>{badges[s.path][0]}</span>
                             )}
                         </NavLink>
                     ))}
@@ -144,6 +156,17 @@ function QueueRoute() {
     if (!can('queue.view')) return <div className="max-w-md"><IssueTicketForm hospitalId={hospitalId} /></div>;
     if (!['list', 'month', 'week', 'day'].includes(view)) return <Navigate to={{ pathname: '/queue/list', search: location.search }} replace />;
     return <QueuePage hospitalId={hospitalId} view={view} />;
+}
+
+function ShiftsRoute() {
+    const { user } = useAuth();
+    return <ShiftRequestsPage hospitalId={user.hospital.id} />;
+}
+
+function PreferencesRoute() {
+    const { user } = useAuth();
+    if (!user.staff_id) return <Message title="บัญชีนี้ไม่ได้ผูกกับแพทย์" text="เฉพาะแพทย์ที่ส่งเวรที่อยากลงได้" />;
+    return <PreferencesPage hospitalId={user.hospital.id} staffId={user.staff_id} />;
 }
 
 function Message({ title, text }) {

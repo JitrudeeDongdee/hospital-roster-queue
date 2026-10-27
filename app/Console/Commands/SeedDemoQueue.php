@@ -4,9 +4,11 @@ namespace App\Console\Commands;
 
 use App\Models\Department;
 use App\Models\Hospital;
+use App\Models\ShiftPreference;
 use App\Models\ShiftTemplate;
 use App\Models\Skill;
 use App\Models\Staff;
+use App\Services\RosterService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -114,12 +116,33 @@ class SeedDemoQueue extends Command
         $this->newLine();
 
         $this->seedToday($departments, $skills, (int) $this->option('today'));
+        $this->seedRoster();
 
         // สรุปวันที่ผ่านมาแล้วเข้า daily_queue_stats ให้ปฏิทินรายเดือนอ่านได้เลย
         $this->call('queue:aggregate-stats', ['--from' => now()->subDays($days)->toDateString(), '--to' => now()->subDay()->toDateString()]);
         $this->info(sprintf('Inserted %d tickets for %d departments in %.1fs', $total, $departments->count(), microtime(true) - $started));
 
         return self::SUCCESS;
+    }
+
+    // โรงพยาบาลแรก: จัดเวรเดือนนี้ไว้ให้ลองขอย้าย/แลกได้เลย · เดือนหน้ายังว่าง มีแค่เวรที่แพทย์อยากลง ให้ลองจัดร่าง
+    private function seedRoster(): void
+    {
+        $roster = app(RosterService::class);
+        $nextMonth = now()->toImmutable()->addMonthNoOverflow()->startOfMonth();
+
+        foreach (Department::where('hospital_id', Hospital::min('id'))->with('shiftTemplates', 'staff')->get() as $department) {
+            $roster->generate($department, now()->startOfMonth()->toDateString(), now()->endOfMonth()->toDateString());
+
+            $rows = [];
+            foreach ($department->staff as $i => $doctor) {
+                foreach ([2, 8, 14] as $offset) {
+                    $template = $department->shiftTemplates[($i + $offset) % $department->shiftTemplates->count()];
+                    $rows[] = ['staff_id' => $doctor->id, 'shift_template_id' => $template->id, 'date' => $nextMonth->addDays($offset + $i)->toDateString(), 'kind' => $offset === 14 ? 'avoid' : 'prefer', 'created_at' => now(), 'updated_at' => now()];
+                }
+            }
+            ShiftPreference::insert($rows);
+        }
     }
 
     // คิวที่ยังรออยู่ของวันนี้ ให้หน้าเว็บมีอะไรให้เรียก — ตั้ง queue_counters ให้ตรง เลขคิวที่ออกต่อจะได้ไม่ชน

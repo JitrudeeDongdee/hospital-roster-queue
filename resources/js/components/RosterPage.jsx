@@ -77,7 +77,13 @@ export default function RosterPage({ hospitalId, view }) {
         mutationFn: () => api(`/hospitals/${hospitalId}/departments/${deptId}/roster/generate`, { method: 'POST', body: { from, to } }),
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['roster', hospitalId] });
-            setProblems(data.gaps.length ? [`สร้างเพิ่ม ${data.created} เวร · ยังเหลือ ${data.gaps.length} ช่องที่จัดไม่ได้โดยไม่ผิดกติกา`] : [`สร้างเพิ่ม ${data.created} เวร · ครบทุกช่อง`]);
+            const p = data.preference_stats;
+            setProblems([
+                data.gaps.length ? `สร้างเพิ่ม ${data.created} เวร · ยังเหลือ ${data.gaps.length} ช่องที่จัดไม่ได้โดยไม่ผิดกติกา` : `สร้างเพิ่ม ${data.created} เวร · ครบทุกช่อง`,
+                ...(p && p.prefer_total + p.avoid_total > 0
+                    ? [`ตรงกับเวรที่แพทย์อยากลง ${p.prefer_met}/${p.prefer_total} ช่อง · ต้องลงช่องที่แพทย์ไม่สะดวก ${p.avoid_used}/${p.avoid_total} ช่อง`]
+                    : []),
+            ]);
             queryClient.invalidateQueries({ queryKey: ['my-queue', hospitalId] });
         },
         onError: (error) => setProblems(errorMessages(error)),
@@ -100,6 +106,13 @@ export default function RosterPage({ hospitalId, view }) {
         return map;
     }, [roster.data]);
     const gaps = useMemo(() => Object.fromEntries((roster.data?.gaps ?? []).map((g) => [`${g.date}|${g.shift_template_id}`, g.problem])), [roster.data]);
+    // เวรที่แพทย์อยากลง/ไม่สะดวก — แอดมินเห็นก่อนจัดร่างหรือลงเวรเอง
+    const wishes = useMemo(() => {
+        const map = {};
+        for (const p of roster.data?.preferences ?? []) (map[`${p.date}|${p.shift_template_id}`] ??= []).push(p);
+        return map;
+    }, [roster.data]);
+    const staffName = Object.fromEntries(doctors.map((d) => [d.id, d.name]));
     const hours = useMemo(() => {
         const perDoctor = {};
         const templates = Object.fromEntries((roster.data?.templates ?? []).map((t) => [t.id, t]));
@@ -225,6 +238,7 @@ export default function RosterPage({ hospitalId, view }) {
                                                             <option key={d.id} value={d.id}>{d.name}</option>
                                                         ))}
                                                     </select>}
+                                                    {canManage && <Wishes list={(wishes[key] ?? []).filter((w) => isShown(w.staff_id))} staffName={staffName} assigned={assigned} />}
                                                     {gaps[key] && <p className="mt-1 text-xs text-red-600">{gaps[key]}</p>}
                                                 </td>
                                             );
@@ -327,4 +341,17 @@ function shiftHours(template) {
 function formatDay(iso) {
     const [, m, d] = iso.split('-');
     return `${Number(d)}/${Number(m)}`;
+}
+
+function Wishes({ list, staffName, assigned }) {
+    const names = (kind) => list.filter((w) => w.kind === kind).map((w) => ({ id: w.staff_id, name: staffName[w.staff_id], on: assigned.some((s) => s.staff_id === w.staff_id) }));
+    const prefer = names('prefer');
+    const avoid = names('avoid');
+    if (!prefer.length && !avoid.length) return null;
+    return (
+        <p className="mt-1 text-[11px] leading-tight">
+            {prefer.length > 0 && <span className="text-emerald-700">★ อยากลง: {prefer.map((x) => x.name + (x.on ? ' ✓' : '')).join(', ')} </span>}
+            {avoid.length > 0 && <span className="text-slate-500">✕ ไม่สะดวก: {avoid.map((x) => x.name + (x.on ? ' (ลงแล้ว)' : '')).join(', ')}</span>}
+        </p>
+    );
 }

@@ -36,6 +36,12 @@ class Hospital extends Model
         return $this->hasManyThrough(StaffUnavailability::class, Staff::class);
     }
 
+    // ใช้กับ scopeBindings ของ route {shiftRequest}
+    public function shiftRequests(): HasMany
+    {
+        return $this->hasMany(ShiftChangeRequest::class);
+    }
+
     public function dailyStats(): HasMany
     {
         return $this->hasMany(DailyQueueStat::class);

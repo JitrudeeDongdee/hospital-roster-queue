@@ -18,6 +18,8 @@ enum Role: string
         'leave.manage.any' => 'บันทึกวันลาให้แพทย์ทุกคน (อนุมัติทันที)',
         'leave.manage.own' => 'ขอลา / ยกเลิกคำขอของตัวเอง',
         'leave.approve' => 'อนุมัติ / ไม่อนุมัติคำขอลา',
+        'shift.request.own' => 'ขอย้าย/แลกเวรของตัวเอง · ตอบรับคำขอแลก · ส่งเวรที่อยากลง',
+        'shift.request.resolve' => 'เคลียร์คำขอย้าย/แลกเวรที่ติดกติกา',
         'queue.view' => 'ดูรายการคิว',
         'ticket.issue' => 'ออกบัตรคิว',
         'ticket.triage' => 'กำหนดความเร่งด่วน / ความเชี่ยวชาญ (คัดกรอง)',
@@ -39,8 +41,8 @@ enum Role: string
     public function permissions(): array
     {
         return match ($this) {
-            self::Admin => ['roster.view', 'roster.manage', 'leave.manage.any', 'leave.approve', 'queue.view', 'ticket.issue', 'ticket.triage', 'stats.view'],
-            self::Doctor => ['roster.view', 'leave.manage.own', 'queue.view', 'ticket.call'],
+            self::Admin => ['roster.view', 'roster.manage', 'leave.manage.any', 'leave.approve', 'shift.request.resolve', 'queue.view', 'ticket.issue', 'ticket.triage', 'stats.view'],
+            self::Doctor => ['roster.view', 'leave.manage.own', 'shift.request.own', 'queue.view', 'ticket.call'],
             self::Nurse => ['roster.view', 'queue.view', 'ticket.issue', 'ticket.triage'],
             self::Registration => ['ticket.issue'],
         };

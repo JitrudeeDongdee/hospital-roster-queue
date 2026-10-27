@@ -6,6 +6,8 @@ use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\LookupController;
 use App\Http\Controllers\QueueSummaryController;
 use App\Http\Controllers\RosterController;
+use App\Http\Controllers\ShiftPreferenceController;
+use App\Http\Controllers\ShiftRequestController;
 use App\Http\Controllers\StatsController;
 use App\Http\Controllers\TicketController;
 use Illuminate\Support\Facades\Route;
@@ -48,5 +50,18 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('leave-requests/{leave}/approve', [LeaveController::class, 'approve'])->middleware('can:leave.approve');
         Route::post('leave-requests/{leave}/reject', [LeaveController::class, 'reject'])->middleware('can:leave.approve');
         Route::delete('leave-requests/{leave}', [LeaveController::class, 'destroy']); // ตรวจสิทธิ์ใน controller
+
+        // ขอย้าย/แลกเวร: เพื่อนตอบรับแล้วเปลี่ยนทันที · ติดกติกาหรือช่องขาดคน → แอดมินเคลียร์
+        Route::get('shift-requests', [ShiftRequestController::class, 'index']); // ตรวจสิทธิ์ใน controller (ของตัวเอง / แอดมิน)
+        Route::post('shift-requests', [ShiftRequestController::class, 'store'])->middleware('can:shift.request.own');
+        Route::post('shift-requests/{shiftRequest}/accept', [ShiftRequestController::class, 'accept'])->middleware('can:shift.request.own');
+        Route::post('shift-requests/{shiftRequest}/decline', [ShiftRequestController::class, 'decline'])->middleware('can:shift.request.own');
+        Route::post('shift-requests/{shiftRequest}/approve', [ShiftRequestController::class, 'approve'])->middleware('can:shift.request.resolve');
+        Route::post('shift-requests/{shiftRequest}/reject', [ShiftRequestController::class, 'reject'])->middleware('can:shift.request.resolve');
+        Route::delete('shift-requests/{shiftRequest}', [ShiftRequestController::class, 'destroy'])->middleware('can:shift.request.own');
+
+        // เวรที่อยากลง/ไม่สะดวก ก่อนจัดร่าง
+        Route::get('staff/{staff}/preferences', [ShiftPreferenceController::class, 'show']); // ตรวจสิทธิ์ใน controller
+        Route::put('staff/{staff}/preferences', [ShiftPreferenceController::class, 'update'])->middleware('can:shift.request.own');
     });
 });

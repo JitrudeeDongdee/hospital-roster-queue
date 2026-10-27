@@ -39,4 +39,9 @@ class Staff extends Model
     {
         return $this->hasMany(StaffUnavailability::class);
     }
+
+    public function preferences(): HasMany
+    {
+        return $this->hasMany(ShiftPreference::class);
+    }
 }
