@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 750 1164" width="750" height="1164" font-family="Sarabun, 'Noto Sans Thai', Thonburi, 'Helvetica Neue', sans-serif">
+<title>BPMN: วันให้บริการ ผู้ป่วยมาถึงจนตรวจเสร็จ</title>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3b4a6b"/></marker></defs>
+<rect x="0.5" y="0.5" width="749" height="1163" fill="#fff" stroke="#3b4a6b"/>
+<rect x="0.5" y="0.5" width="149" height="1163" fill="#f4f7fc" stroke="#3b4a6b" stroke-width="0.8"/>
+<rect x="0.5" y="0.5" width="149" height="40" fill="#e3e9f5" stroke="#3b4a6b" stroke-width="0.8"/>
+<text x="75.0" y="25.0" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2a44">ผู้ป่วย</text>
+<rect x="150.5" y="0.5" width="149" height="1163" fill="#fbfbf6" stroke="#3b4a6b" stroke-width="0.8"/>
+<rect x="150.5" y="0.5" width="149" height="40" fill="#e3e9f5" stroke="#3b4a6b" stroke-width="0.8"/>
+<text x="225.0" y="17.5" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2a44">เวชระเบียน</text>
+<text x="225.0" y="32.5" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2a44">(registration)</text>
+<rect x="300.5" y="0.5" width="149" height="1163" fill="#f4faf6" stroke="#3b4a6b" stroke-width="0.8"/>
+<rect x="300.5" y="0.5" width="149" height="40" fill="#e3e9f5" stroke="#3b4a6b" stroke-width="0.8"/>
+<text x="375.0" y="17.5" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2a44">พยาบาลคัดกรอง</text>
+<text x="375.0" y="32.5" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2a44">(nurse)</text>
+<rect x="450.5" y="0.5" width="149" height="1163" fill="#fbf6f8" stroke="#3b4a6b" stroke-width="0.8"/>
+<rect x="450.5" y="0.5" width="149" height="40" fill="#e3e9f5" stroke="#3b4a6b" stroke-width="0.8"/>
+<text x="525.0" y="17.5" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2a44">แพทย์ที่อยู่เวร</text>
+<text x="525.0" y="32.5" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2a44">(doctor)</text>
+<rect x="600.5" y="0.5" width="149" height="1163" fill="#f6f6fb" stroke="#3b4a6b" stroke-width="0.8"/>
+<rect x="600.5" y="0.5" width="149" height="40" fill="#e3e9f5" stroke="#3b4a6b" stroke-width="0.8"/>
+<text x="675.0" y="25.0" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2a44">ระบบ</text>
+<path d="M75.0,111.0 V137.0 H225.0 V153.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M225.0,203.0 V221.0 H375.0 V237.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M375.0,287.0 V318.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M375.0,374.0 V405.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
+<text x="380.0" y="387.0" font-size="11" fill="#7a2e2e" text-anchor="start" paint-order="stroke" stroke="#fff" stroke-width="3">ใช่</text>
+<path d="M403.0,346.0 H675.0 V489.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
+<text x="409.0" y="340.0" font-size="11" fill="#7a2e2e" text-anchor="start" paint-order="stroke" stroke="#fff" stroke-width="3">ไม่</text>
+<path d="M375.0,455.0 V473.0 H675.0 V489.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M675.0,539.0 V557.0 H75.0 V573.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M525.0,623.0 V657.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M525.0,707.0 V725.0 H675.0 V741.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M675.0,791.0 V825.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M675.0,875.0 V893.0 H75.0 V909.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M75.0,623.0 V909.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M75.0,959.0 V977.0 H525.0 V993.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M525.0,1043.0 V1069.0 H75.0 V1085.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M525.0,1043.0 V1069.0 H675.0 V1085.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<circle cx="75.0" cy="94.0" r="17.0" fill="#eaf7ee" stroke="#2e7d4f" stroke-width="1.6"/>
+<text x="100.0" y="98.0" font-size="11.5" fill="#1f2a44">มาถึง</text>
+<rect x="163.0" y="153.0" width="124" height="50" rx="9" fill="#fff" stroke="#3b4a6b" stroke-width="1.4"/>
+<text x="225.0" y="175.5" text-anchor="middle" font-size="12" fill="#1f2a44">ยืนยันตัวตน</text>
+<text x="225.0" y="189.5" text-anchor="middle" font-size="12" fill="#1f2a44">เลือกแผนก</text>
+<rect x="313.0" y="237.0" width="124" height="50" rx="9" fill="#fff" stroke="#3b4a6b" stroke-width="1.4"/>
+<text x="375.0" y="266.5" text-anchor="middle" font-size="12" fill="#1f2a44">คัดกรองอาการ</text>
+<path d="M375.0,318.0 L403.0,346.0 L375.0,374.0 L347.0,346.0 z" fill="#fff8e6" stroke="#8a6d1d" stroke-width="1.4"/>
+<text x="375.0" y="352.0" text-anchor="middle" font-size="18" fill="#8a6d1d">×</text>
+<text x="339.0" y="343.5" text-anchor="end" font-size="11.5" fill="#5c4810">เร่งด่วน /</text>
+<text x="339.0" y="356.5" text-anchor="end" font-size="11.5" fill="#5c4810">เฉพาะทาง?</text>
+<rect x="313.0" y="405.0" width="124" height="50" rx="9" fill="#fff" stroke="#3b4a6b" stroke-width="1.4"/>
+<text x="375.0" y="427.5" text-anchor="middle" font-size="12" fill="#1f2a44">ระบุ priority</text>
+<text x="375.0" y="441.5" text-anchor="middle" font-size="12" fill="#1f2a44">และทักษะที่ต้องการ</text>
+<rect x="613.0" y="489.0" width="124" height="50" rx="9" fill="#fff" stroke="#3b4a6b" stroke-width="1.4"/>
+<text x="675.0" y="504.5" text-anchor="middle" font-size="12" fill="#1f2a44">ออกเลขคิว</text>
+<text x="675.0" y="518.5" text-anchor="middle" font-size="12" fill="#1f2a44">ล็อก counter</text>
+<text x="675.0" y="532.5" text-anchor="middle" font-size="12" fill="#1f2a44">กันเลขซ้ำ</text>
+<rect x="13.0" y="573.0" width="124" height="50" rx="9" fill="#fff" stroke="#3b4a6b" stroke-width="1.4"/>
+<text x="75.0" y="595.5" text-anchor="middle" font-size="12" fill="#1f2a44">รอดูเลขคิว</text>
+<text x="75.0" y="609.5" text-anchor="middle" font-size="12" fill="#1f2a44">บนจอ</text>
+<rect x="463.0" y="573.0" width="124" height="50" rx="9" fill="#fff" stroke="#3b4a6b" stroke-width="1.4"/>
+<text x="525.0" y="595.5" text-anchor="middle" font-size="12" fill="#1f2a44">ดูคิวที่</text>
+<text x="525.0" y="609.5" text-anchor="middle" font-size="12" fill="#1f2a44">ตัวเองรับได้</text>
+<rect x="463.0" y="657.0" width="124" height="50" rx="9" fill="#fff" stroke="#3b4a6b" stroke-width="1.4"/>
+<text x="525.0" y="679.5" text-anchor="middle" font-size="12" fill="#1f2a44">กดเรียก</text>
+<text x="525.0" y="693.5" text-anchor="middle" font-size="12" fill="#1f2a44">คิวถัดไป</text>
+<rect x="613.0" y="741.0" width="124" height="50" rx="9" fill="#fff" stroke="#3b4a6b" stroke-width="1.4"/>
+<text x="675.0" y="756.5" text-anchor="middle" font-size="12" fill="#1f2a44">เลือกคิว: แผนก+ทักษะ</text>
+<text x="675.0" y="770.5" text-anchor="middle" font-size="12" fill="#1f2a44">priority → มาก่อน</text>
+<text x="675.0" y="784.5" text-anchor="middle" font-size="12" fill="#1f2a44">SKIP LOCKED</text>
+<rect x="613.0" y="825.0" width="124" height="50" rx="9" fill="#fff" stroke="#3b4a6b" stroke-width="1.4"/>
+<text x="675.0" y="847.5" text-anchor="middle" font-size="12" fill="#1f2a44">ส่งเลขคิวไปจอ</text>
+<text x="675.0" y="861.5" text-anchor="middle" font-size="12" fill="#1f2a44">(WebSocket)</text>
+<rect x="13.0" y="909.0" width="124" height="50" rx="9" fill="#fff" stroke="#3b4a6b" stroke-width="1.4"/>
+<text x="75.0" y="938.5" text-anchor="middle" font-size="12" fill="#1f2a44">เข้าห้องตรวจ</text>
+<rect x="463.0" y="993.0" width="124" height="50" rx="9" fill="#fff" stroke="#3b4a6b" stroke-width="1.4"/>
+<text x="525.0" y="1015.5" text-anchor="middle" font-size="12" fill="#1f2a44">ตรวจ แล้วกด</text>
+<text x="525.0" y="1029.5" text-anchor="middle" font-size="12" fill="#1f2a44">เสร็จสิ้น</text>
+<circle cx="75.0" cy="1102.0" r="17.0" fill="#fdecec" stroke="#a23b3b" stroke-width="3.2"/>
+<text x="100.0" y="1106.0" font-size="11.5" fill="#1f2a44">กลับบ้าน</text>
+<circle cx="675.0" cy="1102.0" r="17.0" fill="#eaf7ee" stroke="#2e7d4f" stroke-width="1.6"/><circle cx="675.0" cy="1102.0" r="13.0" fill="#fff" stroke="#2e7d4f"/><path d="M675.0,1094.0 V1102.0 L681.0,1105.0" stroke="#2e7d4f" fill="none"/>
+<text x="650.0" y="1106.0" text-anchor="end" font-size="11.5" fill="#1f2a44">สรุปยอด 00:30</text>
+</svg>

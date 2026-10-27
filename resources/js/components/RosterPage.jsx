@@ -1,22 +1,35 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { addDays, api, errorMessages, mondayOf } from '../api';
+import { addDays, api, errorMessages, isoDate } from '../api';
 import { useDepartments, useStaff } from '../useLookups';
+import { useAuth } from '../auth';
 
-const DAY_NAMES = ['จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.', 'อา.'];
+const DAY_NAMES = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
+
+const firstOfMonth = (date = new Date()) => isoDate(new Date(date.getFullYear(), date.getMonth(), 1));
+const shiftMonth = (iso, months) => {
+    const d = new Date(`${iso}T00:00:00`);
+    return isoDate(new Date(d.getFullYear(), d.getMonth() + months, 1));
+};
+const lastOfMonth = (iso) => addDays(shiftMonth(iso, 1), -1);
+const monthLabel = (iso) => new Date(`${iso}T00:00:00`).toLocaleDateString('th-TH', { month: 'long', year: 'numeric' });
+const weekday = (iso) => new Date(`${iso}T00:00:00`).getDay();
 
 export default function RosterPage({ hospitalId }) {
     const queryClient = useQueryClient();
+    const { user, can } = useAuth();
+    const canManage = can('roster.manage');
     const departments = useDepartments(hospitalId).data ?? [];
     const allStaff = useStaff(hospitalId).data ?? [];
     const [departmentId, setDepartmentId] = useState(null);
-    const [weekStart, setWeekStart] = useState(mondayOf());
+    const [monthStart, setMonthStart] = useState(firstOfMonth());
     const [problems, setProblems] = useState(null);
 
-    const deptId = departmentId ?? departments[0]?.id;
+    const ownDept = allStaff.find((s) => s.id === user.staff_id)?.department_id;
+    const deptId = departmentId ?? ownDept ?? departments[0]?.id;
     const doctors = allStaff.filter((s) => s.department_id === deptId);
-    const from = weekStart;
-    const to = addDays(weekStart, 6);
+    const from = monthStart;
+    const to = lastOfMonth(monthStart);
     const rosterKey = ['roster', hospitalId, deptId, from];
 
     const roster = useQuery({
@@ -65,7 +78,9 @@ export default function RosterPage({ hospitalId }) {
     }, [roster.data]);
 
     const templates = roster.data?.templates ?? [];
-    const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+    const days = [];
+    for (let d = from; d <= to; d = addDays(d, 1)) days.push(d);
+    const gapCount = roster.data?.gaps.length ?? 0;
 
     return (
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
@@ -76,17 +91,21 @@ export default function RosterPage({ hospitalId }) {
                         {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
                     </select>
                     <div className="flex items-center gap-1 text-sm">
-                        <button className="rounded-md border border-slate-300 px-2 py-1.5" onClick={() => setWeekStart(addDays(weekStart, -7))} aria-label="สัปดาห์ก่อน">‹</button>
-                        <span className="w-44 text-center">{formatDay(from)} – {formatDay(to)}</span>
-                        <button className="rounded-md border border-slate-300 px-2 py-1.5" onClick={() => setWeekStart(addDays(weekStart, 7))} aria-label="สัปดาห์ถัดไป">›</button>
+                        <button className="rounded-md border border-slate-300 px-2 py-1.5" onClick={() => { setMonthStart(shiftMonth(monthStart, -1)); setProblems(null); }} aria-label="เดือนก่อน">‹</button>
+                        <span className="w-36 text-center font-medium">{monthLabel(from)}</span>
+                        <button className="rounded-md border border-slate-300 px-2 py-1.5" onClick={() => { setMonthStart(shiftMonth(monthStart, 1)); setProblems(null); }} aria-label="เดือนถัดไป">›</button>
                     </div>
-                    <button
-                        className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-40"
-                        disabled={generate.isPending || !deptId}
-                        onClick={() => generate.mutate()}
-                    >
-                        {generate.isPending ? 'กำลังจัด…' : 'จัดเวรอัตโนมัติ (ร่าง)'}
-                    </button>
+                    {canManage ? (
+                        <button
+                            className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-40"
+                            disabled={generate.isPending || !deptId}
+                            onClick={() => generate.mutate()}
+                        >
+                            {generate.isPending ? 'กำลังจัด…' : 'จัดเวรทั้งเดือนอัตโนมัติ (ร่าง)'}
+                        </button>
+                    ) : (
+                        <span className="rounded-md bg-slate-100 px-3 py-1.5 text-xs text-slate-500">ดูอย่างเดียว · จัดเวรได้เฉพาะแอดมิน</span>
+                    )}
                 </div>
 
                 {problems && (
@@ -95,12 +114,18 @@ export default function RosterPage({ hospitalId }) {
                     </ul>
                 )}
 
-                <div className="overflow-x-auto p-4">
+                {roster.isSuccess && (
+                    <p className={`mx-4 mt-4 text-sm ${gapCount ? 'text-red-600' : 'text-emerald-700'}`}>
+                        {gapCount ? `ยังมี ${gapCount} ช่องที่คนไม่ครบหรือขาดความเชี่ยวชาญ (สีแดง)` : 'ทุกเวรในเดือนนี้มีแพทย์ครบตามกติกา'}
+                    </p>
+                )}
+
+                <div className="max-h-[70vh] overflow-auto p-4">
                     {roster.isPending && <p className="text-sm text-slate-500">กำลังโหลด…</p>}
                     {roster.isError && <p className="text-sm text-red-600">{roster.error.message}</p>}
                     {roster.isSuccess && (
                         <table className="w-full min-w-[640px] table-fixed border-collapse text-sm">
-                            <thead>
+                            <thead className="sticky top-0 z-10 bg-white">
                                 <tr>
                                     <th className="w-24 p-2 text-left text-xs font-medium text-slate-500">วัน</th>
                                     {templates.map((t) => (
@@ -112,9 +137,9 @@ export default function RosterPage({ hospitalId }) {
                                 </tr>
                             </thead>
                             <tbody>
-                                {days.map((date, i) => (
-                                    <tr key={date} className="border-t border-slate-100 align-top">
-                                        <td className="p-2 font-medium">{DAY_NAMES[i]} {formatDay(date)}</td>
+                                {days.map((date) => (
+                                    <tr key={date} className={`border-t border-slate-100 align-top ${[0, 6].includes(weekday(date)) ? 'bg-slate-50' : ''}`}>
+                                        <td className="p-2 font-medium">{DAY_NAMES[weekday(date)]} {formatDay(date)}</td>
                                         {templates.map((t) => {
                                             const key = `${date}|${t.id}`;
                                             const assigned = cells[key] ?? [];
@@ -122,13 +147,13 @@ export default function RosterPage({ hospitalId }) {
                                                 <td key={t.id} className={`p-2 ${gaps[key] ? 'bg-red-50' : ''}`}>
                                                     <div className="flex flex-wrap gap-1">
                                                         {assigned.map((s) => (
-                                                            <span key={s.id} className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-xs text-indigo-800">
+                                                            <span key={s.id} className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs ${s.staff_id === user.staff_id ? 'bg-emerald-100 text-emerald-900 ring-1 ring-emerald-400' : 'bg-indigo-50 text-indigo-800'}`}>
                                                                 {s.staff_name}
-                                                                <button className="text-indigo-400 hover:text-red-600" onClick={() => remove.mutate(s.id)} aria-label={`เอา ${s.staff_name} ออกจากเวร`}>✕</button>
+                                                                {canManage && <button className="text-indigo-400 hover:text-red-600" onClick={() => remove.mutate(s.id)} aria-label={`เอา ${s.staff_name} ออกจากเวร`}>✕</button>}
                                                             </span>
                                                         ))}
                                                     </div>
-                                                    <select
+                                                    {canManage && <select
                                                         className="mt-1 w-full rounded border border-dashed border-slate-300 bg-transparent px-1 py-0.5 text-xs text-slate-500"
                                                         value=""
                                                         onChange={(e) => assign.mutate({ staff_id: Number(e.target.value), shift_template_id: t.id, date })}
@@ -137,7 +162,7 @@ export default function RosterPage({ hospitalId }) {
                                                         {doctors.filter((d) => !assigned.some((s) => s.staff_id === d.id)).map((d) => (
                                                             <option key={d.id} value={d.id}>{d.name}</option>
                                                         ))}
-                                                    </select>
+                                                    </select>}
                                                     {gaps[key] && <p className="mt-1 text-xs text-red-600">{gaps[key]}</p>}
                                                 </td>
                                             );
@@ -152,7 +177,8 @@ export default function RosterPage({ hospitalId }) {
 
             <div className="space-y-6">
                 <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <h2 className="mb-3 text-lg font-semibold">ชั่วโมงสัปดาห์นี้</h2>
+                    <h2 className="mb-1 text-lg font-semibold">ชั่วโมงเดือนนี้</h2>
+                    <p className="mb-3 text-xs text-slate-500">กติกา: ไม่เกินชั่วโมงต่อสัปดาห์ที่โรงพยาบาลกำหนด · พักระหว่างเวรขั้นต่ำ</p>
                     <ul className="space-y-2 text-sm">
                         {doctors.map((d) => (
                             <li key={d.id} className="flex items-center justify-between gap-2">
@@ -165,7 +191,13 @@ export default function RosterPage({ hospitalId }) {
                         ))}
                     </ul>
                 </section>
-                <UnavailabilityPanel hospitalId={hospitalId} doctors={doctors} onChange={refresh} />
+                {(can('leave.manage.any') || can('leave.manage.own')) && (
+                    <UnavailabilityPanel
+                        hospitalId={hospitalId}
+                        doctors={can('leave.manage.any') ? doctors : doctors.filter((d) => d.id === user.staff_id)}
+                        onChange={refresh}
+                    />
+                )}
             </div>
         </div>
     );

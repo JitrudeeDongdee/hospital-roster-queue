@@ -8,11 +8,6 @@ use App\Models\Skill;
 // ข้อมูลอ้างอิงสำหรับหน้าเว็บ: มีไม่กี่แถวและแทบไม่เปลี่ยน ฝั่ง frontend cache ไว้นานได้
 class LookupController extends Controller
 {
-    public function hospitals()
-    {
-        return Hospital::orderBy('code')->get(['id', 'code', 'name']);
-    }
-
     public function skills()
     {
         return Skill::orderBy('code')->get(['id', 'code', 'name']);

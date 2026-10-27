@@ -41,6 +41,9 @@ return [
 
     'debug' => (bool) env('APP_DEBUG', false),
 
+    // เลือกผู้ใช้ทดลองโดยไม่ต้องใช้รหัสผ่าน — ห้ามเปิดบน production
+    'demo_login' => (bool) env('DEMO_LOGIN', false),
+
     /*
     |--------------------------------------------------------------------------
     | Application URL

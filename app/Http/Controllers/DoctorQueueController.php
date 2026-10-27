@@ -5,13 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\Hospital;
 use App\Models\QueueTicket;
 use App\Models\Staff;
+use Illuminate\Http\Request;
 
 // ฟังก์ชันเสริม: หมอดูได้ตลอดว่ามีคิวไหนที่ตัวเองรับได้ (แผนกเดียวกัน + ความเชี่ยวชาญตรง) และเวรถัดไปของตัวเอง
 class DoctorQueueController extends Controller
 {
     // GET /api/hospitals/{hospital}/staff/{staff}/my-queue
-    public function show(Hospital $hospital, Staff $staff)
+    public function show(Request $request, Hospital $hospital, Staff $staff)
     {
+        // แพทย์ดูได้เฉพาะของตัวเอง · แอดมิน/พยาบาลดูของแพทย์คนไหนก็ได้ในโรงพยาบาล
+        $user = $request->user();
+        abort_if($user->staff_id !== null && $user->staff_id !== $staff->id, 403, 'ดูได้เฉพาะคิวของตัวเอง');
+
         $skillIds = $staff->skills()->pluck('skills.id');
         $today = now()->toDateString();
 

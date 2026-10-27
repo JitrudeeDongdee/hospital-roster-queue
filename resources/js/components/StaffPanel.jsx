@@ -2,12 +2,16 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, PRIORITY } from '../api';
 import { byId, useDepartments, useStaff } from '../useLookups';
+import { useAuth } from '../auth';
 
 export default function StaffPanel({ hospitalId }) {
     const queryClient = useQueryClient();
     const staff = useStaff(hospitalId);
     const departments = byId(useDepartments(hospitalId).data);
-    const [staffId, setStaffId] = useState('');
+    const { user, can } = useAuth();
+    const canCall = can('ticket.call');
+    const [chosen, setChosen] = useState('');
+    const staffId = user.staff_id ?? chosen; // แพทย์ล็อกเป็นตัวเอง · แอดมิน/พยาบาลเลือกดูคิวของแพทย์คนไหนก็ได้
     const [current, setCurrent] = useState(null);
     const member = staff.data?.find((s) => s.id === Number(staffId));
 
@@ -45,18 +49,18 @@ export default function StaffPanel({ hospitalId }) {
 
     return (
         <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <h2 className="mb-3 text-lg font-semibold">ห้องตรวจ</h2>
+            <h2 className="mb-3 text-lg font-semibold">{user.staff_id ? 'ห้องตรวจของฉัน' : 'คิวของแพทย์'}</h2>
 
-            <select
+            {!user.staff_id && <select
                 className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                 value={staffId}
-                onChange={(e) => { setStaffId(e.target.value); setCurrent(null); callNext.reset(); }}
+                onChange={(e) => { setChosen(e.target.value); setCurrent(null); callNext.reset(); }}
             >
                 <option value="">เลือกเจ้าหน้าที่</option>
                 {staff.data?.map((s) => (
                     <option key={s.id} value={s.id}>{departments[s.department_id]?.code} · {s.name}</option>
                 ))}
-            </select>
+            </select>}
 
             {member && (
                 <div className="mt-2 flex flex-wrap gap-1">
@@ -66,13 +70,13 @@ export default function StaffPanel({ hospitalId }) {
                 </div>
             )}
 
-            <button
+            {canCall && <button
                 className="mt-4 w-full rounded-md bg-indigo-600 py-2.5 font-medium text-white hover:bg-indigo-700 disabled:opacity-40"
                 disabled={!staffId || callNext.isPending || current?.status === 'called'}
                 onClick={() => callNext.mutate()}
             >
                 {callNext.isPending ? 'กำลังเรียก…' : 'เรียกคิวถัดไป'}
-            </button>
+            </button>}
 
             {callNext.isError && (
                 <p className="mt-3 text-sm text-slate-500">

@@ -9,6 +9,8 @@ use App\Models\Skill;
 use App\Models\Staff;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class SeedDemoQueue extends Command
 {
@@ -28,6 +30,9 @@ class SeedDemoQueue extends Command
         ])->map(fn ($s) => Skill::firstOrCreate(['code' => $s['code']], $s));
 
         $departments = collect();
+        // ผู้ใช้ทดลองไม่มีรหัสผ่านที่ใช้ได้จริง (สุ่มแล้วทิ้ง) — เข้าได้ทาง demo-login เท่านั้น
+        $unusablePassword = Hash::make(Str::random(40));
+        $users = [];
 
         for ($h = 1; $h <= (int) $this->option('hospitals'); $h++) {
             $hospital = Hospital::create(['code' => sprintf('H%03d', $h), 'name' => "Demo Hospital {$h}"]);
@@ -52,9 +57,16 @@ class SeedDemoQueue extends Command
                         'name' => "Dr. {$code}-{$s}",
                     ]);
                     $staff->skills()->attach($skills->random(2)->pluck('id'));
+                    $users[] = ['name' => $staff->name, 'email' => strtolower("{$hospital->code}.{$code}-{$s}@demo.test"), 'role' => 'doctor', 'hospital_id' => $hospital->id, 'staff_id' => $staff->id];
                 }
             }
+
+            foreach (['admin' => 'หัวหน้าแผนก', 'nurse' => 'พยาบาลคัดกรอง', 'registration' => 'เวชระเบียน'] as $role => $title) {
+                $users[] = ['name' => "{$title} {$hospital->code}", 'email' => strtolower("{$hospital->code}.{$role}@demo.test"), 'role' => $role, 'hospital_id' => $hospital->id, 'staff_id' => null];
+            }
         }
+
+        DB::table('users')->insert(array_map(fn ($u) => $u + ['password' => $unusablePassword, 'created_at' => now(), 'updated_at' => now()], $users));
 
         // ตั๋วย้อนหลัง: สร้างทีละ batch แล้ว INSERT ครั้งเดียวต่อ batch (ไม่ใช่ทีละแถว)
         $total = (int) $this->option('tickets');

@@ -1,19 +1,41 @@
 export const DEMO = import.meta.env.VITE_DEMO === 'true';
 
+// token ของผู้ใช้ — localStorage อาจใช้ไม่ได้ (private mode) จึงห่อ try/catch และเก็บสำรองไว้ใน memory
+let memoryToken = null;
+export function getToken() {
+    try { return localStorage.getItem('token') ?? memoryToken; } catch { return memoryToken; }
+}
+export function setToken(token) {
+    memoryToken = token;
+    try { token ? localStorage.setItem('token', token) : localStorage.removeItem('token'); } catch { /* ใช้ค่าใน memory */ }
+}
+
 export async function api(path, { body, ...options } = {}) {
+    const token = getToken();
+
     if (DEMO) {
         // GitHub Pages ไม่มี server — ใช้ API จำลองใน browser (dynamic import: ไม่ติดไปกับ build ปกติ)
         const { mockApi } = await import('./demo/mockApi');
-        return mockApi(path, { ...options, body });
+        try {
+            return await mockApi(path, { ...options, body, token });
+        } catch (error) {
+            if (error.status === 401) window.dispatchEvent(new Event('auth:expired'));
+            throw error;
+        }
     }
 
     const res = await fetch(`/api${path}`, {
-        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: body ? JSON.stringify(body) : undefined,
         ...options,
     });
 
     if (res.status === 204) return null;
+    if (res.status === 401) window.dispatchEvent(new Event('auth:expired'));
 
     const data = await res.json().catch(() => null);
     if (!res.ok) {

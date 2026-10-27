@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, PRIORITY } from '../api';
 import { useDepartments, useSkills } from '../useLookups';
+import { useAuth } from '../auth';
 
 export default function IssueTicketForm({ hospitalId }) {
     const queryClient = useQueryClient();
+    const { can } = useAuth();
+    const canTriage = can('ticket.triage');
     const departments = useDepartments(hospitalId).data ?? [];
     const skills = useSkills().data ?? [];
     const [form, setForm] = useState({ department_id: '', patient_ref: '', priority: 0, required_skill_id: '' });
@@ -37,13 +40,19 @@ export default function IssueTicketForm({ hospitalId }) {
                     {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
                 <input className={input} placeholder="รหัสอ้างอิงผู้ป่วย เช่น P000123" value={form.patient_ref} onChange={set('patient_ref')} required maxLength={64} />
-                <select className={input} value={form.priority} onChange={set('priority')}>
-                    {Object.entries(PRIORITY).map(([value, p]) => <option key={value} value={value}>{p.label}</option>)}
-                </select>
-                <select className={input} value={form.required_skill_id} onChange={set('required_skill_id')}>
-                    <option value="">ไม่ระบุความเชี่ยวชาญ</option>
-                    {skills.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                </select>
+                {canTriage ? (
+                    <>
+                        <select className={input} value={form.priority} onChange={set('priority')}>
+                            {Object.entries(PRIORITY).map(([value, p]) => <option key={value} value={value}>{p.label}</option>)}
+                        </select>
+                        <select className={input} value={form.required_skill_id} onChange={set('required_skill_id')}>
+                            <option value="">ไม่ระบุความเชี่ยวชาญ</option>
+                            {skills.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                        </select>
+                    </>
+                ) : (
+                    <p className="text-xs text-slate-500">ออกบัตรคิวปกติ · พยาบาลคัดกรองเป็นคนกำหนดความเร่งด่วน/ความเชี่ยวชาญ</p>
+                )}
                 <button className="w-full rounded-md bg-slate-800 py-2.5 font-medium text-white hover:bg-slate-900 disabled:opacity-40" disabled={issue.isPending}>
                     {issue.isPending ? 'กำลังออกบัตร…' : 'ออกบัตรคิว'}
                 </button>

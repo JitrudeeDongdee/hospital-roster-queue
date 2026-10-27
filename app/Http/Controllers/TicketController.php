@@ -35,12 +35,17 @@ class TicketController extends Controller
     // POST /api/hospitals/{hospital}/departments/{department}/tickets
     public function store(StoreTicketRequest $request, Hospital $hospital, Department $department)
     {
+        // ตู้คิว/เวชระเบียนออกบัตรได้ แต่กำหนดความเร่งด่วนหรือความเชี่ยวชาญได้เฉพาะคนที่คัดกรอง
+        $triaged = $request->integer('priority') > 0 || $request->filled('required_skill_id');
+        abort_if($triaged && $request->user()->cannot('ticket.triage'), 403, 'ต้องเป็นพยาบาลคัดกรองจึงกำหนดความเร่งด่วน/ความเชี่ยวชาญได้');
+
         return response()->json($this->queue->issue($department, $request->validated()), 201);
     }
 
     // POST /api/hospitals/{hospital}/staff/{staff}/call-next
-    public function callNext(Hospital $hospital, Staff $staff)
+    public function callNext(Request $request, Hospital $hospital, Staff $staff)
     {
+        abort_unless($request->user()->staff_id === $staff->id, 403, 'เรียกคิวได้เฉพาะในชื่อของตัวเอง');
         abort_unless($staff->is_active, 422, 'Staff is not active.');
 
         $ticket = $this->queue->callNext($staff);
@@ -51,8 +56,9 @@ class TicketController extends Controller
     }
 
     // POST /api/hospitals/{hospital}/tickets/{ticket}/complete
-    public function complete(Hospital $hospital, QueueTicket $ticket)
+    public function complete(Request $request, Hospital $hospital, QueueTicket $ticket)
     {
+        abort_unless($ticket->staff_id === null || $ticket->staff_id === $request->user()->staff_id, 403, 'ปิดได้เฉพาะคิวที่ตัวเองเรียก');
         abort_unless($ticket->status === QueueTicket::CALLED, 422, 'Ticket has not been called.');
 
         $ticket->update(['status' => QueueTicket::COMPLETED, 'completed_at' => now()]);

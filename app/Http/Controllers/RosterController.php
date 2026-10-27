@@ -69,6 +69,13 @@ class RosterController extends Controller
     // POST /api/hospitals/{hospital}/staff/{staff}/unavailabilities {date, reason}
     public function addUnavailability(Request $request, Hospital $hospital, Staff $staff)
     {
+        $user = $request->user();
+        abort_unless(
+            $user->can('leave.manage.any') || ($user->can('leave.manage.own') && $user->staff_id === $staff->id),
+            403,
+            'บันทึกวันลาได้เฉพาะของตัวเอง',
+        );
+
         $data = $request->validate([
             'date' => 'required|date_format:Y-m-d',
             'reason' => 'nullable|string|max:100',

@@ -24,6 +24,8 @@ class QueueTest extends TestCase
 
     private function issue(Hospital $hospital, Department $department, array $data = []): array
     {
+        $this->actingAsRole('nurse', $hospital);
+
         return $this->postJson("/api/hospitals/{$hospital->id}/departments/{$department->id}/tickets",
             $data + ['patient_ref' => 'P000001'])->assertCreated()->json();
     }
@@ -47,6 +49,7 @@ class QueueTest extends TestCase
         $elderly = $this->issue($hospital, $opd, ['priority' => 1]);
 
         $url = "/api/hospitals/{$hospital->id}/staff/{$staff->id}/call-next";
+        $this->actingAsDoctor($staff);
         $this->postJson($url)->assertOk()->assertJsonPath('id', $elderly['id']);
         $this->postJson($url)->assertOk()->assertJsonPath('id', $normal['id']);
         $this->postJson($url)->assertNotFound();
@@ -66,10 +69,12 @@ class QueueTest extends TestCase
         $heartCase = $this->issue($hospital, $opd, ['required_skill_id' => $cardio->id]);
         $childCase = $this->issue($hospital, $opd, ['required_skill_id' => $pediatrics->id]);
 
+        $this->actingAsDoctor($pediatrician);
         $this->postJson("/api/hospitals/{$hospital->id}/staff/{$pediatrician->id}/call-next")
             ->assertOk()->assertJsonPath('id', $childCase['id']);
         $this->postJson("/api/hospitals/{$hospital->id}/staff/{$pediatrician->id}/call-next")
             ->assertNotFound(); // ไม่เอาเคสหัวใจไปให้กุมารแพทย์
+        $this->actingAsDoctor($cardiologist);
         $this->postJson("/api/hospitals/{$hospital->id}/staff/{$cardiologist->id}/call-next")
             ->assertOk()->assertJsonPath('id', $heartCase['id']);
     }
@@ -80,12 +85,15 @@ class QueueTest extends TestCase
         [$hospitalB, $departmentB] = $this->hospitalWithDepartment('H002');
         $staffB = Staff::create(['hospital_id' => $hospitalB->id, 'department_id' => $departmentB->id, 'name' => 'Dr. B']);
         $ticketB = $this->issue($hospitalB, $departmentB);
+        $doctorA = Staff::create(['hospital_id' => $hospitalA->id, 'department_id' => Department::where('hospital_id', $hospitalA->id)->value('id'), 'name' => 'Dr. A']);
+        $this->actingAsDoctor($doctorA); // ผู้ใช้ของ A ใส่ id ของ B ใน URL ของ A → ไม่เจอ (404)
 
         $this->postJson("/api/hospitals/{$hospitalA->id}/departments/{$departmentB->id}/tickets", ['patient_ref' => 'P1'])
             ->assertNotFound();
         $this->postJson("/api/hospitals/{$hospitalA->id}/staff/{$staffB->id}/call-next")->assertNotFound();
         $this->postJson("/api/hospitals/{$hospitalA->id}/tickets/{$ticketB['id']}/complete")->assertNotFound();
         $this->getJson("/api/hospitals/{$hospitalA->id}/tickets")->assertOk()->assertJsonCount(0, 'data');
+        $this->getJson("/api/hospitals/{$hospitalB->id}/tickets")->assertForbidden(); // URL ของ B ตรง ๆ → ไม่ได้สังกัด (403)
     }
 
     public function test_ticket_list_uses_cursor_pagination(): void
@@ -108,6 +116,7 @@ class QueueTest extends TestCase
         $staff = Staff::create(['hospital_id' => $hospital->id, 'department_id' => $opd->id, 'name' => 'Dr. A']);
         $ticket = $this->issue($hospital, $opd);
 
+        $this->actingAsDoctor($staff);
         $this->postJson("/api/hospitals/{$hospital->id}/tickets/{$ticket['id']}/complete")->assertStatus(422);
         $this->postJson("/api/hospitals/{$hospital->id}/staff/{$staff->id}/call-next")->assertOk();
         $this->postJson("/api/hospitals/{$hospital->id}/tickets/{$ticket['id']}/complete")
@@ -128,6 +137,7 @@ class QueueTest extends TestCase
         $this->assertSame(3000, (int) \DB::table('daily_queue_stats')->sum('total_tickets'));
 
         $hospital = Hospital::first();
+        $this->actingAsRole('admin', $hospital);
         $this->getJson("/api/hospitals/{$hospital->id}/stats?from={$from}&to={$to}")
             ->assertOk()->assertJsonCount(3 * 3);
     }

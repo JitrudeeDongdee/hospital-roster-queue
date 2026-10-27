@@ -74,8 +74,43 @@ const db = (() => {
         });
     }
 
-    return { skills, hospitals, departments, staff, tickets, counters, templates, shifts, unavailabilities };
+    // ผู้ใช้ทดลอง: แอดมิน/พยาบาล/เวชระเบียน 1 คนต่อโรงพยาบาล + แพทย์ทุกคน
+    const users = [];
+    for (const h of hospitals) {
+        for (const m of staff.filter((x) => x.hospital_id === h.id)) users.push({ id: users.length + 1, name: m.name, role: 'doctor', hospital_id: h.id, staff_id: m.id });
+        for (const [role, title] of [['admin', 'หัวหน้าแผนก'], ['nurse', 'พยาบาลคัดกรอง'], ['registration', 'เวชระเบียน']]) {
+            users.push({ id: users.length + 1, name: `${title} ${h.code}`, role, hospital_id: h.id, staff_id: null });
+        }
+    }
+
+    return { skills, hospitals, departments, staff, tickets, counters, templates, shifts, unavailabilities, users };
 })();
+
+// ---- สิทธิ์: สำเนาของ App\\Enums\\Role ใน backend ----
+const PERMISSIONS = {
+    'roster.view': 'ดูตารางเวร',
+    'roster.manage': 'จัดเวร / จัดอัตโนมัติ / ลบเวร',
+    'leave.manage.any': 'บันทึกวันลาให้แพทย์ทุกคน',
+    'leave.manage.own': 'บันทึกวันลาของตัวเอง',
+    'queue.view': 'ดูรายการคิว',
+    'ticket.issue': 'ออกบัตรคิว',
+    'ticket.triage': 'กำหนดความเร่งด่วน / ความเชี่ยวชาญ (คัดกรอง)',
+    'ticket.call': 'เรียกคิว / ตรวจเสร็จ (ของตัวเอง)',
+    'stats.view': 'ดูสถิติ',
+};
+const ROLES = [
+    { value: 'admin', label: 'แอดมิน / หัวหน้าแผนก', permissions: ['roster.view', 'roster.manage', 'leave.manage.any', 'queue.view', 'ticket.issue', 'ticket.triage', 'stats.view'] },
+    { value: 'doctor', label: 'แพทย์', permissions: ['roster.view', 'leave.manage.own', 'queue.view', 'ticket.call'] },
+    { value: 'nurse', label: 'พยาบาล', permissions: ['roster.view', 'queue.view', 'ticket.issue', 'ticket.triage'] },
+    { value: 'registration', label: 'เวชระเบียน / ตู้คิว', permissions: ['ticket.issue'] },
+];
+const roleOf = (user) => ROLES.find((r) => r.value === user.role);
+const can = (user, permission) => roleOf(user).permissions.includes(permission);
+const present = (user) => {
+    const h = db.hospitals.find((x) => x.id === user.hospital_id);
+    return { id: user.id, name: user.name, role: user.role, role_label: roleOf(user).label, hospital: { id: h.id, code: h.code, name: h.name }, staff_id: user.staff_id, permissions: roleOf(user).permissions };
+};
+const forbid = (condition, message) => { if (condition) throw new HttpError(403, message); };
 
 class HttpError extends Error {
     constructor(status, message, errors) {
@@ -207,10 +242,19 @@ function findIn(list, id, hospitalId) {
 }
 
 const routes = [
-    ['GET', /^\/hospitals$/, () => db.hospitals],
-    ['GET', /^\/skills$/, () => db.skills],
-    ['GET', /^\/hospitals\/(\d+)\/departments$/, ([h]) => db.departments.filter((d) => d.hospital_id === Number(h))],
-    ['GET', /^\/hospitals\/(\d+)\/staff$/, ([h]) => db.staff.filter((s) => s.hospital_id === Number(h))],
+    
+    ['GET', /^\/skills$/, () => db.skills, {}],
+    ['GET', /^\/demo-users$/, () => db.users.filter((u) => u.hospital_id === 1 && (u.role !== 'doctor' || u.name.endsWith('-1'))).map(present), { public: true }],
+    ['POST', /^\/demo-login$/, (_p, _q, body) => {
+        const user = db.users.find((u) => u.id === Number(body.user_id));
+        if (!user) throw new HttpError(404, 'Not Found');
+        return { token: `demo-${user.id}`, user: present(user) };
+    }, { public: true }],
+    ['GET', /^\/roles$/, () => ({ permissions: PERMISSIONS, roles: ROLES }), { public: true }],
+    ['GET', /^\/me$/, (_p, _q, _b, user) => present(user), {}],
+    ['POST', /^\/logout$/, () => null, {}],
+    ['GET', /^\/hospitals\/(\d+)\/departments$/, ([h]) => db.departments.filter((d) => d.hospital_id === Number(h)), {}],
+    ['GET', /^\/hospitals\/(\d+)\/staff$/, ([h]) => db.staff.filter((s) => s.hospital_id === Number(h)), {}],
 
     ['GET', /^\/hospitals\/(\d+)\/tickets$/, ([h], query) => {
         const after = Number(query.get('cursor') ?? 0); // keyset: id > cursor
@@ -231,8 +275,9 @@ const routes = [
         return { data, per_page: PAGE_SIZE, next_cursor: hasMore ? String(data.at(-1).id) : null };
     }],
 
-    ['POST', /^\/hospitals\/(\d+)\/departments\/(\d+)\/tickets$/, ([h, d], _query, body) => {
+    ['POST', /^\/hospitals\/(\d+)\/departments\/(\d+)\/tickets$/, ([h, d], _query, body, user) => {
         const department = findIn(db.departments, d, h);
+        forbid((Number(body?.priority) > 0 || body?.required_skill_id) && !can(user, 'ticket.triage'), 'ต้องเป็นพยาบาลคัดกรองจึงกำหนดความเร่งด่วน/ความเชี่ยวชาญได้');
         if (!body?.patient_ref) throw new HttpError(422, 'The patient ref field is required.');
         db.counters[department.id] = (db.counters[department.id] ?? 0) + 1;
         const ticket = {
@@ -252,8 +297,9 @@ const routes = [
         return { ...ticket };
     }],
 
-    ['POST', /^\/hospitals\/(\d+)\/staff\/(\d+)\/call-next$/, ([h, s]) => {
+    ['POST', /^\/hospitals\/(\d+)\/staff\/(\d+)\/call-next$/, ([h, s], _q, _b, user) => {
         const member = findIn(db.staff, s, h);
+        forbid(user.staff_id !== member.id, 'เรียกคิวได้เฉพาะในชื่อของตัวเอง');
         const skillIds = member.skills.map((skill) => skill.id);
         // เหมือน QueueService::callNext — คิวที่ไม่ระบุความเชี่ยวชาญหรือที่ตรงกับเจ้าหน้าที่, priority DESC แล้ว id ASC
         const next = db.tickets
@@ -287,8 +333,9 @@ const routes = [
         const member = findIn(db.staff, s, h);
         return db.unavailabilities.filter((u) => u.staff_id === member.id).sort((a, b) => a.date.localeCompare(b.date));
     }],
-    ['POST', /^\/hospitals\/(\d+)\/staff\/(\d+)\/unavailabilities$/, ([h, s], _q, body) => {
+    ['POST', /^\/hospitals\/(\d+)\/staff\/(\d+)\/unavailabilities$/, ([h, s], _q, body, user) => {
         const member = findIn(db.staff, s, h);
+        forbid(!(can(user, 'leave.manage.any') || (can(user, 'leave.manage.own') && user.staff_id === member.id)), 'บันทึกวันลาได้เฉพาะของตัวเอง');
         if (db.shifts.some((x) => x.staff_id === member.id && x.shift_date === body.date)) {
             throw new HttpError(422, 'แพทย์มีเวรในวันนี้อยู่แล้ว ต้องลบเวรออกก่อน', { date: ['แพทย์มีเวรในวันนี้อยู่แล้ว ต้องลบเวรออกก่อน'] });
         }
@@ -299,8 +346,9 @@ const routes = [
         return row;
     }],
 
-    ['GET', /^\/hospitals\/(\d+)\/staff\/(\d+)\/my-queue$/, ([h, s]) => {
+    ['GET', /^\/hospitals\/(\d+)\/staff\/(\d+)\/my-queue$/, ([h, s], _q, _b, user) => {
         const member = findIn(db.staff, s, h);
+        forbid(user.staff_id !== null && user.staff_id !== member.id, 'ดูได้เฉพาะคิวของตัวเอง');
         const skillIds = member.skills.map((k) => k.id);
         const now = new Date();
         return {
@@ -317,21 +365,48 @@ const routes = [
         };
     }],
 
-    ['POST', /^\/hospitals\/(\d+)\/tickets\/(\d+)\/complete$/, ([h, t]) => {
+    ['POST', /^\/hospitals\/(\d+)\/tickets\/(\d+)\/complete$/, ([h, t], _q, _b, user) => {
         const ticket = findIn(db.tickets, t, h);
+        forbid(ticket.staff_id !== null && ticket.staff_id !== user.staff_id, 'ปิดได้เฉพาะคิวที่ตัวเองเรียก');
         if (ticket.status !== 'called') throw new HttpError(422, 'Ticket has not been called.');
         Object.assign(ticket, { status: 'completed' });
         return { ...ticket };
     }],
 ];
 
-export async function mockApi(path, { method = 'GET', body } = {}) {
+// สิทธิ์ของแต่ละ route — ตรงกับ ->middleware('can:...') ใน routes/api.php
+const ROUTE_PERMISSIONS = [
+    ['GET', /\/tickets$/, 'queue.view'],
+    ['POST', /\/departments\/\d+\/tickets$/, 'ticket.issue'],
+    ['POST', /\/call-next$/, 'ticket.call'],
+    ['POST', /\/complete$/, 'ticket.call'],
+    ['GET', /\/my-queue$/, 'queue.view'],
+    ['GET', /\/roster$/, 'roster.view'],
+    ['POST', /\/roster\/generate$/, 'roster.manage'],
+    ['POST', /\/shifts$/, 'roster.manage'],
+    ['DELETE', /\/shifts\/\d+$/, 'roster.manage'],
+    ['GET', /\/unavailabilities$/, 'roster.view'],
+];
+
+export async function mockApi(path, { method = 'GET', body, token } = {}) {
     await delay(120 + Math.random() * 180); // ให้รู้สึกเหมือนเรียกผ่านเน็ต
 
     const url = new URL(path, 'http://demo.local');
-    for (const [routeMethod, pattern, handler] of routes) {
+    for (const [routeMethod, pattern, handler, options = {}] of routes) {
         const match = routeMethod === method && url.pathname.match(pattern);
-        if (match) return handler(match.slice(1), url.searchParams, body);
+        if (!match) continue;
+
+        let user = null;
+        if (!options.public) {
+            user = db.users.find((u) => token === `demo-${u.id}`);
+            if (!user) throw new HttpError(401, 'Unauthenticated.');
+            const hospital = url.pathname.match(/^\/hospitals\/(\d+)/);
+            forbid(hospital && Number(hospital[1]) !== user.hospital_id, 'คุณไม่ได้สังกัดโรงพยาบาลนี้');
+            const rule = ROUTE_PERMISSIONS.find(([m, re]) => m === method && re.test(url.pathname));
+            forbid(rule && !can(user, rule[2]), 'This action is unauthorized.');
+        }
+
+        return handler(match.slice(1), url.searchParams, body, user);
     }
 
     throw new HttpError(404, `No demo route for ${method} ${url.pathname}`);

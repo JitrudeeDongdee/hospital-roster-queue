@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Department;
+use App\Models\Hospital;
 use App\Models\Shift;
 use App\Models\ShiftTemplate;
 use App\Models\Staff;
@@ -20,45 +21,15 @@ class RosterService
      */
     public function violations(Staff $staff, ShiftTemplate $template, string $date): array
     {
-        $hospital = $staff->hospital;
-        [$start, $end] = $template->window($date);
-        $rest = $hospital->min_rest_hours;
-        $errors = [];
+        [$start] = $template->window($date);
+        [$from, $to] = $this->contextRange($start, $staff->hospital);
 
-        if ($template->department_id !== $staff->department_id) {
-            $errors[] = 'แพทย์ไม่ได้อยู่ในแผนกของเวรนี้';
-        }
+        // โหลดเฉพาะเวรของแพทย์คนนี้ในช่วงที่กติกาต้องใช้ (สัปดาห์นั้น ± เวลาพัก) — ใช้ index (staff_id, starts_at)
+        $shifts = $staff->shifts()->whereBetween('starts_at', [$from, $to])->get(['starts_at', 'ends_at'])
+            ->map(fn (Shift $s) => [CarbonImmutable::instance($s->starts_at), CarbonImmutable::instance($s->ends_at)]);
+        $leave = $staff->unavailabilities()->whereDate('date', $date)->exists() ? [$date] : [];
 
-        if ($staff->unavailabilities()->whereDate('date', $date)->exists()) {
-            $errors[] = 'แพทย์แจ้งลา/ไม่สะดวกในวันนี้';
-        }
-
-        // เวรที่อยู่ใกล้กันในช่วง ±เวลาพัก — ใช้ index (staff_id, starts_at)
-        $nearby = $staff->shifts()
-            ->where('starts_at', '<', $end->addHours($rest))
-            ->where('ends_at', '>', $start->subHours($rest))
-            ->get();
-
-        foreach ($nearby as $other) {
-            if ($other->starts_at < $end && $other->ends_at > $start) {
-                $errors[] = "เวรซ้อนกับเวร {$other->starts_at->format('d/m H:i')}–{$other->ends_at->format('H:i')}";
-            } else {
-                $errors[] = "พักน้อยกว่า {$rest} ชม. ก่อน/หลังเวร {$other->starts_at->format('d/m H:i')}";
-            }
-        }
-
-        $weekStart = $start->startOfWeek();
-        $weekHours = $staff->shifts()
-            ->whereBetween('starts_at', [$weekStart, $weekStart->endOfWeek()])
-            ->get()
-            ->sum(fn (Shift $s) => $s->starts_at->diffInMinutes($s->ends_at) / 60);
-        $total = $weekHours + $start->diffInMinutes($end) / 60;
-
-        if ($total > $hospital->max_weekly_hours) {
-            $errors[] = "ชั่วโมงสัปดาห์นี้จะเป็น {$total} ชม. เกิน {$hospital->max_weekly_hours} ชม.";
-        }
-
-        return $errors;
+        return $this->check($staff, $template, $date, $shifts->all(), $leave, $staff->hospital);
     }
 
     public function assign(Staff $staff, ShiftTemplate $template, string $date): Shift
@@ -88,13 +59,13 @@ class RosterService
             ->with('staff:id,name', 'staff.skills:id')
             ->orderBy('starts_at')
             ->get();
+        $bySlot = $shifts->groupBy(fn (Shift $s) => $s->shift_template_id.'|'.$s->shift_date->toDateString());
 
         $gaps = [];
         foreach (CarbonPeriod::create($from, $to) as $day) {
             $date = $day->toDateString();
             foreach ($templates as $template) {
-                $assigned = $shifts->filter(fn ($s) => $s->shift_template_id === $template->id && $s->shift_date->toDateString() === $date);
-                $problem = $this->coverageProblem($template, $assigned->pluck('staff'));
+                $problem = $this->coverageProblem($template, ($bySlot["{$template->id}|{$date}"] ?? collect())->pluck('staff'));
                 if ($problem) {
                     $gaps[] = ['date' => $date, 'shift_template_id' => $template->id, 'problem' => $problem];
                 }
@@ -115,28 +86,47 @@ class RosterService
     }
 
     /**
-     * สร้างตารางเวรอัตโนมัติ (greedy): เติมเฉพาะช่องที่ยังขาด ไม่ลบเวรที่แอดมินลงไว้แล้ว
-     * ลำดับเลือกหมอ: ผ่านกติกา → มีความเชี่ยวชาญที่ช่องนั้นยังขาด → ชั่วโมงสะสมน้อยสุด (กระจายเวรให้เท่า ๆ กัน)
+     * สร้างตารางเวรอัตโนมัติทั้งเดือน (greedy): เติมเฉพาะช่องที่ยังขาด ไม่ลบเวรที่แอดมินลงไว้แล้ว
+     * ลำดับเลือกหมอ: ผ่านกติกา → มีความเชี่ยวชาญที่ช่องนั้นยังขาด → ชั่วโมงสะสมในช่วงนี้น้อยสุด (กระจายเวรให้เท่า ๆ กัน)
+     *
+     * โหลดเวรและวันลาของทุกคนมาครั้งเดียว แล้วตรวจกติกาใน memory ด้วย check() ตัวเดียวกับตอนลงเวรเอง
+     * — จัดทั้งเดือนจึงใช้ query คงที่ ไม่ได้ยิงฐานข้อมูลทุกครั้งที่ลองหมอแต่ละคน
      */
     public function generate(Department $department, string $from, string $to): array
     {
+        $hospital = $department->hospital;
         $templates = $department->shiftTemplates()->get();
-        $doctors = $department->staff()->where('is_active', true)->with('skills:id', 'hospital')->get();
-        $hours = $doctors->mapWithKeys(fn (Staff $d) => [$d->id => $this->hoursBetween($d, $from, $to)]);
+        $doctors = $department->staff()->where('is_active', true)->with('skills:id')->get();
+        $doctorById = $doctors->keyBy('id');
+
+        [$loadFrom] = $this->contextRange(CarbonImmutable::parse($from), $hospital);
+        [, $loadTo] = $this->contextRange(CarbonImmutable::parse($to)->addDay(), $hospital);
+
+        $existing = Shift::whereIn('staff_id', $doctors->pluck('id'))->whereBetween('starts_at', [$loadFrom, $loadTo])->get();
+        $shiftsOf = $doctors->mapWithKeys(fn (Staff $d) => [$d->id => $existing->where('staff_id', $d->id)
+            ->map(fn (Shift $s) => [CarbonImmutable::instance($s->starts_at), CarbonImmutable::instance($s->ends_at)])->values()->all()])->all();
+        $leaveOf = DB::table('staff_unavailabilities')->whereIn('staff_id', $doctors->pluck('id'))->whereBetween('date', [$from, $to])->get()
+            ->groupBy('staff_id')->map(fn ($rows) => $rows->map(fn ($r) => substr($r->date, 0, 10))->all())->all();
+        $slots = Shift::where('department_id', $department->id)->whereBetween('shift_date', [$from, $to])->get()
+            ->groupBy(fn (Shift $s) => $s->shift_template_id.'|'.$s->shift_date->toDateString())
+            ->map(fn ($group) => $group->map(fn (Shift $s) => $doctorById[$s->staff_id] ?? $s->staff)->filter()->values());
+        $hours = $doctors->mapWithKeys(fn (Staff $d) => [$d->id => $existing->where('staff_id', $d->id)
+            ->filter(fn (Shift $s) => $s->shift_date->between($from, $to))
+            ->sum(fn (Shift $s) => $s->starts_at->diffInMinutes($s->ends_at) / 60)])->all();
         $created = 0;
 
-        DB::transaction(function () use ($templates, $doctors, $from, $to, &$hours, &$created) {
+        DB::transaction(function () use ($templates, $doctors, $from, $to, $hospital, &$shiftsOf, $leaveOf, &$slots, &$hours, &$created) {
             foreach (CarbonPeriod::create($from, $to) as $day) {
                 $date = $day->toDateString();
                 foreach ($templates as $template) {
-                    $assigned = Shift::where('shift_template_id', $template->id)->whereDate('shift_date', $date)->with('staff.skills:id')->get()->pluck('staff');
+                    $assigned = $slots["{$template->id}|{$date}"] ?? collect();
 
                     while ($this->coverageProblem($template, $assigned)) {
                         $needSkill = $template->required_skill_id && ! $this->hasSkill($assigned, $template->required_skill_id);
 
                         $pick = $doctors
                             ->reject(fn (Staff $d) => $assigned->contains('id', $d->id))
-                            ->filter(fn (Staff $d) => $this->violations($d, $template, $date) === [])
+                            ->filter(fn (Staff $d) => $this->check($d, $template, $date, $shiftsOf[$d->id], $leaveOf[$d->id] ?? [], $hospital) === [])
                             ->sortBy(fn (Staff $d) => [
                                 $needSkill && ! $d->skills->contains('id', $template->required_skill_id) ? 1 : 0,
                                 $hours[$d->id],
@@ -149,15 +139,69 @@ class RosterService
                         }
 
                         $shift = $this->assign($pick, $template, $date);
+                        $shiftsOf[$pick->id][] = [CarbonImmutable::instance($shift->starts_at), CarbonImmutable::instance($shift->ends_at)];
                         $hours[$pick->id] += $shift->starts_at->diffInMinutes($shift->ends_at) / 60;
-                        $assigned->push($pick);
+                        $assigned = $assigned->push($pick);
                         $created++;
                     }
+
+                    $slots["{$template->id}|{$date}"] = $assigned;
                 }
             }
         });
 
         return ['created' => $created] + $this->roster($department, $from, $to);
+    }
+
+    /**
+     * ตรวจกติกาจากข้อมูลที่โหลดมาแล้ว (ไม่ query) — ใช้ทั้งตอนลงเวรเองและตอนจัดอัตโนมัติ
+     *
+     * @param  list<array{0: CarbonImmutable, 1: CarbonImmutable}>  $shifts  เวรของแพทย์คนนี้ (อย่างน้อยช่วงสัปดาห์นั้น ± เวลาพัก)
+     * @param  list<string>  $leaveDates
+     */
+    private function check(Staff $staff, ShiftTemplate $template, string $date, array $shifts, array $leaveDates, Hospital $hospital): array
+    {
+        [$start, $end] = $template->window($date);
+        $rest = $hospital->min_rest_hours;
+        $errors = [];
+
+        if ($template->department_id !== $staff->department_id) {
+            $errors[] = 'แพทย์ไม่ได้อยู่ในแผนกของเวรนี้';
+        }
+
+        if (in_array($date, $leaveDates, true)) {
+            $errors[] = 'แพทย์แจ้งลา/ไม่สะดวกในวันนี้';
+        }
+
+        $weekStart = $start->startOfWeek();
+        $weekEnd = $weekStart->endOfWeek();
+        $total = $start->diffInMinutes($end) / 60;
+
+        foreach ($shifts as [$otherStart, $otherEnd]) {
+            if ($otherStart < $end && $otherEnd > $start) {
+                $errors[] = "เวรซ้อนกับเวร {$otherStart->format('d/m H:i')}–{$otherEnd->format('H:i')}";
+            } elseif ($otherStart < $end->addHours($rest) && $otherEnd > $start->subHours($rest)) {
+                $errors[] = "พักน้อยกว่า {$rest} ชม. ก่อน/หลังเวร {$otherStart->format('d/m H:i')}";
+            }
+
+            if ($otherStart->between($weekStart, $weekEnd)) {
+                $total += $otherStart->diffInMinutes($otherEnd) / 60;
+            }
+        }
+
+        if ($total > $hospital->max_weekly_hours) {
+            $errors[] = "ชั่วโมงสัปดาห์นี้จะเป็น {$total} ชม. เกิน {$hospital->max_weekly_hours} ชม.";
+        }
+
+        return $errors;
+    }
+
+    /** ช่วงเวลาที่ต้องรู้เวรเดิมเพื่อตรวจกติกาของเวรที่เริ่ม $start: ทั้งสัปดาห์ + เผื่อเวลาพักและเวรข้ามคืน */
+    private function contextRange(CarbonImmutable $start, Hospital $hospital): array
+    {
+        $margin = max(24, $hospital->min_rest_hours + 16);
+
+        return [$start->startOfWeek()->subHours($margin), $start->endOfWeek()->addHours($margin)];
     }
 
     private function coverageProblem(ShiftTemplate $template, Collection $doctors): ?string
@@ -176,11 +220,5 @@ class RosterService
     private function hasSkill(Collection $doctors, int $skillId): bool
     {
         return $doctors->contains(fn (Staff $d) => $d->skills->contains('id', $skillId));
-    }
-
-    private function hoursBetween(Staff $staff, string $from, string $to): float
-    {
-        return $staff->shifts()->whereBetween('shift_date', [$from, $to])->get()
-            ->sum(fn (Shift $s) => $s->starts_at->diffInMinutes($s->ends_at) / 60);
     }
 }

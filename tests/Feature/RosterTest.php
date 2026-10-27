@@ -32,6 +32,7 @@ class RosterTest extends TestCase
                 'department_id' => $this->opd->id, 'code' => $t[0], 'name' => $t[0],
                 'start_time' => $t[1], 'end_time' => $t[2], 'min_staff' => 1, 'sort_order' => $i,
             ]))->all();
+        $this->actingAsRole('admin', $this->hospital);
     }
 
     private function doctor(string $name = 'Dr. A', ?Department $department = null): Staff
@@ -43,6 +44,8 @@ class RosterTest extends TestCase
 
     private function assign(Staff $doctor, ShiftTemplate $template, string $date)
     {
+        $this->actingAsRole('admin', $this->hospital);
+
         return $this->postJson("/api/hospitals/{$this->hospital->id}/shifts", [
             'staff_id' => $doctor->id, 'shift_template_id' => $template->id, 'date' => $date,
         ]);
@@ -131,6 +134,32 @@ class RosterTest extends TestCase
         $this->assertLessThanOrEqual(7, $perDoctor->max());
     }
 
+    public function test_generate_fills_a_whole_month_without_breaking_any_rule(): void
+    {
+        $this->hospital->update(['max_weekly_hours' => 60]);
+        $this->morning->update(['min_staff' => 2]);
+        $doctors = collect(range(1, 6))->map(fn ($i) => $this->doctor("Dr. {$i}"));
+        $this->postJson("/api/hospitals/{$this->hospital->id}/staff/{$doctors[0]->id}/unavailabilities", ['date' => '2026-11-10'])->assertCreated();
+
+        $result = $this->postJson("/api/hospitals/{$this->hospital->id}/departments/{$this->opd->id}/roster/generate", ['from' => '2026-11-01', 'to' => '2026-11-30'])
+            ->assertOk()->json();
+
+        $this->assertSame(30 * 4, $result['created']); // เช้า 2 + บ่าย 1 + ดึก 1 ต่อวัน
+        $this->assertSame([], $result['gaps']);
+
+        $shifts = \App\Models\Shift::orderBy('starts_at')->get();
+        foreach ($shifts->groupBy('staff_id') as $own) {
+            // พักอย่างน้อย 8 ชม. ระหว่างเวรต่อเนื่อง และไม่เกิน 60 ชม. ในทุกสัปดาห์
+            $own->sliding(2)->each(fn ($pair) => $this->assertGreaterThanOrEqual(8 * 60, $pair->first()->ends_at->diffInMinutes($pair->last()->starts_at)));
+            $own->groupBy(fn ($s) => $s->starts_at->startOfWeek()->toDateString())
+                ->each(fn ($week) => $this->assertLessThanOrEqual(60, $week->count() * 8));
+        }
+        $this->assertFalse($shifts->contains(fn ($s) => $s->staff_id === $doctors[0]->id && $s->shift_date->toDateString() === '2026-11-10'));
+        // กระจายชั่วโมงใกล้เคียงกัน: ห่างกันไม่เกิน 2 เวร
+        $perDoctor = $shifts->countBy('staff_id');
+        $this->assertLessThanOrEqual(2, $perDoctor->max() - $perDoctor->min());
+    }
+
     public function test_generate_keeps_manual_shifts_and_leaves_gaps_when_rules_cannot_be_met(): void
     {
         $doctor = $this->doctor();
@@ -150,6 +179,7 @@ class RosterTest extends TestCase
         $pediatrics = Skill::create(['code' => 'PED', 'name' => 'Pediatrics']);
         $doctor = $this->doctor();
         $doctor->skills()->attach($cardio);
+        $this->actingAsRole('nurse', $this->hospital);
         $issue = fn ($skill) => $this->postJson("/api/hospitals/{$this->hospital->id}/departments/{$this->opd->id}/tickets",
             ['patient_ref' => 'P1', 'required_skill_id' => $skill?->id])->json('id');
 
@@ -157,6 +187,7 @@ class RosterTest extends TestCase
         $heart = $issue($cardio);
         $issue($pediatrics);
 
+        $this->actingAsDoctor($doctor);
         $this->getJson("/api/hospitals/{$this->hospital->id}/staff/{$doctor->id}/my-queue")
             ->assertOk()
             ->assertJsonCount(2, 'waiting')
@@ -172,7 +203,10 @@ class RosterTest extends TestCase
 
         $this->assign($outsider, $this->morning, '2026-11-02')->assertNotFound();
         $shift = $this->assign($this->doctor(), $this->morning, '2026-11-02')->json('id');
+
+        $this->actingAsRole('admin', $other); // แอดมินของโรงพยาบาลอื่น ใส่ id ของเราใน URL ของเขา → 404
         $this->deleteJson("/api/hospitals/{$other->id}/shifts/{$shift}")->assertNotFound();
         $this->getJson("/api/hospitals/{$other->id}/departments/{$this->opd->id}/roster?from=2026-11-02&to=2026-11-02")->assertNotFound();
+        $this->getJson("/api/hospitals/{$this->hospital->id}/departments/{$this->opd->id}/roster?from=2026-11-02&to=2026-11-02")->assertForbidden();
     }
 }
