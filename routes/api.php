@@ -69,6 +69,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('shift-requests/{shiftRequest}', [ShiftRequestController::class, 'destroy'])->middleware('can:shift.request.own');
 
         // เวรที่อยากลง/ไม่สะดวก ก่อนจัดร่าง
+        Route::get('staff/{staff}/preferences/months', [ShiftPreferenceController::class, 'months']); // ตรวจสิทธิ์ใน controller
         Route::get('staff/{staff}/preferences', [ShiftPreferenceController::class, 'show']); // ตรวจสิทธิ์ใน controller
         Route::put('staff/{staff}/preferences', [ShiftPreferenceController::class, 'update'])->middleware('can:shift.request.own');
     });

@@ -427,10 +427,18 @@ function isoOf(d) {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
+const leaveOf = (member, month) => db.unavailabilities
+    .filter((u) => u.staff_id === member.id && u.date.startsWith(month) && ['approved', 'pending'].includes(u.status))
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map((u) => ({ date: u.date, status: u.status }));
+const monthLocked = (member, month) => db.shifts.some((x) => x.department_id === member.department_id && x.shift_date.startsWith(month));
+
 function preferencesOf(member, month) {
     return {
         month,
-        locked: db.shifts.some((x) => x.department_id === member.department_id && x.shift_date.startsWith(month)),
+        locked: monthLocked(member, month),
+        max_weekly_hours: db.hospitals.find((h) => h.id === member.hospital_id).max_weekly_hours,
+        leave: leaveOf(member, month),
         items: db.preferences.filter((p) => p.staff_id === member.id && p.date.startsWith(month))
             .sort((a, b) => a.date.localeCompare(b.date))
             .map(({ date, shift_template_id, kind }) => ({ date, shift_template_id, kind })),
@@ -731,6 +739,15 @@ const routes = [
         return null;
     }],
 
+    ['GET', /^\/hospitals\/(\d+)\/staff\/(\d+)\/preferences\/months$/, ([h, s], _q, _b, user) => {
+        const member = findIn(db.staff, s, h);
+        forbid(!(can(user, 'roster.manage') || (can(user, 'shift.request.own') && user.staff_id === member.id)), 'This action is unauthorized.');
+        const months = [...new Set(db.preferences.filter((p) => p.staff_id === member.id).map((p) => p.date.slice(0, 7)))].sort().reverse();
+        return months.map((month) => {
+            const mine = db.preferences.filter((p) => p.staff_id === member.id && p.date.startsWith(month));
+            return { month, prefer: mine.filter((p) => p.kind === 'prefer').length, avoid: mine.filter((p) => p.kind === 'avoid').length, locked: monthLocked(member, month) };
+        });
+    }],
     ['GET', /^\/hospitals\/(\d+)\/staff\/(\d+)\/preferences$/, ([h, s], query, _b, user) => {
         const member = findIn(db.staff, s, h);
         forbid(!(can(user, 'roster.manage') || (can(user, 'shift.request.own') && user.staff_id === member.id)), 'This action is unauthorized.');
@@ -741,6 +758,8 @@ const routes = [
         forbid(user.staff_id !== member.id, 'ส่งได้เฉพาะของตัวเอง');
         const month = query.get('month');
         if (preferencesOf(member, month).locked) fail422('month', ['เดือนนี้แผนกจัดเวรแล้ว ถ้าต้องการเปลี่ยนให้ขอย้าย/แลกเวรแทน']);
+        const onLeave = [...new Set(body.items.map((i) => i.date))].filter((d) => leaveOf(member, month).some((l) => l.date === d));
+        if (onLeave.length) fail422('items', [`วันที่ลาไว้แล้วเลือกเวรไม่ได้: ${onLeave.join(', ')}`]);
         for (const i of body.items) {
             if (!i.date.startsWith(month)) fail422('items', ['วันที่ต้องอยู่ในเดือนที่เลือก']);
             if (!db.templates.some((t) => t.id === i.shift_template_id && t.department_id === member.department_id)) fail422('items', ['ช่วงเวรไม่ถูกต้อง']);

@@ -215,6 +215,35 @@ class ShiftRequestTest extends TestCase
         $this->putJson("{$url}?month=2026-12", ['items' => []])->assertUnprocessable()->assertJsonValidationErrors('month');
     }
 
+    public function test_preferences_show_leave_days_refuse_them_and_list_past_months(): void
+    {
+        $url = "/api/hospitals/{$this->hospital->id}/staff/{$this->a->id}/preferences";
+        $this->a->unavailabilities()->create(['date' => '2026-12-05', 'status' => 'approved']);
+        $this->a->unavailabilities()->create(['date' => '2026-12-06', 'status' => 'pending']);
+        $this->a->unavailabilities()->create(['date' => '2026-12-07', 'status' => 'rejected']);
+        $this->actingAsDoctor($this->a);
+
+        $this->getJson("{$url}?month=2026-12")->assertOk()
+            ->assertJsonPath('max_weekly_hours', 60)
+            ->assertJsonPath('leave', [['date' => '2026-12-05', 'status' => 'approved'], ['date' => '2026-12-06', 'status' => 'pending']]);
+
+        // วันลา (อนุมัติแล้วหรือรออนุมัติ) เลือกไม่ได้ · วันที่คำขอลาไม่อนุมัติ เลือกได้
+        $this->putJson("{$url}?month=2026-12", ['items' => [['date' => '2026-12-06', 'shift_template_id' => $this->morning->id, 'kind' => 'prefer']]])
+            ->assertUnprocessable()->assertJsonPath('errors.items.0', fn ($m) => str_contains($m, '2026-12-06'));
+        $this->putJson("{$url}?month=2026-12", ['items' => [['date' => '2026-12-07', 'shift_template_id' => $this->morning->id, 'kind' => 'prefer']]])->assertOk();
+        $this->putJson("{$url}?month=2027-01", ['items' => [
+            ['date' => '2027-01-02', 'shift_template_id' => $this->morning->id, 'kind' => 'prefer'],
+            ['date' => '2027-01-03', 'shift_template_id' => $this->night->id, 'kind' => 'avoid'],
+        ]])->assertOk();
+
+        $this->getJson("{$url}/months")->assertOk()->assertJson([
+            ['month' => '2027-01', 'prefer' => 1, 'avoid' => 1, 'locked' => false],
+            ['month' => '2026-12', 'prefer' => 1, 'avoid' => 0, 'locked' => false],
+        ]);
+        $this->actingAsDoctor($this->b);
+        $this->getJson("{$url}/months")->assertForbidden();
+    }
+
     public function test_generator_puts_doctors_on_shifts_they_prefer_and_avoids_the_others(): void
     {
         $c = $this->doctor('Dr. C');
