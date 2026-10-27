@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-27
+
 ### Added
 - รายการคิวมีคอลัมน์ "แพทย์": คิวที่เรียกแล้ว/เสร็จแล้วแสดงแพทย์ที่ตรวจ · คิวที่ยังรอแสดงแพทย์ที่อยู่เวรตอนนี้ตามตารางเวรและรับคิวนั้นได้ (ความเชี่ยวชาญตรง) ถ้าไม่มีใครรับได้ขึ้นสีแดง (`GET /on-duty`)
 - ข้อมูลเดโม: คิวที่ตรวจแล้วของโรงพยาบาลแรกผูกกับแพทย์ที่อยู่เวรตอนออกบัตร
@@ -59,7 +61,8 @@ release แรก — ตัวอย่างระบบจัดเวรแ�
 - ตั้ง timezone เป็น `Asia/Bangkok` — คิวที่ออกช่วง 00:00–07:00 ไม่ถูกนับเป็นวันก่อนหน้าแล้ว
 - หัวตารางเวรไม่มีแถวโผล่ทะลุขึ้นมาตอนเลื่อน
 
-[Unreleased]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/JitrudeeDongdee/waka-crud/releases/tag/v0.1.0
