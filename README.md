@@ -215,3 +215,7 @@ php artisan test
 - Real sign-in (hospital SSO, or password + MFA). Only passwordless demo users exist today.
 - Live updates. The page polls every 15 seconds; Laravel Reverb (WebSockets) would replace that.
 - Partitioning `queue_tickets` by month, once the table grows past tens of millions of rows.
+
+## License
+
+[MIT](LICENSE) © 2026 JitrudeeDongdee

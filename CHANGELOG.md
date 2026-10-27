@@ -5,6 +5,9 @@
 
 ## [Unreleased]
 
+### Added
+- ไฟล์ `LICENSE` (MIT) และหัวข้อ License ท้าย README
+
 ## [0.7.8] - 2026-10-27
 
 ### Changed
