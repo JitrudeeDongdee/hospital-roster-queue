@@ -1,0 +1,95 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-cd-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Tests (${{ matrix.db }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        db: [sqlite, mysql]
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: hospital_queue_test
+          MYSQL_USER: queue
+          MYSQL_PASSWORD: queue
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: pdo_sqlite, pdo_mysql
+          coverage: none
+      - uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: cp .env.example .env && php artisan key:generate
+      # sqlite ใช้ค่าใน phpunit.xml (:memory:) — mysql override ด้วย env ของ job นี้
+      - name: Use MySQL
+        if: matrix.db == 'mysql'
+        run: |
+          {
+            echo "DB_CONNECTION=mysql"
+            echo "DB_HOST=127.0.0.1"
+            echo "DB_PORT=3306"
+            echo "DB_DATABASE=hospital_queue_test"
+            echo "DB_USERNAME=queue"
+            echo "DB_PASSWORD=queue"
+          } >> "$GITHUB_ENV"
+      - run: php artisan test
+
+  frontend:
+    name: Frontend build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build # build ที่ Laravel ใช้
+      - run: npm run build:pages # build เดโมสำหรับ GitHub Pages
+      - uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request'
+        with:
+          path: dist-pages
+
+  deploy:
+    name: Deploy to GitHub Pages
+    # deploy เฉพาะเมื่อทดสอบผ่านทั้ง SQLite และ MySQL และ build หน้าเว็บผ่าน
+    needs: [test, frontend]
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
