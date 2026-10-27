@@ -1,6 +1,6 @@
 # ระบบจัดเวรแพทย์และจัดคิวโรงพยาบาล — Architecture
 
-จิตฤดี ดวงดี · 27 ต.ค. 2569 · โค้ด: [github.com/JitrudeeDongdee/waka-crud](https://github.com/JitrudeeDongdee/waka-crud) · เดโม: [jitrudeedongdee.github.io/waka-crud](https://jitrudeedongdee.github.io/waka-crud/) · ตรงกับเวอร์ชัน v0.7.9
+จิตฤดี ดวงดี · 27 ต.ค. 2569 · โค้ด: [github.com/JitrudeeDongdee/hospital-roster-queue](https://github.com/JitrudeeDongdee/hospital-roster-queue) · เดโม: [jitrudeedongdee.github.io/hospital-roster-queue](https://jitrudeedongdee.github.io/hospital-roster-queue/) · ตรงกับเวอร์ชัน v0.7.9
 
 เอกสารนี้อธิบายระบบที่เริ่มจาก 15 โรงพยาบาลและขยายไปถึง 30 แห่ง ได้แก่ ขั้นตอนการทำงาน (BPMN), โครงสร้างฐานข้อมูล (ER diagram), server และ network บน AWS ทีละขั้นของการขยาย, ข้อเสนอฟีเจอร์ถัดไป และหน้าจอเดโม
 
@@ -305,96 +305,96 @@
 
 ### 5.1 หน้าเลือกผู้ใช้ทดลอง
 
-เดโมไม่มีรหัสผ่าน ให้เลือกผู้ใช้ตามบทบาท แต่ละกล่องบอกสิทธิ์ของบทบาทนั้น แพทย์มีครบทุกคนของโรงพยาบาลแรก ระบบจริงใช้ SSO ของโรงพยาบาลแทน (เปิดหน้านี้ได้เฉพาะเมื่อ `DEMO_LOGIN=true`)<br>**เปิดดู:** [https://jitrudeedongdee.github.io/waka-crud/login](https://jitrudeedongdee.github.io/waka-crud/login)
+เดโมไม่มีรหัสผ่าน ให้เลือกผู้ใช้ตามบทบาท แต่ละกล่องบอกสิทธิ์ของบทบาทนั้น แพทย์มีครบทุกคนของโรงพยาบาลแรก ระบบจริงใช้ SSO ของโรงพยาบาลแทน (เปิดหน้านี้ได้เฉพาะเมื่อ `DEMO_LOGIN=true`)<br>**เปิดดู:** [https://jitrudeedongdee.github.io/hospital-roster-queue/login](https://jitrudeedongdee.github.io/hospital-roster-queue/login)
 
 ![หน้าเลือกผู้ใช้ทดลอง](screenshots/01-login.jpg "ov") ![หน้าเลือกผู้ใช้ทดลอง (ขยาย)](screenshots/01-login-detail.jpg "dt")
 
 ### 5.2 ตารางเวรรายเดือน (หัวหน้าแผนก)
 
-ช่องสีแดง = คนไม่ครบ · กล่องส้ม "ต้องเลือก" = มีแพทย์อยากลงช่องนี้มากกว่าที่ต้องการ ระบบจึงไม่เลือกให้ กดชื่อเพื่อเลือก · ชิปแดง ⚠ = ลงเวรได้แต่ผิดกติกาแบบเตือน (ในภาพ Dr. OPD-3 พักไม่ถึง 8 ชม.) และชื่อในแผงชั่วโมงเป็นสีแดงด้วย · ชิปเขียว ✓ = ได้ตามที่อยากลง · ทุก dropdown ค้นหาได้<br>**เปิดดู:** [https://jitrudeedongdee.github.io/waka-crud/roster/table?dept=1&month=2027-01](https://jitrudeedongdee.github.io/waka-crud/roster/table?dept=1&month=2027-01) · ล็อกอินเป็น หัวหน้าแผนก
+ช่องสีแดง = คนไม่ครบ · กล่องส้ม "ต้องเลือก" = มีแพทย์อยากลงช่องนี้มากกว่าที่ต้องการ ระบบจึงไม่เลือกให้ กดชื่อเพื่อเลือก · ชิปแดง ⚠ = ลงเวรได้แต่ผิดกติกาแบบเตือน (ในภาพ Dr. OPD-3 พักไม่ถึง 8 ชม.) และชื่อในแผงชั่วโมงเป็นสีแดงด้วย · ชิปเขียว ✓ = ได้ตามที่อยากลง · ทุก dropdown ค้นหาได้<br>**เปิดดู:** [https://jitrudeedongdee.github.io/hospital-roster-queue/roster/table?dept=1&month=2027-01](https://jitrudeedongdee.github.io/hospital-roster-queue/roster/table?dept=1&month=2027-01) · ล็อกอินเป็น หัวหน้าแผนก
 
 ![ตารางเวรรายเดือน (หัวหน้าแผนก)](screenshots/02-roster-table.jpg "ov") ![ตารางเวรรายเดือน (หัวหน้าแผนก) (ขยาย)](screenshots/02-roster-table-detail.jpg "dt")
 
 ### 5.3 ปฏิทินเวร (ทุกคน)
 
-ตัวกรองแพทย์ตัวเดียวกับตาราง สีตามช่วงเวร วันที่มีช่องขาดคนมีกรอบแดง<br>**เปิดดู:** [https://jitrudeedongdee.github.io/waka-crud/roster/calendar?dept=1&month=2027-01](https://jitrudeedongdee.github.io/waka-crud/roster/calendar?dept=1&month=2027-01) · ล็อกอินเป็น หัวหน้าแผนก
+ตัวกรองแพทย์ตัวเดียวกับตาราง สีตามช่วงเวร วันที่มีช่องขาดคนมีกรอบแดง<br>**เปิดดู:** [https://jitrudeedongdee.github.io/hospital-roster-queue/roster/calendar?dept=1&month=2027-01](https://jitrudeedongdee.github.io/hospital-roster-queue/roster/calendar?dept=1&month=2027-01) · ล็อกอินเป็น หัวหน้าแผนก
 
 ![ปฏิทินเวร (ทุกคน)](screenshots/03-roster-calendar.jpg "ov") ![ปฏิทินเวร (ทุกคน) (ขยาย)](screenshots/03-roster-calendar-detail.jpg "dt")
 
 ### 5.4 ปฏิทินเวรเมื่อเลือกแพทย์คนเดียว
 
-สรุปเวรและชั่วโมงในเดือน วันลา และชั่วโมงต่อสัปดาห์เทียบเพดานทางขวา เวรที่ผิดกติกาเป็นสีแดง<br>**เปิดดู:** [https://jitrudeedongdee.github.io/waka-crud/roster/calendar?dept=1&month=2027-01&doctors=3](https://jitrudeedongdee.github.io/waka-crud/roster/calendar?dept=1&month=2027-01&doctors=3) · ล็อกอินเป็น หัวหน้าแผนก
+สรุปเวรและชั่วโมงในเดือน วันลา และชั่วโมงต่อสัปดาห์เทียบเพดานทางขวา เวรที่ผิดกติกาเป็นสีแดง<br>**เปิดดู:** [https://jitrudeedongdee.github.io/hospital-roster-queue/roster/calendar?dept=1&month=2027-01&doctors=3](https://jitrudeedongdee.github.io/hospital-roster-queue/roster/calendar?dept=1&month=2027-01&doctors=3) · ล็อกอินเป็น หัวหน้าแผนก
 
 ![ปฏิทินเวรเมื่อเลือกแพทย์คนเดียว](screenshots/04-roster-calendar-doctor.jpg "ov") ![ปฏิทินเวรเมื่อเลือกแพทย์คนเดียว (ขยาย)](screenshots/04-roster-calendar-doctor-detail.jpg "dt")
 
 ### 5.5 ร้องขอข้างตารางเวร (แพทย์)
 
-แพทย์เห็นเวรของตัวเองเป็นสีเขียว คลิกชิปเวรที่ยังไม่เริ่มแล้วกล่อง "ร้องขอ" สลับไปแท็บขอย้าย/แลกเวรพร้อมเลือกเวรนั้นให้ เลือกแลกกับเพื่อนหรือย้ายไปช่องอื่นได้โดยยังเห็นตาราง<br>**เปิดดู:** [https://jitrudeedongdee.github.io/waka-crud/roster/table?dept=1&doctors=1](https://jitrudeedongdee.github.io/waka-crud/roster/table?dept=1&doctors=1) · ล็อกอินเป็น Dr. OPD-1
+แพทย์เห็นเวรของตัวเองเป็นสีเขียว คลิกชิปเวรที่ยังไม่เริ่มแล้วกล่อง "ร้องขอ" สลับไปแท็บขอย้าย/แลกเวรพร้อมเลือกเวรนั้นให้ เลือกแลกกับเพื่อนหรือย้ายไปช่องอื่นได้โดยยังเห็นตาราง<br>**เปิดดู:** [https://jitrudeedongdee.github.io/hospital-roster-queue/roster/table?dept=1&doctors=1](https://jitrudeedongdee.github.io/hospital-roster-queue/roster/table?dept=1&doctors=1) · ล็อกอินเป็น Dr. OPD-1
 
 ![ร้องขอข้างตารางเวร (แพทย์)](screenshots/05-roster-request-panel.jpg "ov") ![ร้องขอข้างตารางเวร (แพทย์) (ขยาย)](screenshots/05-roster-request-panel-detail.jpg "dt")
 
 ### 5.6 เวรที่อยากลง (แพทย์)
 
-กดช่องเพื่อสลับ อยากลง / ไม่สะดวก · สรุปชั่วโมงรายสัปดาห์เทียบเพดาน เกินแล้วยังเลือกได้แต่เป็นสีแดง · วันที่ขอลาไว้เลือกไม่ได้ · ประวัติรายเดือนทางขวา กดเพื่อเปิดเดือนนั้น<br>**เปิดดู:** [https://jitrudeedongdee.github.io/waka-crud/preferences?month=2026-12](https://jitrudeedongdee.github.io/waka-crud/preferences?month=2026-12) · ล็อกอินเป็น Dr. OPD-1
+กดช่องเพื่อสลับ อยากลง / ไม่สะดวก · สรุปชั่วโมงรายสัปดาห์เทียบเพดาน เกินแล้วยังเลือกได้แต่เป็นสีแดง · วันที่ขอลาไว้เลือกไม่ได้ · ประวัติรายเดือนทางขวา กดเพื่อเปิดเดือนนั้น<br>**เปิดดู:** [https://jitrudeedongdee.github.io/hospital-roster-queue/preferences?month=2026-12](https://jitrudeedongdee.github.io/hospital-roster-queue/preferences?month=2026-12) · ล็อกอินเป็น Dr. OPD-1
 
 ![เวรที่อยากลง (แพทย์)](screenshots/06-preferences.jpg "ov") ![เวรที่อยากลง (แพทย์) (ขยาย)](screenshots/06-preferences-detail.jpg "dt")
 
 ### 5.7 คำขอแลกเวรที่เพื่อนส่งมา (แพทย์ผู้ถูกขอ)
 
-เห็นว่าเพื่อนขอแลกเวรไหนกับเวรไหน พร้อมปัญหาที่ระบบตรวจเจอล่วงหน้า ถ้าตอบรับและไม่ผิดกติกา ระบบสลับให้ทันที<br>**เปิดดู:** [https://jitrudeedongdee.github.io/waka-crud/requests/shifts](https://jitrudeedongdee.github.io/waka-crud/requests/shifts) · ล็อกอินเป็น Dr. OPD-2
+เห็นว่าเพื่อนขอแลกเวรไหนกับเวรไหน พร้อมปัญหาที่ระบบตรวจเจอล่วงหน้า ถ้าตอบรับและไม่ผิดกติกา ระบบสลับให้ทันที<br>**เปิดดู:** [https://jitrudeedongdee.github.io/hospital-roster-queue/requests/shifts](https://jitrudeedongdee.github.io/hospital-roster-queue/requests/shifts) · ล็อกอินเป็น Dr. OPD-2
 
 ![คำขอแลกเวรที่เพื่อนส่งมา (แพทย์ผู้ถูกขอ)](screenshots/07-requests-swap-incoming.jpg "ov") ![คำขอแลกเวรที่เพื่อนส่งมา (แพทย์ผู้ถูกขอ) (ขยาย)](screenshots/07-requests-swap-incoming-detail.jpg "dt")
 
 ### 5.8 คำขอที่รอหัวหน้าเคลียร์
 
-คำขอแลกที่เพื่อนตอบรับแล้วแต่ผิดกติกา หัวหน้าเปิดตารางของแพทย์ที่เกี่ยวข้อง เคลียร์ แล้วอนุมัติ (ระบบไม่ให้อนุมัติถ้ายังผิดกติกา) หรือไม่อนุมัติพร้อมหมายเหตุ<br>**เปิดดู:** [https://jitrudeedongdee.github.io/waka-crud/requests/shifts](https://jitrudeedongdee.github.io/waka-crud/requests/shifts) · ล็อกอินเป็น หัวหน้าแผนก
+คำขอแลกที่เพื่อนตอบรับแล้วแต่ผิดกติกา หัวหน้าเปิดตารางของแพทย์ที่เกี่ยวข้อง เคลียร์ แล้วอนุมัติ (ระบบไม่ให้อนุมัติถ้ายังผิดกติกา) หรือไม่อนุมัติพร้อมหมายเหตุ<br>**เปิดดู:** [https://jitrudeedongdee.github.io/hospital-roster-queue/requests/shifts](https://jitrudeedongdee.github.io/hospital-roster-queue/requests/shifts) · ล็อกอินเป็น หัวหน้าแผนก
 
 ![คำขอที่รอหัวหน้าเคลียร์](screenshots/08-requests-swap-admin.jpg "ov") ![คำขอที่รอหัวหน้าเคลียร์ (ขยาย)](screenshots/08-requests-swap-admin-detail.jpg "dt")
 
 ### 5.9 คำขอลา (หัวหน้าแผนก)
 
-กล่องคำขอแยกตามสถานะ ถ้าวันนั้นแพทย์มีเวรอยู่ ระบบเตือนให้ย้ายเวรก่อนและปุ่มอนุมัติกดไม่ได้<br>**เปิดดู:** [https://jitrudeedongdee.github.io/waka-crud/requests/leave](https://jitrudeedongdee.github.io/waka-crud/requests/leave) · ล็อกอินเป็น หัวหน้าแผนก
+กล่องคำขอแยกตามสถานะ ถ้าวันนั้นแพทย์มีเวรอยู่ ระบบเตือนให้ย้ายเวรก่อนและปุ่มอนุมัติกดไม่ได้<br>**เปิดดู:** [https://jitrudeedongdee.github.io/hospital-roster-queue/requests/leave](https://jitrudeedongdee.github.io/hospital-roster-queue/requests/leave) · ล็อกอินเป็น หัวหน้าแผนก
 
 ![คำขอลา (หัวหน้าแผนก)](screenshots/09-requests-leave-admin.jpg "ov") ![คำขอลา (หัวหน้าแผนก) (ขยาย)](screenshots/09-requests-leave-admin-detail.jpg "dt")
 
 ### 5.10 รายการคิว (พยาบาลคัดกรอง)
 
-เลขคิวตัวเลขล้วน หลักแรกบอกแผนก · พยาบาลแก้ความเร่งด่วนและความเชี่ยวชาญของคิวที่รอเรียกได้ในแถว · คอลัมน์แพทย์บอกแพทย์ที่อยู่เวรตอนนี้และรับคิวนั้นได้ ถ้าไม่มีใครรับได้ขึ้นสีแดง · ค้นหาเลขคิวและกรองความเร่งด่วน/แพทย์ได้<br>**เปิดดู:** [https://jitrudeedongdee.github.io/waka-crud/queue/list](https://jitrudeedongdee.github.io/waka-crud/queue/list) · ล็อกอินเป็น พยาบาลคัดกรอง
+เลขคิวตัวเลขล้วน หลักแรกบอกแผนก · พยาบาลแก้ความเร่งด่วนและความเชี่ยวชาญของคิวที่รอเรียกได้ในแถว · คอลัมน์แพทย์บอกแพทย์ที่อยู่เวรตอนนี้และรับคิวนั้นได้ ถ้าไม่มีใครรับได้ขึ้นสีแดง · ค้นหาเลขคิวและกรองความเร่งด่วน/แพทย์ได้<br>**เปิดดู:** [https://jitrudeedongdee.github.io/hospital-roster-queue/queue/list](https://jitrudeedongdee.github.io/hospital-roster-queue/queue/list) · ล็อกอินเป็น พยาบาลคัดกรอง
 
 ![รายการคิว (พยาบาลคัดกรอง)](screenshots/10-queue-list-nurse.jpg "ov") ![รายการคิว (พยาบาลคัดกรอง) (ขยาย)](screenshots/10-queue-list-nurse-detail.jpg "dt")
 
 ### 5.11 ห้องตรวจของแพทย์
 
-คิวปัจจุบัน (กำลังตรวจ) พร้อมเวลาที่เรียก ปุ่มเรียกคิวถัดไปกดไม่ได้จนกว่าจะกดเสร็จสิ้น · กล่องคิวถัดไป · ในรายการ คิวที่กำลังตรวจเป็นสีม่วง คิวที่เสร็จแล้วเป็นสีเทาอยู่ด้านล่าง<br>**เปิดดู:** [https://jitrudeedongdee.github.io/waka-crud/queue/list](https://jitrudeedongdee.github.io/waka-crud/queue/list) · ล็อกอินเป็น Dr. OPD-1
+คิวปัจจุบัน (กำลังตรวจ) พร้อมเวลาที่เรียก ปุ่มเรียกคิวถัดไปกดไม่ได้จนกว่าจะกดเสร็จสิ้น · กล่องคิวถัดไป · ในรายการ คิวที่กำลังตรวจเป็นสีม่วง คิวที่เสร็จแล้วเป็นสีเทาอยู่ด้านล่าง<br>**เปิดดู:** [https://jitrudeedongdee.github.io/hospital-roster-queue/queue/list](https://jitrudeedongdee.github.io/hospital-roster-queue/queue/list) · ล็อกอินเป็น Dr. OPD-1
 
 ![ห้องตรวจของแพทย์](screenshots/11-queue-exam-room.jpg "ov") ![ห้องตรวจของแพทย์ (ขยาย)](screenshots/11-queue-exam-room-detail.jpg "dt")
 
 ### 5.12 dropdown ที่ค้นหาได้
 
-ใช้ทุกจุดในระบบ พิมพ์เพื่อกรอง (ในภาพพิมพ์ "LAB") ใช้ลูกศร/Enter ได้ รายการสูงไม่เกิน 240px แล้วเลื่อนในกล่อง<br>**เปิดดู:** [https://jitrudeedongdee.github.io/waka-crud/queue/list](https://jitrudeedongdee.github.io/waka-crud/queue/list) · ล็อกอินเป็น พยาบาลคัดกรอง
+ใช้ทุกจุดในระบบ พิมพ์เพื่อกรอง (ในภาพพิมพ์ "LAB") ใช้ลูกศร/Enter ได้ รายการสูงไม่เกิน 240px แล้วเลื่อนในกล่อง<br>**เปิดดู:** [https://jitrudeedongdee.github.io/hospital-roster-queue/queue/list](https://jitrudeedongdee.github.io/hospital-roster-queue/queue/list) · ล็อกอินเป็น พยาบาลคัดกรอง
 
 ![dropdown ที่ค้นหาได้](screenshots/12-searchable-dropdown.jpg "ov") ![dropdown ที่ค้นหาได้ (ขยาย)](screenshots/12-searchable-dropdown-detail.jpg "dt")
 
 ### 5.13 ปฏิทินคิวรายเดือน
 
-จำนวนคิว เสร็จแล้ว และเวลารอเฉลี่ยต่อวัน สีเข้มตามความหนาแน่น วันที่ผ่านมาอ่านจากตารางสรุปรายวัน วันนี้นับสด<br>**เปิดดู:** [https://jitrudeedongdee.github.io/waka-crud/queue/month](https://jitrudeedongdee.github.io/waka-crud/queue/month) · ล็อกอินเป็น พยาบาลคัดกรอง
+จำนวนคิว เสร็จแล้ว และเวลารอเฉลี่ยต่อวัน สีเข้มตามความหนาแน่น วันที่ผ่านมาอ่านจากตารางสรุปรายวัน วันนี้นับสด<br>**เปิดดู:** [https://jitrudeedongdee.github.io/hospital-roster-queue/queue/month](https://jitrudeedongdee.github.io/hospital-roster-queue/queue/month) · ล็อกอินเป็น พยาบาลคัดกรอง
 
 ![ปฏิทินคิวรายเดือน](screenshots/13-queue-month.jpg "ov") ![ปฏิทินคิวรายเดือน (ขยาย)](screenshots/13-queue-month-detail.jpg "dt")
 
 ### 5.14 ปฏิทินคิวรายสัปดาห์
 
-ตารางวัน × ชั่วโมงของคิวที่ออก เห็นช่วงเวลาที่คนไข้หนาแน่น<br>**เปิดดู:** [https://jitrudeedongdee.github.io/waka-crud/queue/week](https://jitrudeedongdee.github.io/waka-crud/queue/week) · ล็อกอินเป็น พยาบาลคัดกรอง
+ตารางวัน × ชั่วโมงของคิวที่ออก เห็นช่วงเวลาที่คนไข้หนาแน่น<br>**เปิดดู:** [https://jitrudeedongdee.github.io/hospital-roster-queue/queue/week](https://jitrudeedongdee.github.io/hospital-roster-queue/queue/week) · ล็อกอินเป็น พยาบาลคัดกรอง
 
 ![ปฏิทินคิวรายสัปดาห์](screenshots/14-queue-week.jpg "ov") ![ปฏิทินคิวรายสัปดาห์ (ขยาย)](screenshots/14-queue-week-detail.jpg "dt")
 
 ### 5.15 หน้าแพทย์ (หัวหน้าแผนก)
 
-แพทย์ทุกคนพร้อมความเชี่ยวชาญ เวรและชั่วโมงเดือนนี้ เวรถัดไป คำขอลาที่รอ · คลิกชื่อเพื่อแก้ชื่อและความเชี่ยวชาญ · เพิ่มแพทย์ใหม่พร้อมบัญชีผู้ใช้<br>**เปิดดู:** [https://jitrudeedongdee.github.io/waka-crud/staff?id=2](https://jitrudeedongdee.github.io/waka-crud/staff?id=2) · ล็อกอินเป็น หัวหน้าแผนก
+แพทย์ทุกคนพร้อมความเชี่ยวชาญ เวรและชั่วโมงเดือนนี้ เวรถัดไป คำขอลาที่รอ · คลิกชื่อเพื่อแก้ชื่อและความเชี่ยวชาญ · เพิ่มแพทย์ใหม่พร้อมบัญชีผู้ใช้<br>**เปิดดู:** [https://jitrudeedongdee.github.io/hospital-roster-queue/staff?id=2](https://jitrudeedongdee.github.io/hospital-roster-queue/staff?id=2) · ล็อกอินเป็น หัวหน้าแผนก
 
 ![หน้าแพทย์ (หัวหน้าแผนก)](screenshots/15-staff.jpg "ov") ![หน้าแพทย์ (หัวหน้าแผนก) (ขยาย)](screenshots/15-staff-detail.jpg "dt")
 
 ### 5.16 สิทธิ์ตามบทบาท
 
-ตารางสิทธิ์จาก `App\Enums\Role` ตัวเดียวกับที่ backend ใช้ตรวจทุก request<br>**เปิดดู:** [https://jitrudeedongdee.github.io/waka-crud/roles](https://jitrudeedongdee.github.io/waka-crud/roles) · ล็อกอินเป็น ทุกบทบาท
+ตารางสิทธิ์จาก `App\Enums\Role` ตัวเดียวกับที่ backend ใช้ตรวจทุก request<br>**เปิดดู:** [https://jitrudeedongdee.github.io/hospital-roster-queue/roles](https://jitrudeedongdee.github.io/hospital-roster-queue/roles) · ล็อกอินเป็น ทุกบทบาท
 
 ![สิทธิ์ตามบทบาท](screenshots/16-roles.jpg "ov") ![สิทธิ์ตามบทบาท (ขยาย)](screenshots/16-roles-detail.jpg "dt")

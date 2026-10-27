@@ -1,6 +1,6 @@
 # Hospital Roster & Queue
 
-**Live demo (frontend only): https://jitrudeedongdee.github.io/waka-crud/**
+**Live demo (frontend only): https://jitrudeedongdee.github.io/hospital-roster-queue/**
 GitHub Pages cannot run PHP, so the demo uses an in-browser mock API that follows the same rules
 as the Laravel API below (roster rules, auto-generation, skill-based calling, cursor pagination). Run the project
 locally to use the real Laravel + MySQL backend.
@@ -154,7 +154,7 @@ All endpoints are under `/api/hospitals/{hospital}`, except `GET /api/hospitals`
 Versions follow [SemVer](https://semver.org/). The pushed git tag is the only source of the number:
 CI reads it, builds with it, and the running app reports it.
 
-- `GET /version` (Laravel) and `/waka-crud/version.json` (Pages) return `{"version","sha","built_at"}`.
+- `GET /version` (Laravel) and `/hospital-roster-queue/version.json` (Pages) return `{"version","sha","built_at"}`.
   The version also shows at the bottom of every page.
 - Pushing to `main` runs the tests and builds as `0.0.0-dev.<run>`, but does not deploy.
 - Pushing a tag `vX.Y.Z` runs the tests, deploys Pages, and creates a GitHub Release from that

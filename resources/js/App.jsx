@@ -37,7 +37,7 @@ export default function App() {
                     <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
                         <strong>โหมดเดโม:</strong> หน้านี้อยู่บน GitHub Pages จึงใช้ API จำลองใน browser (ข้อมูลตัวอย่าง รีเฟรชแล้วเริ่มใหม่)
                         ตรรกะและสิทธิ์เหมือน Laravel API ใน{' '}
-                        <a className="underline" href="https://github.com/JitrudeeDongdee/waka-crud">repo นี้</a>
+                        <a className="underline" href="https://github.com/JitrudeeDongdee/hospital-roster-queue">repo นี้</a>
                     </div>
                 </div>
             )}

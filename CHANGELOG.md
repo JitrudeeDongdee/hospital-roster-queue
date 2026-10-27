@@ -5,6 +5,9 @@
 
 ## [Unreleased]
 
+### Changed
+- เปลี่ยนชื่อ repo จาก `waka-crud` เป็น `hospital-roster-queue` · เดโมย้ายไป https://jitrudeedongdee.github.io/hospital-roster-queue/ (base path ของ Pages และลิงก์ในเอกสารเปลี่ยนตาม)
+
 ## [0.7.9] - 2026-10-27
 
 ### Changed
@@ -151,20 +154,20 @@ release แรก — ตัวอย่างระบบจัดเวรแ�
 - ตั้ง timezone เป็น `Asia/Bangkok` — คิวที่ออกช่วง 00:00–07:00 ไม่ถูกนับเป็นวันก่อนหน้าแล้ว
 - หัวตารางเวรไม่มีแถวโผล่ทะลุขึ้นมาตอนเลื่อน
 
-[Unreleased]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.9...HEAD
-[0.7.9]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.8...v0.7.9
-[0.7.8]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.7...v0.7.8
-[0.7.7]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.6...v0.7.7
-[0.7.6]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.5...v0.7.6
-[0.7.5]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.4...v0.7.5
-[0.7.4]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.3...v0.7.4
-[0.7.3]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.2...v0.7.3
-[0.7.2]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.1...v0.7.2
-[0.7.1]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.0...v0.7.1
-[0.7.0]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.6.0...v0.7.0
-[0.6.0]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.5.0...v0.6.0
-[0.5.0]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.4.0...v0.5.0
-[0.4.0]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.3.0...v0.4.0
-[0.3.0]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.2.0...v0.3.0
-[0.2.0]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/JitrudeeDongdee/waka-crud/releases/tag/v0.1.0
+[Unreleased]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.7.9...HEAD
+[0.7.9]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.7.8...v0.7.9
+[0.7.8]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.7.7...v0.7.8
+[0.7.7]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.7.6...v0.7.7
+[0.7.6]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.7.5...v0.7.6
+[0.7.5]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.7.4...v0.7.5
+[0.7.4]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.7.3...v0.7.4
+[0.7.3]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.7.2...v0.7.3
+[0.7.2]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.7.1...v0.7.2
+[0.7.1]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.7.0...v0.7.1
+[0.7.0]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.6.0...v0.7.0
+[0.6.0]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.5.0...v0.6.0
+[0.5.0]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.4.0...v0.5.0
+[0.4.0]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/JitrudeeDongdee/hospital-roster-queue/releases/tag/v0.1.0
