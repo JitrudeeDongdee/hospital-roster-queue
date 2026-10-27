@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-27
+
 ### Added
 - เมนู "แพทย์" สำหรับหัวหน้าแผนก (`/staff`): ดูแพทย์ทุกคนพร้อมความเชี่ยวชาญ เวรและชั่วโมงเดือนนี้ เวรถัดไป และคำขอลาที่รอ · คลิกชื่อเพื่อแก้ชื่อ/ความเชี่ยวชาญ · เพิ่มแพทย์ใหม่พร้อมบัญชีผู้ใช้บทบาทแพทย์ (สิทธิ์ใหม่ `staff.manage`)
 - "ห้องตรวจของฉัน" แสดงคิวปัจจุบันจาก server ตลอด (เลขคิว ความเร่งด่วน เวลาที่เรียก) รีเฟรชหน้าหรือแอดมิน/พยาบาลเปิดดูของแพทย์คนอื่นก็ยังเห็น · ปุ่มเรียกคิวถัดไปกดไม่ได้จนกว่าจะกดเสร็จสิ้นคิวปัจจุบัน
@@ -71,7 +73,8 @@ release แรก — ตัวอย่างระบบจัดเวรแ�
 - ตั้ง timezone เป็น `Asia/Bangkok` — คิวที่ออกช่วง 00:00–07:00 ไม่ถูกนับเป็นวันก่อนหน้าแล้ว
 - หัวตารางเวรไม่มีแถวโผล่ทะลุขึ้นมาตอนเลื่อน
 
-[Unreleased]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.1.0...v0.2.0
