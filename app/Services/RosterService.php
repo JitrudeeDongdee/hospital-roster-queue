@@ -72,7 +72,10 @@ class RosterService
             }
         }
 
+        $hospital = $department->hospital;
+
         return [
+            'rules' => ['min_rest_hours' => $hospital->min_rest_hours, 'max_weekly_hours' => $hospital->max_weekly_hours],
             'templates' => $templates,
             'shifts' => $shifts->map(fn (Shift $s) => [
                 'id' => $s->id,

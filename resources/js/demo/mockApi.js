@@ -198,7 +198,9 @@ function rosterOf(department, from, to) {
             if (problem) gaps.push({ date, shift_template_id: t.id, problem });
         }
     }
+    const hospital = db.hospitals.find((h) => h.id === department.hospital_id);
     return {
+        rules: { min_rest_hours: hospital.min_rest_hours, max_weekly_hours: hospital.max_weekly_hours },
         templates,
         shifts: shifts.map((s) => ({ id: s.id, shift_template_id: s.shift_template_id, shift_date: s.shift_date, staff_id: s.staff_id, staff_name: staffOf(s).name })),
         gaps,
@@ -329,9 +331,11 @@ const routes = [
         return null;
     }],
 
-    ['GET', /^\/hospitals\/(\d+)\/staff\/(\d+)\/unavailabilities$/, ([h, s]) => {
+    ['GET', /^\/hospitals\/(\d+)\/staff\/(\d+)\/unavailabilities$/, ([h, s], query) => {
         const member = findIn(db.staff, s, h);
-        return db.unavailabilities.filter((u) => u.staff_id === member.id).sort((a, b) => a.date.localeCompare(b.date));
+        const from = query.get('from') ?? '0000-00-00';
+        const to = query.get('to') ?? '9999-99-99';
+        return db.unavailabilities.filter((u) => u.staff_id === member.id && u.date >= from && u.date <= to).sort((a, b) => a.date.localeCompare(b.date));
     }],
     ['POST', /^\/hospitals\/(\d+)\/staff\/(\d+)\/unavailabilities$/, ([h, s], _q, body, user) => {
         const member = findIn(db.staff, s, h);

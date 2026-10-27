@@ -99,6 +99,8 @@ class RosterTest extends TestCase
 
         $this->assign($doctor, $this->morning, '2026-11-04')->assertUnprocessable()
             ->assertJsonPath('errors.shift.0', fn ($m) => str_contains($m, 'ลา'));
+        $this->getJson("/api/hospitals/{$this->hospital->id}/staff/{$doctor->id}/unavailabilities?from=2026-11-01&to=2026-11-30")
+            ->assertOk()->assertJsonCount(1)->assertJsonPath('0.reason', 'ลาพักร้อน');
     }
 
     public function test_roster_reports_missing_staff_and_missing_skill(): void
@@ -112,6 +114,11 @@ class RosterTest extends TestCase
 
         $this->assertStringContainsString('อย่างน้อย 2 คน', $gaps->firstWhere('shift_template_id', $this->morning->id)['problem']);
         $this->assertCount(3, $gaps); // เช้า (ขาด 1 คน) + บ่าย + ดึก ยังว่าง
+
+        $this->getJson("/api/hospitals/{$this->hospital->id}/departments/{$this->opd->id}/roster?from=2026-10-26&to=2026-12-06")
+            ->assertOk()->assertJsonPath('rules.max_weekly_hours', 40); // ช่วงปฏิทิน 6 สัปดาห์ (42 วัน) ได้
+        $this->getJson("/api/hospitals/{$this->hospital->id}/departments/{$this->opd->id}/roster?from=2026-10-01&to=2026-12-31")
+            ->assertStatus(422);
     }
 
     public function test_generate_fills_every_slot_within_the_rules_and_covers_skills(): void

@@ -66,9 +66,24 @@ Passwordless demo login is available only with `DEMO_LOGIN=true` (off by default
 
 ## Frontend (React 19)
 
-The page at `/` is a React app built with Vite inside Laravel, with a demo-user picker and
-tabs for the monthly roster (main), the patient queue and the role × permission matrix.
+The page is a React app built with Vite inside Laravel, with a demo-user picker and
+pages for the monthly roster (main), the patient queue and the role × permission matrix.
 Buttons are shown according to the user's permissions.
+
+Every page has its own URL (React Router), so links can be shared and back/forward work:
+
+| URL | Page |
+|---|---|
+| `/login` | Demo-user picker (after a deep link, returns to that page) |
+| `/roster/table?dept=1&month=2026-11&doctors=1,4` | Roster table, editable by admins, filtered to selected doctors |
+| `/roster/calendar?dept=1&month=2026-11&doctors=1,4` | Month calendar of all shifts, colour per shift, red when a slot is short |
+| `/roster/doctors/5?month=2026-11` | One doctor's month: shifts, leave days, hours per week against the limit |
+| `/queue?status=waiting&dept=1` | Patient queue |
+| `/roles` | Role × permission matrix |
+
+Pages a role cannot use show a 403 page; unknown paths show a 404 page. Laravel serves the app
+for every non-`/api` path, and the GitHub Pages build ships `404.html` (a copy of `index.html`)
+so deep links work there too.
 
 | Technique | Where | Why |
 |---|---|---|

@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { api, PRIORITY, STATUS } from '../api';
@@ -7,8 +8,15 @@ import { byId, useDepartments, useSkills } from '../useLookups';
 const ROW_HEIGHT = 44;
 
 export default function TicketBoard({ hospitalId }) {
-    const [status, setStatus] = useState('waiting');
-    const [departmentId, setDepartmentId] = useState('');
+    // ตัวกรองอยู่ใน URL (/queue?status=waiting&dept=1) — แชร์ลิงก์/กด back ได้
+    const [params, setParams] = useSearchParams();
+    const status = params.has('status') ? params.get('status') : 'waiting';
+    const departmentId = params.get('dept') ?? '';
+    const setFilter = (key, value) => {
+        const next = new URLSearchParams(params);
+        next.set(key, value);
+        setParams(next, { replace: true });
+    };
     const departments = byId(useDepartments(hospitalId).data);
     const skills = byId(useSkills().data);
 
@@ -51,11 +59,11 @@ export default function TicketBoard({ hospitalId }) {
         <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
             <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 p-4">
                 <h2 className="mr-auto text-lg font-semibold">คิววันนี้</h2>
-                <select className="rounded-md border border-slate-300 px-2 py-1.5 text-sm" value={status} onChange={(e) => setStatus(e.target.value)}>
+                <select className="rounded-md border border-slate-300 px-2 py-1.5 text-sm" value={status} onChange={(e) => setFilter('status', e.target.value)}>
                     <option value="">ทุกสถานะ</option>
                     {Object.entries(STATUS).map(([value, s]) => <option key={value} value={value}>{s.label}</option>)}
                 </select>
-                <select className="rounded-md border border-slate-300 px-2 py-1.5 text-sm" value={departmentId} onChange={(e) => setDepartmentId(e.target.value)}>
+                <select className="rounded-md border border-slate-300 px-2 py-1.5 text-sm" value={departmentId} onChange={(e) => setFilter('dept', e.target.value)}>
                     <option value="">ทุกแผนก</option>
                     {Object.values(departments).map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>

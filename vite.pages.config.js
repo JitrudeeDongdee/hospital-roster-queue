@@ -7,6 +7,9 @@ export default defineConfig({
     root: 'resources/pages',
     base: '/waka-crud/',
     plugins: [react(), tailwindcss()],
-    define: { 'import.meta.env.VITE_DEMO': JSON.stringify('true') },
+    define: {
+        'import.meta.env.VITE_DEMO': JSON.stringify('true'),
+        'import.meta.env.VITE_BASENAME': JSON.stringify('/waka-crud'),
+    },
     build: { outDir: '../../dist-pages', emptyOutDir: true },
 });

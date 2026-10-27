@@ -61,9 +61,16 @@ class RosterController extends Controller
     }
 
     // GET /api/hospitals/{hospital}/staff/{staff}/unavailabilities
-    public function unavailabilities(Hospital $hospital, Staff $staff)
+    // ?from=&to= สำหรับปฏิทิน · ไม่ส่งมา = ตั้งแต่ 7 วันก่อนเป็นต้นไป
+    public function unavailabilities(Request $request, Hospital $hospital, Staff $staff)
     {
-        return $staff->unavailabilities()->where('date', '>=', now()->subDays(7)->toDateString())->orderBy('date')->get(['id', 'date', 'reason']);
+        $data = $request->validate(['from' => 'nullable|date_format:Y-m-d', 'to' => 'nullable|date_format:Y-m-d']);
+
+        return $staff->unavailabilities()
+            ->where('date', '>=', $data['from'] ?? now()->subDays(7)->toDateString())
+            ->when($data['to'] ?? null, fn ($q, $to) => $q->where('date', '<=', $to))
+            ->orderBy('date')
+            ->get(['id', 'date', 'reason']);
     }
 
     // POST /api/hospitals/{hospital}/staff/{staff}/unavailabilities {date, reason}
@@ -95,7 +102,8 @@ class RosterController extends Controller
             'to' => 'required|date_format:Y-m-d|after_or_equal:from',
         ]);
 
-        abort_if(now()->parse($data['from'])->diffInDays($data['to']) > 31, 422, 'Range is limited to 31 days.');
+        // 42 วัน = ปฏิทิน 6 สัปดาห์ที่คร่อมต้น/ปลายเดือน
+        abort_if(now()->parse($data['from'])->diffInDays($data['to']) > 42, 422, 'Range is limited to 42 days.');
 
         return [$data['from'], $data['to']];
     }
