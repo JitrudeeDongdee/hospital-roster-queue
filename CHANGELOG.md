@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+## [0.7.8] - 2026-10-27
+
+### Changed
+- เอกสาร architecture ข้อ 5 หน้าจอเดโม: แต่ละกรณีมีภาพเต็มจอแบบย่อคู่กับภาพขยายเฉพาะส่วนที่อธิบาย (ความละเอียด 2 เท่า) และลิงก์ไปหน้านั้นบนเว็บเดโมพร้อมบอกว่าต้องล็อกอินเป็นใคร
+- ข้อ 3, 4, 5 เริ่มหน้าใหม่ใน PDF
+
 ## [0.7.7] - 2026-10-27
 
 ### Changed
@@ -137,7 +143,8 @@ release แรก — ตัวอย่างระบบจัดเวรแ�
 - ตั้ง timezone เป็น `Asia/Bangkok` — คิวที่ออกช่วง 00:00–07:00 ไม่ถูกนับเป็นวันก่อนหน้าแล้ว
 - หัวตารางเวรไม่มีแถวโผล่ทะลุขึ้นมาตอนเลื่อน
 
-[Unreleased]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.7...HEAD
+[Unreleased]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.8...HEAD
+[0.7.8]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.7...v0.7.8
 [0.7.7]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.6...v0.7.7
 [0.7.6]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.5...v0.7.6
 [0.7.5]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.4...v0.7.5
