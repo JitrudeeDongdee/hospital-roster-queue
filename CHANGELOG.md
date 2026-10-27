@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+## [0.7.9] - 2026-10-27
+
+### Changed
+- เอกสาร architecture ข้อ 3.3–3.6: ใต้ผังแต่ละขั้นอธิบายสั้น ๆ ว่าแต่ละส่วนทำอะไร และขั้นที่ขยายต่อมาเปลี่ยน/เพิ่มอะไรเพื่ออะไร
+
 ### Added
 - ไฟล์ `LICENSE` (MIT) และหัวข้อ License ท้าย README
 
@@ -146,7 +151,8 @@ release แรก — ตัวอย่างระบบจัดเวรแ�
 - ตั้ง timezone เป็น `Asia/Bangkok` — คิวที่ออกช่วง 00:00–07:00 ไม่ถูกนับเป็นวันก่อนหน้าแล้ว
 - หัวตารางเวรไม่มีแถวโผล่ทะลุขึ้นมาตอนเลื่อน
 
-[Unreleased]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.8...HEAD
+[Unreleased]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.9...HEAD
+[0.7.9]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.8...v0.7.9
 [0.7.8]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.7...v0.7.8
 [0.7.7]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.6...v0.7.7
 [0.7.6]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.5...v0.7.6
