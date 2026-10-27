@@ -25,10 +25,10 @@
 <path d="M298.0,430.0 H630.0 V489.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
 <text x="304.0" y="424.0" font-size="11" fill="#7a2e2e" text-anchor="start" paint-order="stroke" stroke="#fff" stroke-width="3">ตอบรับ</text>
 <path d="M630.0,539.0 V570.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
-<path d="M630.0,626.0 V641.0 H450.0 V657.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
-<text x="635.0" y="639.0" font-size="11" fill="#7a2e2e" text-anchor="start" paint-order="stroke" stroke="#fff" stroke-width="3">ไม่ผ่าน</text>
-<path d="M658.0,598.0 H630.0 V909.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
-<text x="664.0" y="592.0" font-size="11" fill="#7a2e2e" text-anchor="start" paint-order="stroke" stroke="#fff" stroke-width="3">ผ่าน</text>
+<path d="M602.0,598.0 H450.0 V657.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
+<text x="596.0" y="592.0" font-size="11" fill="#7a2e2e" text-anchor="end" paint-order="stroke" stroke="#fff" stroke-width="3">ไม่ผ่าน</text>
+<path d="M630.0,626.0 V909.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
+<text x="635.0" y="639.0" font-size="11" fill="#7a2e2e" text-anchor="start" paint-order="stroke" stroke="#fff" stroke-width="3">ผ่าน</text>
 <path d="M450.0,707.0 V741.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
 <path d="M450.0,791.0 V822.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
 <path d="M478.0,850.0 H630.0 V909.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
