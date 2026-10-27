@@ -214,6 +214,22 @@ class RosterTest extends TestCase
             ->assertJsonPath('waiting.1.id', $heart);
     }
 
+    public function test_on_duty_lists_doctors_whose_shift_covers_now(): void
+    {
+        $this->travelTo('2026-11-02 10:00');
+        $onDuty = $this->doctor('Dr. Morning');
+        $later = $this->doctor('Dr. Evening');
+        $this->assign($onDuty, $this->morning, '2026-11-02')->assertCreated();
+        $this->assign($later, $this->evening, '2026-11-02')->assertCreated();
+
+        $this->actingAsRole('nurse', $this->hospital);
+        $this->getJson("/api/hospitals/{$this->hospital->id}/on-duty")
+            ->assertOk()->assertJsonCount(1)->assertJsonPath('0.staff_id', $onDuty->id)->assertJsonPath('0.shift_name', 'M');
+
+        $this->actingAsRole('registration', $this->hospital);
+        $this->getJson("/api/hospitals/{$this->hospital->id}/on-duty")->assertForbidden();
+    }
+
     public function test_shifts_cannot_cross_hospitals(): void
     {
         $other = Hospital::create(['code' => 'H002', 'name' => 'Hospital 2']);

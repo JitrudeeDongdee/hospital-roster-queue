@@ -414,6 +414,14 @@ const fail422 = (field, messages) => { throw new HttpError(422, messages[0], { [
     }
 }
 
+// คิวที่ตรวจแล้วของโรงพยาบาลแรก (ช่วงที่มีตารางเวร) ผูกกับแพทย์ที่อยู่เวรตอนออกบัตร — รายการคิวจะเห็นว่าใครดูแล
+for (const t of db.tickets) {
+    if (t.hospital_id !== 1 || t.status !== 'completed') continue;
+    const at = new Date(t.created_at);
+    const duty = db.shifts.filter((x) => x.department_id === t.department_id && new Date(x.starts_at) <= at && new Date(x.ends_at) > at);
+    if (duty.length) t.staff_id = duty[t.id % duty.length].staff_id;
+}
+
 function isoOf(d) {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
@@ -602,6 +610,12 @@ const routes = [
         return null;
     }],
 
+    ['GET', /^\/hospitals\/(\d+)\/on-duty$/, ([h]) => {
+        const now = new Date();
+        return db.shifts
+            .filter((x) => x.hospital_id === Number(h) && new Date(x.starts_at) <= now && new Date(x.ends_at) > now)
+            .map((x) => ({ staff_id: x.staff_id, department_id: x.department_id, shift_name: templateOf(x.shift_template_id).name, ends_at: x.ends_at }));
+    }],
     ['GET', /^\/hospitals\/(\d+)\/shift-requests$/, ([h], _q, _b, user) => {
         const own = can(user, 'shift.request.own') && user.staff_id;
         const resolve = can(user, 'shift.request.resolve');
@@ -741,6 +755,7 @@ const ROUTE_PERMISSIONS = [
     ['POST', /\/complete$/, 'ticket.call'],
     ['PATCH', /\/triage$/, 'ticket.triage'],
     ['GET', /\/my-queue$/, 'queue.view'],
+    ['GET', /\/on-duty$/, 'queue.view'],
     ['GET', /\/roster$/, 'roster.view'],
     ['POST', /\/roster\/generate$/, 'roster.manage'],
     ['POST', /\/shifts$/, 'roster.manage'],

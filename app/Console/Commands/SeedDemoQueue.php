@@ -143,6 +143,33 @@ class SeedDemoQueue extends Command
             }
             ShiftPreference::insert($rows);
         }
+
+        $this->linkTicketsToDoctorsOnDuty();
+    }
+
+    // คิวของโรงพยาบาลแรกที่ออกระหว่างมีตารางเวร: ให้คิวที่ตรวจแล้วมีชื่อแพทย์ที่อยู่เวรตอนนั้น
+    // และคิววันนี้ที่ออกไปเกิน 1 ชม. ตรวจเสร็จไปครึ่งหนึ่ง — รายการคิวจะได้เห็นว่าใครดูแล
+    private function linkTicketsToDoctorsOnDuty(): void
+    {
+        $hospitalId = Hospital::min('id');
+        $shifts = DB::table('shifts')->where('hospital_id', $hospitalId)->get(['department_id', 'staff_id', 'starts_at', 'ends_at'])->groupBy('department_id');
+        $tickets = DB::table('queue_tickets')->where('hospital_id', $hospitalId)->where('service_date', '>=', now()->startOfMonth()->toDateString())
+            ->where(fn ($q) => $q->where('status', 'completed')->orWhere(fn ($t) => $t->where('service_date', now()->toDateString())->where('created_at', '<', now()->subHour())))
+            ->get(['id', 'department_id', 'status', 'created_at']);
+
+        foreach ($tickets as $ticket) {
+            $onDuty = ($shifts[$ticket->department_id] ?? collect())->filter(fn ($s) => $s->starts_at <= $ticket->created_at && $s->ends_at > $ticket->created_at)->values();
+            if ($onDuty->isEmpty() || ($ticket->status === 'waiting' && random_int(0, 1) === 0)) {
+                continue;
+            }
+            $calledAt = now()->parse($ticket->created_at)->addMinutes(random_int(5, 45));
+            DB::table('queue_tickets')->where('id', $ticket->id)->update([
+                'staff_id' => $onDuty->random()->staff_id,
+                'status' => 'completed',
+                'called_at' => $ticket->status === 'completed' ? DB::raw('called_at') : $calledAt,
+                'completed_at' => $ticket->status === 'completed' ? DB::raw('completed_at') : $calledAt->copy()->addMinutes(10),
+            ]);
+        }
     }
 
     // คิวที่ยังรออยู่ของวันนี้ ให้หน้าเว็บมีอะไรให้เรียก — ตั้ง queue_counters ให้ตรง เลขคิวที่ออกต่อจะได้ไม่ชน

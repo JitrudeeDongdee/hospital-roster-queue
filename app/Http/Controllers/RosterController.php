@@ -61,6 +61,23 @@ class RosterController extends Controller
         return response()->noContent();
     }
 
+    // GET /api/hospitals/{hospital}/on-duty — แพทย์ที่อยู่เวรตอนนี้ (ตามตารางเวร) ใช้แสดงในรายการคิวว่าใครดูแลคิวที่ยังรอ
+    public function onDuty(Hospital $hospital)
+    {
+        $now = now();
+
+        return $hospital->shifts()
+            ->where('starts_at', '<=', $now)->where('ends_at', '>', $now)
+            ->with('template:id,name,start_time,end_time')
+            ->get(['id', 'department_id', 'staff_id', 'shift_template_id', 'starts_at', 'ends_at'])
+            ->map(fn (Shift $s) => [
+                'staff_id' => $s->staff_id,
+                'department_id' => $s->department_id,
+                'shift_name' => $s->template->name,
+                'ends_at' => $s->ends_at,
+            ]);
+    }
+
     // GET /api/hospitals/{hospital}/staff/{staff}/unavailabilities
     // ?from=&to= สำหรับปฏิทิน · ไม่ส่งมา = ตั้งแต่ 7 วันก่อนเป็นต้นไป
     public function unavailabilities(Request $request, Hospital $hospital, Staff $staff)

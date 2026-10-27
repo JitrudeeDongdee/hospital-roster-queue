@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router';
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { PRIORITY, STATUS, api, errorMessages, isoDate, queueNo } from '../api';
 import { useAuth } from '../auth';
-import { byId, useDepartments, useSkills } from '../useLookups';
+import { byId, useDepartments, useSkills, useStaff } from '../useLookups';
 
 const ROW_HEIGHT = 44;
 
@@ -25,6 +25,24 @@ export default function TicketBoard({ hospitalId, date }) {
     const departments = byId(useDepartments(hospitalId).data);
     const skillList = useSkills().data ?? [];
     const skills = byId(skillList);
+    const staff = byId(useStaff(hospitalId).data);
+    // แพทย์ที่อยู่เวรตอนนี้ตามตารางเวร — บอกว่าคิวที่ยังรอจะไปถึงใคร
+    const onDuty = useQuery({
+        queryKey: ['on-duty', hospitalId],
+        queryFn: () => api(`/hospitals/${hospitalId}/on-duty`),
+        enabled: isToday,
+        refetchInterval: 60_000,
+    }).data ?? [];
+    const doctorCell = (t) => {
+        if (t.staff_id) return <span className="truncate">{staff[t.staff_id]?.name ?? '…'}</span>;
+        if (t.status !== 'waiting' || !isToday) return <span className="text-slate-400">—</span>;
+        const able = onDuty
+            .filter((d) => d.department_id === t.department_id)
+            .filter((d) => !t.required_skill_id || staff[d.staff_id]?.skills.some((k) => k.id === t.required_skill_id));
+        if (!able.length) return <span className="truncate text-xs font-medium text-red-600" title="ตามตารางเวร ไม่มีแพทย์ในแผนกนี้ที่รับคิวนี้ได้ตอนนี้">ไม่มีแพทย์เวรที่รับได้</span>;
+        const names = able.map((d) => staff[d.staff_id]?.name).filter(Boolean).join(', ');
+        return <span className="truncate text-xs text-slate-500" title={`แพทย์เวรตอนนี้ที่รับคิวนี้ได้: ${names}`}>เวร: {names}</span>;
+    };
     const queryClient = useQueryClient();
     // พยาบาลคัดกรองแก้ความเร่งด่วน/ความเชี่ยวชาญของคิววันนี้ที่ยังรอเรียกได้ในแถวเลย (เช่น บัตรที่เวชระเบียนออกให้)
     const canTriage = useAuth().can('ticket.triage') && isToday;
@@ -80,8 +98,8 @@ export default function TicketBoard({ hospitalId, date }) {
                 </select>
             </div>
 
-            <div className="grid grid-cols-[70px_1fr_1fr_1fr_56px_56px_52px_96px] gap-2 border-b border-slate-100 bg-slate-50 px-4 py-2 text-xs font-medium text-slate-500">
-                <span>คิว</span><span>แผนก</span><span>ความเร่งด่วน</span><span>ความเชี่ยวชาญ</span><span>ออกบัตร</span><span>เรียก</span><span>รอ (นาที)</span><span>สถานะ</span>
+            <div className="grid grid-cols-[56px_1fr_1fr_1fr_1.3fr_52px_52px_44px_84px] gap-2 border-b border-slate-100 bg-slate-50 px-4 py-2 text-xs font-medium text-slate-500">
+                <span>คิว</span><span>แผนก</span><span>ความเร่งด่วน</span><span>ความเชี่ยวชาญ</span><span>แพทย์</span><span>ออกบัตร</span><span>เรียก</span><span>รอ (นาที)</span><span>สถานะ</span>
             </div>
 
             <div ref={scrollRef} className="h-[520px] overflow-auto">
@@ -95,7 +113,7 @@ export default function TicketBoard({ hospitalId, date }) {
                         return (
                             <div
                                 key={item.key}
-                                className="absolute left-0 grid w-full grid-cols-[70px_1fr_1fr_1fr_56px_56px_52px_96px] items-center gap-2 border-b border-slate-100 px-4 text-sm"
+                                className="absolute left-0 grid w-full grid-cols-[56px_1fr_1fr_1fr_1.3fr_52px_52px_44px_84px] items-center gap-2 border-b border-slate-100 px-4 text-sm"
                                 style={{ height: ROW_HEIGHT, transform: `translateY(${item.start}px)` }}
                             >
                                 {t ? (
@@ -130,13 +148,14 @@ export default function TicketBoard({ hospitalId, date }) {
                                                 <span className="truncate text-slate-500">{t.required_skill_id ? skills[t.required_skill_id]?.name : '—'}</span>
                                             </>
                                         )}
+                                        {doctorCell(t)}
                                         <span className="font-mono text-xs">{clock(t.created_at)}</span>
                                         <span className="font-mono text-xs">{clock(t.called_at)}</span>
                                         <span className="font-mono text-xs">{waitMinutes(t) ?? '—'}</span>
                                         <span><Badge {...STATUS[t.status]} /></span>
                                     </>
                                 ) : (
-                                    <span className="col-span-8 text-slate-400">กำลังโหลดหน้าถัดไป…</span>
+                                    <span className="col-span-9 text-slate-400">กำลังโหลดหน้าถัดไป…</span>
                                 )}
                             </div>
                         );

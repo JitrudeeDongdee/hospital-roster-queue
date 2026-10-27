@@ -37,6 +37,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('tickets/{ticket}/triage', [TicketController::class, 'triage'])->middleware('can:ticket.triage');
         Route::get('staff/{staff}/my-queue', [DoctorQueueController::class, 'show'])->middleware('can:queue.view');
         Route::get('stats', [StatsController::class, 'index'])->middleware('can:stats.view');
+        Route::get('on-duty', [RosterController::class, 'onDuty'])->middleware('can:queue.view');
 
         // จัดเวรแพทย์
         Route::get('departments/{department}/roster', [RosterController::class, 'show'])->middleware('can:roster.view');
