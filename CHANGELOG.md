@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-27
+
 ### Added
 - พยาบาลคัดกรองปรับความเร่งด่วน/ความเชี่ยวชาญของบัตรที่ออกไปแล้วได้ในรายการคิว (`PATCH /tickets/{ticket}/triage`) เฉพาะคิวที่ยังรอเรียก — ตรงกับผัง BPMN วันให้บริการ (เวชระเบียนออกบัตร → พยาบาลคัดกรอง)
 - เลขคิวเป็นตัวเลขล้วน หลักแรกบอกแผนก เช่น ผู้ป่วยนอก 1001 · ห้องแล็บ 2001 · เอกซเรย์ 3001 (`departments.queue_prefix`) ไม่ซ้ำกันทั้งโรงพยาบาล ผู้สูงอายุอ่านง่าย
@@ -47,6 +49,7 @@ release แรก — ตัวอย่างระบบจัดเวรแ�
 - ตั้ง timezone เป็น `Asia/Bangkok` — คิวที่ออกช่วง 00:00–07:00 ไม่ถูกนับเป็นวันก่อนหน้าแล้ว
 - หัวตารางเวรไม่มีแถวโผล่ทะลุขึ้นมาตอนเลื่อน
 
-[Unreleased]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/JitrudeeDongdee/waka-crud/releases/tag/v0.1.0
