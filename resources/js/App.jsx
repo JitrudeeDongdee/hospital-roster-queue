@@ -10,6 +10,7 @@ import QueuePage from './components/QueuePage';
 import ShiftRequestsPage, { useShiftRequestCount } from './components/ShiftRequestsPage';
 import PreferencesPage from './components/PreferencesPage';
 import StaffPage from './components/StaffPage';
+import AppointmentsPage from './components/AppointmentsPage';
 
 // เมนูหลัก: path + สิทธิ์ที่ต้องมี (ซ่อนเมนูที่ไม่มีสิทธิ์ และ RequirePermission กันการพิมพ์ URL เข้าตรง ๆ)
 const SECTIONS = [
@@ -18,6 +19,7 @@ const SECTIONS = [
     { path: '/requests', match: '/requests', label: 'ร้องขอ', allowed: (can) => canLeave(can) || canShiftRequest(can) },
     { path: '/preferences', match: '/preferences', label: 'เวรที่อยากลง', allowed: (can) => can('shift.request.own') },
     { path: '/queue/list', match: '/queue', label: 'คิวผู้ป่วย', allowed: (can) => can('queue.view') || can('ticket.issue') },
+    { path: '/appointments', match: '/appointments', label: 'นัดหมาย', allowed: (can) => can('appointment.manage') },
     { path: '/roles', match: '/roles', label: 'สิทธิ์ตามบทบาท', allowed: () => true },
 ];
 
@@ -37,7 +39,7 @@ export default function App() {
                     <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
                         <strong>โหมดเดโม:</strong> หน้านี้อยู่บน GitHub Pages จึงใช้ API จำลองใน browser (ข้อมูลตัวอย่าง รีเฟรชแล้วเริ่มใหม่)
                         ตรรกะและสิทธิ์เหมือน Laravel API ใน{' '}
-                        <a className="underline" href="https://github.com/JitrudeeDongdee/waka-crud">repo นี้</a>
+                        <a className="underline" href="https://github.com/JitrudeeDongdee/hospital-roster-queue">repo นี้</a>
                     </div>
                 </div>
             )}
@@ -66,6 +68,9 @@ export default function App() {
                         <Route path="shifts" element={<Navigate to="/requests/shifts" replace />} />
                         <Route element={<RequirePermission allowed={(can) => can('shift.request.own')} />}>
                             <Route path="preferences" element={<PreferencesRoute />} />
+                        </Route>
+                        <Route element={<RequirePermission allowed={(can) => can('appointment.manage')} />}>
+                            <Route path="appointments" element={<AppointmentsRoute />} />
                         </Route>
                         <Route element={<RequirePermission allowed={(can) => can('staff.manage')} />}>
                             <Route path="staff" element={<StaffRoute />} />
@@ -170,6 +175,11 @@ function LegacyDoctorCalendar() {
     const params = new URLSearchParams(location.search);
     if (staffId) params.set('doctors', staffId);
     return <Navigate to={{ pathname: '/roster/calendar', search: `?${params}` }} replace />;
+}
+
+function AppointmentsRoute() {
+    const { user } = useAuth();
+    return <AppointmentsPage hospitalId={user.hospital.id} />;
 }
 
 function StaffRoute() {

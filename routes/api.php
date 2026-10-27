@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DoctorQueueController;
 use App\Http\Controllers\LeaveController;
@@ -33,6 +34,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('staff-directory', [StaffController::class, 'index'])->middleware('can:staff.manage');
         Route::post('staff', [StaffController::class, 'store'])->middleware('can:staff.manage');
         Route::patch('staff/{staff}', [StaffController::class, 'update'])->middleware('can:staff.manage');
+
+        // นัดหมาย: check-in แล้วจึงได้บัตรคิว
+        Route::get('appointments', [AppointmentController::class, 'index'])->middleware('can:appointment.manage');
+        Route::get('departments/{department}/appointment-slots', [AppointmentController::class, 'slots'])->middleware('can:appointment.manage');
+        Route::post('departments/{department}/appointments', [AppointmentController::class, 'store'])->middleware('can:appointment.manage');
+        Route::post('appointments/{appointment}/check-in', [AppointmentController::class, 'checkIn'])->middleware('can:appointment.manage');
+        Route::post('appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])->middleware('can:appointment.manage');
 
         // คิวผู้ป่วย
         Route::get('tickets', [TicketController::class, 'index'])->middleware('can:queue.view');

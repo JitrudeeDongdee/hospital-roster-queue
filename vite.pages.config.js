@@ -12,7 +12,7 @@ const version = {
 
 export default defineConfig({
     root: 'resources/pages',
-    base: '/waka-crud/',
+    base: '/hospital-roster-queue/',
     plugins: [
         react(),
         tailwindcss(),
@@ -20,7 +20,7 @@ export default defineConfig({
     ],
     define: {
         'import.meta.env.VITE_DEMO': JSON.stringify('true'),
-        'import.meta.env.VITE_BASENAME': JSON.stringify('/waka-crud'),
+        'import.meta.env.VITE_BASENAME': JSON.stringify('/hospital-roster-queue'),
     },
     build: { outDir: '../../dist-pages', emptyOutDir: true },
 });

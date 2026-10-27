@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Department;
 use App\Models\QueueTicket;
 use App\Models\Staff;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -43,6 +44,8 @@ class QueueService
                 'patient_ref' => $data['patient_ref'],
                 'priority' => $data['priority'] ?? 0,
                 'status' => QueueTicket::WAITING,
+                'appointment_at' => $data['appointment_at'] ?? null,
+                'requested_staff_id' => $data['requested_staff_id'] ?? null,
             ]);
         });
     }
@@ -53,22 +56,14 @@ class QueueService
      */
     public function callNext(Staff $staff): ?QueueTicket
     {
-        $skillIds = $staff->skills()->pluck('skills.id');
-
-        return DB::transaction(function () use ($staff, $skillIds) {
+        return DB::transaction(function () use ($staff) {
             // แพทย์หนึ่งคนตรวจได้ทีละคิว: ล็อกแถวของแพทย์ก่อน กันกดเรียกซ้อนสองครั้งพร้อมกัน
             Staff::whereKey($staff->id)->lockForUpdate()->first();
             if (QueueTicket::where('staff_id', $staff->id)->where('status', QueueTicket::CALLED)->exists()) {
                 throw ValidationException::withMessages(['ticket' => ['ยังมีคิวที่กำลังตรวจอยู่ กดเสร็จสิ้นก่อนจึงเรียกคิวถัดไปได้']]);
             }
 
-            $ticket = QueueTicket::query()
-                ->where('department_id', $staff->department_id)
-                ->where('service_date', now()->toDateString())
-                ->where('status', QueueTicket::WAITING)
-                ->where(fn ($q) => $q->whereNull('required_skill_id')->orWhereIn('required_skill_id', $skillIds))
-                ->orderByDesc('priority')
-                ->orderBy('id')
+            $ticket = $this->eligibleFor($staff)
                 ->lock('for update skip locked')
                 ->first();
 
@@ -80,5 +75,25 @@ class QueueService
 
             return $ticket;
         });
+    }
+
+    /**
+     * คิวที่แพทย์คนนี้รับได้ เรียงตามลำดับที่จะถูกเรียก — ใช้ทั้งตอนเรียกคิวและตอนแสดง "คิวถัดไป" ให้ตรงกันเสมอ
+     * แผนกเดียวกัน · ความเชี่ยวชาญตรง · นัดที่ระบุแพทย์ต้องเป็นแพทย์คนนั้น
+     * ลำดับ: ความเร่งด่วน → คิวนัดที่ถึงเวลา (ก่อนเวลานัดไม่เกิน N นาที) → มาก่อนได้ก่อน
+     */
+    public function eligibleFor(Staff $staff): Builder
+    {
+        $skillIds = $staff->skills()->pluck('skills.id');
+
+        return QueueTicket::query()
+            ->where('department_id', $staff->department_id)
+            ->where('service_date', now()->toDateString())
+            ->where('status', QueueTicket::WAITING)
+            ->where(fn ($q) => $q->whereNull('required_skill_id')->orWhereIn('required_skill_id', $skillIds))
+            ->where(fn ($q) => $q->whereNull('requested_staff_id')->orWhere('requested_staff_id', $staff->id))
+            ->orderByDesc('priority')
+            ->orderByRaw('CASE WHEN appointment_at IS NOT NULL AND appointment_at <= ? THEN 0 ELSE 1 END', [now()->addMinutes($staff->hospital->appointment_early_minutes)->toDateTimeString()])
+            ->orderBy('id');
     }
 }

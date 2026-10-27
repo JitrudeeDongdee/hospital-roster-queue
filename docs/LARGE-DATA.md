@@ -1,6 +1,6 @@
 # การจัดการข้อมูลปริมาณมาก — ค้นคว้าประกอบระบบจัดเวรแพทย์และจัดคิว
 
-จิตฤดี ดวงดี · 27 ต.ค. 2569 · โค้ด: [github.com/JitrudeeDongdee/waka-crud](https://github.com/JitrudeeDongdee/waka-crud) · ภาพรวมระบบ: [ARCHITECTURE.md](ARCHITECTURE.md)
+จิตฤดี ดวงดี · 27 ต.ค. 2569 · โค้ด: [github.com/JitrudeeDongdee/hospital-roster-queue](https://github.com/JitrudeeDongdee/hospital-roster-queue) · ภาพรวมระบบ: [ARCHITECTURE.md](ARCHITECTURE.md)
 
 > **บริบท:** ระบบตารางเวรแพทย์และคิวผู้ป่วยแบบ multi-tenant ปัจจุบันมี 15 โรงพยาบาล และจะขยายเป็น 30 แห่ง
 > Stack ปัจจุบันคือ Laravel 13 (PHP 8.5), MySQL 8.4 และ React 19 + TanStack Query/Virtual โดยมีแผนย้ายไป Next.js + NestJS

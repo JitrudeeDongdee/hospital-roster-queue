@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Hospital extends Model
 {
-    protected $fillable = ['code', 'name', 'min_rest_hours', 'max_weekly_hours'];
+    protected $fillable = ['code', 'name', 'min_rest_hours', 'max_weekly_hours', 'appointment_open', 'appointment_close', 'appointment_slot_minutes', 'appointments_per_doctor', 'appointment_early_minutes', 'appointment_late_minutes'];
 
     public function departments(): HasMany
     {
@@ -34,6 +34,12 @@ class Hospital extends Model
     public function leaves(): HasManyThrough
     {
         return $this->hasManyThrough(StaffUnavailability::class, Staff::class);
+    }
+
+    // ใช้กับ scopeBindings ของ route {appointment}
+    public function appointments(): HasMany
+    {
+        return $this->hasMany(Appointment::class);
     }
 
     // ใช้กับ scopeBindings ของ route {shiftRequest}
