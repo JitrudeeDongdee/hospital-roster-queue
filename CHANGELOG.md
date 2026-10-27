@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+## [0.8.2] - 2026-10-28
+
+### Changed
+- ผัง network ขั้น 1–3: Web / API / WebSocket วาดเป็นไอคอนซ้อนกันให้เห็นว่ามีหลาย task (ขั้น 1 = × 2 วางคนละ AZ · ขั้น 2–3 = × N ปรับ 2–10 task ตามโหลด) และอธิบาย × N ในตาราง ECS
+
 ## [0.8.1] - 2026-10-27
 
 ### Changed
@@ -170,7 +175,8 @@ release แรก — ตัวอย่างระบบจัดเวรแ�
 - ตั้ง timezone เป็น `Asia/Bangkok` — คิวที่ออกช่วง 00:00–07:00 ไม่ถูกนับเป็นวันก่อนหน้าแล้ว
 - หัวตารางเวรไม่มีแถวโผล่ทะลุขึ้นมาตอนเลื่อน
 
-[Unreleased]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.8.1...HEAD
+[Unreleased]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.8.2...HEAD
+[0.8.2]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.8.1...v0.8.2
 [0.8.1]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.7.9...v0.8.0
 [0.7.9]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.7.8...v0.7.9
