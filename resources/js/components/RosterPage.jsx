@@ -140,6 +140,13 @@ export default function RosterPage({ hospitalId, view }) {
     const days = [];
     for (let d = from; d <= to; d = addDays(d, 1)) days.push(d);
     const gapCount = (roster.data?.gaps ?? []).filter((g) => g.date >= from && g.date <= to).length;
+    // สรุปความต้องการทั้งเดือน (เฉพาะแพทย์ที่แสดงอยู่) — นับคนที่อยากลงแต่ยังไม่ได้ และไม่สะดวกแต่ถูกลง
+    const wishSummary = { prefer: 0, met: 0, missed: 0, forced: 0 };
+    for (const p of roster.data?.preferences ?? []) {
+        if (p.date < from || p.date > to || !isShown(p.staff_id)) continue;
+        const on = (cells[`${p.date}|${p.shift_template_id}`] ?? []).some((x) => x.staff_id === p.staff_id);
+        if (p.kind === 'prefer') { wishSummary.prefer++; wishSummary[on ? 'met' : 'missed']++; } else if (on) wishSummary.forced++;
+    }
 
     return (
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
@@ -200,6 +207,15 @@ export default function RosterPage({ hospitalId, view }) {
                     <p className={`mx-4 mt-4 text-sm ${gapCount ? 'text-red-600' : 'text-emerald-700'}`}>
                         {gapCount ? `ยังมี ${gapCount} ช่องที่คนไม่ครบหรือขาดความเชี่ยวชาญ (สีแดง)` : 'ทุกเวรในเดือนนี้มีแพทย์ครบตามกติกา'}
                     </p>
+                )}
+                {roster.isSuccess && view === 'table' && canManage && wishSummary.prefer + wishSummary.forced > 0 && (
+                    <div className="mx-4 mt-2 flex flex-wrap items-center gap-1.5 text-xs">
+                        <span className="text-slate-600">ความต้องการของแพทย์:</span>
+                        <span className={`rounded-full px-2 py-0.5 ring-1 ${WISH_STYLE.missed}`}>★ อยากลงแต่ยังไม่ได้ {wishSummary.missed}</span>
+                        {wishSummary.forced > 0 && <span className={`rounded-full px-2 py-0.5 ring-1 ${WISH_STYLE.forced}`}>✕ ไม่สะดวกแต่ถูกลง {wishSummary.forced}</span>}
+                        <span className={`rounded-full px-2 py-0.5 ring-1 ${WISH_STYLE.met}`}>✓ ได้ตามที่อยากลง {wishSummary.met}/{wishSummary.prefer}</span>
+                        <span className={`rounded-full px-2 py-0.5 ring-1 ${WISH_STYLE.avoided}`}>✕ ไม่สะดวก</span>
+                    </div>
                 )}
 
                 {roster.isPending && <p className="p-4 text-sm text-slate-500">กำลังโหลด…</p>}
@@ -405,15 +421,36 @@ function formatDay(iso) {
     return `${Number(d)}/${Number(m)}`;
 }
 
+// ความต้องการของแพทย์ในช่องนี้ แยกตามผล — คนที่อยากลงแต่ไม่ได้เด่นสุด (สีส้ม) ให้แอดมินเห็นก่อน
+const WISH_STYLE = {
+    missed: 'bg-orange-500 text-white ring-orange-600',
+    met: 'bg-white text-emerald-800 ring-emerald-400',
+    forced: 'bg-red-50 text-red-800 ring-red-300',
+    avoided: 'bg-white text-slate-400 ring-slate-200',
+};
+const WISH_LABEL = { missed: '★ อยากลง ยังไม่ได้', met: '★ ได้ตามที่อยากลง', forced: '✕ ไม่สะดวก แต่ถูกลง', avoided: '✕ ไม่สะดวก' };
+
 function Wishes({ list, staffName, assigned }) {
-    const names = (kind) => list.filter((w) => w.kind === kind).map((w) => ({ id: w.staff_id, name: staffName[w.staff_id], on: assigned.some((s) => s.staff_id === w.staff_id) }));
-    const prefer = names('prefer');
-    const avoid = names('avoid');
-    if (!prefer.length && !avoid.length) return null;
+    if (!list.length) return null;
+    const outcome = (w) => {
+        const on = assigned.some((s) => s.staff_id === w.staff_id);
+        if (w.kind === 'prefer') return on ? 'met' : 'missed';
+        return on ? 'forced' : 'avoided';
+    };
+    const groups = ['missed', 'forced', 'met', 'avoided']
+        .map((key) => [key, list.filter((w) => outcome(w) === key)])
+        .filter(([, items]) => items.length);
     return (
-        <p className="mt-1 text-[11px] leading-tight">
-            {prefer.length > 0 && <span className="text-emerald-700">★ อยากลง: {prefer.map((x) => x.name + (x.on ? ' ✓' : '')).join(', ')} </span>}
-            {avoid.length > 0 && <span className="text-slate-500">✕ ไม่สะดวก: {avoid.map((x) => x.name + (x.on ? ' (ลงแล้ว)' : '')).join(', ')}</span>}
-        </p>
+        <div className="mt-1 space-y-0.5 text-[11px] leading-tight">
+            {groups.map(([key, items]) => (
+                <div key={key} className="flex flex-wrap items-center gap-1" title={WISH_LABEL[key]}>
+                    {items.map((w) => (
+                        <span key={w.staff_id} className={`rounded-full px-1.5 py-0.5 ring-1 ${WISH_STYLE[key]}`}>
+                            {key === 'met' ? '✓' : key === 'missed' ? '★' : '✕'} {staffName[w.staff_id]}
+                        </span>
+                    ))}
+                </div>
+            ))}
+        </div>
     );
 }
