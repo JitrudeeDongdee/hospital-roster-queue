@@ -28,7 +28,7 @@ class TicketController extends Controller
         ]);
 
         return $hospital->tickets()
-            ->select(['id', 'department_id', 'required_skill_id', 'number', 'priority', 'status', 'staff_id', 'service_date', 'created_at', 'called_at', 'completed_at'])
+            ->select(['id', 'department_id', 'required_skill_id', 'number', 'priority', 'status', 'staff_id', 'service_date', 'created_at', 'called_at', 'completed_at', 'appointment_at', 'requested_staff_id'])
             ->where('service_date', $request->input('date', now()->toDateString()))
             ->when($request->status === 'active', fn ($q) => $q->whereIn('status', [QueueTicket::WAITING, QueueTicket::CALLED]))
             ->when($request->status && $request->status !== 'active', fn ($q) => $q->where('status', $request->status))

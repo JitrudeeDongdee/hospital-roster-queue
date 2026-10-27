@@ -202,6 +202,7 @@ export default function TicketBoard({ hospitalId, date }) {
                                         <span className="flex flex-col font-mono font-semibold leading-tight">
                                             {queueNo(departments[t.department_id], t.number)}
                                             {t.id === nextId && <span className="font-sans text-[10px] font-medium text-emerald-700">ถัดไป</span>}
+                                            {t.appointment_at && <span className="font-sans text-[10px] font-medium text-sky-700">นัด {clock(t.appointment_at)}</span>}
                                         </span>
                                         <span>{departments[t.department_id]?.name ?? '…'}</span>
                                         {canTriage && t.status === 'waiting' ? (

@@ -21,6 +21,7 @@ enum Role: string
         'shift.request.own' => 'ขอย้าย/แลกเวรของตัวเอง · ตอบรับคำขอแลก · ส่งเวรที่อยากลง',
         'shift.request.resolve' => 'เคลียร์คำขอย้าย/แลกเวรที่ติดกติกา',
         'staff.manage' => 'ดูรายละเอียดแพทย์ · เพิ่มแพทย์ · แก้ชื่อ/ความเชี่ยวชาญ',
+        'appointment.manage' => 'ลงนัด · check-in ผู้ป่วยนัด · ยกเลิกนัด',
         'queue.view' => 'ดูรายการคิว',
         'ticket.issue' => 'ออกบัตรคิว',
         'ticket.triage' => 'กำหนดความเร่งด่วน / ความเชี่ยวชาญ (คัดกรอง)',
@@ -42,10 +43,10 @@ enum Role: string
     public function permissions(): array
     {
         return match ($this) {
-            self::Admin => ['roster.view', 'roster.manage', 'leave.manage.any', 'leave.approve', 'shift.request.resolve', 'staff.manage', 'queue.view', 'ticket.issue', 'ticket.triage', 'stats.view'],
+            self::Admin => ['roster.view', 'roster.manage', 'leave.manage.any', 'leave.approve', 'shift.request.resolve', 'staff.manage', 'appointment.manage', 'queue.view', 'ticket.issue', 'ticket.triage', 'stats.view'],
             self::Doctor => ['roster.view', 'leave.manage.own', 'shift.request.own', 'queue.view', 'ticket.call'],
-            self::Nurse => ['roster.view', 'queue.view', 'ticket.issue', 'ticket.triage'],
-            self::Registration => ['ticket.issue'],
+            self::Nurse => ['roster.view', 'appointment.manage', 'queue.view', 'ticket.issue', 'ticket.triage'],
+            self::Registration => ['ticket.issue', 'appointment.manage'],
         };
     }
 }

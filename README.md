@@ -50,6 +50,8 @@ Passwordless demo login is available only with `DEMO_LOGIN=true` (off by default
 
 ## Patient queue
 
+- **Appointments alongside walk-ins:** registration books a patient into a 30-minute slot of a department (optionally a named doctor). Capacity follows the roster: doctors on duty for the whole slot × appointments per doctor. A booking is not a ticket — at check-in the patient gets a ticket from the same number sequence, marked as an appointment. When calling, urgent cases still go first; among equal priority, appointments whose time has come (up to 15 minutes early) go before walk-ins; a named-doctor appointment can only be called by that doctor. Checking in more than 30 minutes after the slot ends turns it into a walk-in; a scheduled job marks no-shows every 15 minutes.
+
 - **Numeric queue numbers:** patients see digits only, with the first digit for the department (outpatients 1001, lab 2001, X-ray 3001; `departments.queue_prefix`), so numbers never repeat across a hospital on the same day and are easy for elderly patients to read. Up to 999 tickets per department per day keep the 4-digit form.
 
 - **Issue tickets:** each department runs its own numbers every day. A locked counter row keeps numbers unique when several kiosks issue tickets at the same moment.
@@ -146,6 +148,10 @@ All endpoints are under `/api/hospitals/{hospital}`, except `GET /api/hospitals`
 | GET | `/staff-directory` | Admin: doctors with skills, shifts/hours this month, next shift, pending leave, whether they have an account |
 | POST | `/staff` | Admin adds a doctor `{name, department_id, skill_ids[]}` and a doctor user account → `201` |
 | PATCH | `/staff/{staff}` | Admin edits `name` and/or `skill_ids` |
+| GET | `/appointments?date=&department_id=` | Appointments of a day with status (booked / checked_in / no_show / cancelled) and the ticket number once checked in |
+| GET | `/departments/{department}/appointment-slots?date=` | 30-minute slots with capacity (doctors on duty for the whole slot × appointments per doctor), booked count and doctors |
+| POST | `/departments/{department}/appointments` | Book `{patient_ref, slot_start, staff_id?, note?}` → `201`, or `422` when the slot is full, nobody is on duty, or the doctor is full |
+| POST | `/appointments/{appointment}/check-in`, `/cancel` | Check-in issues a ticket that carries the appointment time (late beyond 30 min = walk-in); cancel only before check-in |
 | GET | `/on-duty` | Doctors whose shift covers now (staff, department, shift name), used by the queue list to show who will take a waiting ticket |
 | GET | `/staff/{staff}/my-queue` | Waiting tickets this doctor can take, current ticket, next shifts |
 

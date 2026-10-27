@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 756 456" width="756" height="456" font-family="Sarabun, 'Noto Sans Thai', Thonburi, 'Helvetica Neue', sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 756 737" width="756" height="737" font-family="Sarabun, 'Noto Sans Thai', Thonburi, 'Helvetica Neue', sans-serif">
 <title>ER diagram: คิวผู้ป่วยและสถิติ</title>
-<rect width="756" height="456" fill="#fff"/>
+<rect width="756" height="737" fill="#fff"/>
 <path d="M278,29.0 H212" stroke="#3b4a6b" stroke-width="1.2" fill="none"/>
 <path d="M271,36.0 L271,22.0" stroke="#3b4a6b" stroke-width="1.3"/><path d="M266,36.0 L266,22.0" stroke="#3b4a6b" stroke-width="1.3"/><path d="M224,29.0 L212,22.0 M224,29.0 L212,29.0 M224,29.0 L212,36.0" stroke="#3b4a6b" stroke-width="1.3" fill="none"/><circle cx="229" cy="29.0" r="3.5" fill="#fff" stroke="#3b4a6b" stroke-width="1.1"/>
 <text x="245.0" y="23.0" font-size="11" fill="#7a2e2e" text-anchor="middle" paint-order="stroke" stroke="#fff" stroke-width="3">เลขล่าสุด</text>
@@ -16,6 +16,12 @@
 <path d="M544,242.0 H478" stroke="#3b4a6b" stroke-width="1.2" fill="none"/>
 <path d="M537,249.0 L537,235.0" stroke="#3b4a6b" stroke-width="1.3"/><path d="M532,249.0 L532,235.0" stroke="#3b4a6b" stroke-width="1.3"/><path d="M490,242.0 L478,235.0 M490,242.0 L478,242.0 M490,242.0 L478,249.0" stroke="#3b4a6b" stroke-width="1.3" fill="none"/><circle cx="495" cy="242.0" r="3.5" fill="#fff" stroke="#3b4a6b" stroke-width="1.1"/>
 <text x="511.0" y="236.0" font-size="11" fill="#7a2e2e" text-anchor="middle" paint-order="stroke" stroke="#fff" stroke-width="3">ต้องการ</text>
+<path d="M378.0,478 V540" stroke="#3b4a6b" stroke-width="1.2" fill="none"/>
+<path d="M385.0,485 L371.0,485" stroke="#3b4a6b" stroke-width="1.3"/><path d="M385.0,490 L371.0,490" stroke="#3b4a6b" stroke-width="1.3"/><path d="M378.0,528 L371.0,540 M378.0,528 L378.0,540 M378.0,528 L385.0,540" stroke="#3b4a6b" stroke-width="1.3" fill="none"/><circle cx="378.0" cy="523" r="3.5" fill="#fff" stroke="#3b4a6b" stroke-width="1.1"/>
+<text x="384.0" y="513.0" font-size="11" fill="#7a2e2e" text-anchor="middle" paint-order="stroke" stroke="#fff" stroke-width="3">check-in</text>
+<path d="M132.0,274 V509.0 H358.0 V540" stroke="#3b4a6b" stroke-width="1.2" fill="none"/>
+<path d="M139.0,281 L125.0,281" stroke="#3b4a6b" stroke-width="1.3"/><path d="M139.0,286 L125.0,286" stroke="#3b4a6b" stroke-width="1.3"/><path d="M358.0,528 L351.0,540 M358.0,528 L358.0,540 M358.0,528 L365.0,540" stroke="#3b4a6b" stroke-width="1.3" fill="none"/><circle cx="358.0" cy="523" r="3.5" fill="#fff" stroke="#3b4a6b" stroke-width="1.1"/>
+<text x="245.0" y="504.0" font-size="11" fill="#7a2e2e" text-anchor="middle" paint-order="stroke" stroke="#fff" stroke-width="3">นัดแพทย์</text>
 <rect x="12" y="12" width="200" height="100" rx="5" fill="#fff" stroke="#3b4a6b" stroke-width="1.3"/>
 <path d="M12,38 H212" stroke="#3b4a6b" stroke-width="0.8"/>
 <rect x="12.6" y="12.6" width="198.8" height="25" rx="5" fill="#e3e9f5"/>
@@ -71,7 +77,7 @@
 <text x="20" y="265" font-size="9.5" font-weight="700" fill="#a23b3b">PK</text>
 <text x="46" y="265" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">id</text>
 <text x="204" y="265" font-size="10.5" text-anchor="end" fill="#666">ดูข้อ 2.1</text>
-<rect x="278" y="225" width="200" height="219" rx="5" fill="#fff" stroke="#3b4a6b" stroke-width="1.3"/>
+<rect x="278" y="225" width="200" height="253" rx="5" fill="#fff" stroke="#3b4a6b" stroke-width="1.3"/>
 <path d="M278,251 H478" stroke="#3b4a6b" stroke-width="0.8"/>
 <rect x="278.6" y="225.6" width="198.8" height="25" rx="5" fill="#e3e9f5"/>
 <text x="378.0" y="242" text-anchor="middle" font-size="12.5" font-weight="700" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">queue_tickets</text>
@@ -108,6 +114,12 @@
 <text x="286" y="435" font-size="9.5" font-weight="700" fill="#999"></text>
 <text x="312" y="435" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">called_at</text>
 <text x="470" y="435" font-size="10.5" text-anchor="end" fill="#666">timestamp</text>
+<text x="286" y="452" font-size="9.5" font-weight="700" fill="#999"></text>
+<text x="312" y="452" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">appointment_at</text>
+<text x="470" y="452" font-size="10.5" text-anchor="end" fill="#666">nullable · นัด</text>
+<text x="286" y="469" font-size="9.5" font-weight="700" fill="#2b5ea8">FK</text>
+<text x="312" y="469" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">requested_staff_id</text>
+<text x="470" y="469" font-size="10.5" text-anchor="end" fill="#666">null</text>
 <rect x="544" y="225" width="200" height="49" rx="5" fill="#fff" stroke="#3b4a6b" stroke-width="1.3" stroke-dasharray="4 3"/>
 <path d="M544,251 H744" stroke="#3b4a6b" stroke-width="0.8"/>
 <rect x="544.6" y="225.6" width="198.8" height="25" rx="5" fill="#f1f1f1"/>
@@ -115,4 +127,35 @@
 <text x="552" y="265" font-size="9.5" font-weight="700" fill="#a23b3b">PK</text>
 <text x="578" y="265" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">id</text>
 <text x="736" y="265" font-size="10.5" text-anchor="end" fill="#666">ดูข้อ 2.1</text>
+<rect x="278" y="540" width="200" height="185" rx="5" fill="#fff" stroke="#3b4a6b" stroke-width="1.3"/>
+<path d="M278,566 H478" stroke="#3b4a6b" stroke-width="0.8"/>
+<rect x="278.6" y="540.6" width="198.8" height="25" rx="5" fill="#e3e9f5"/>
+<text x="378.0" y="557" text-anchor="middle" font-size="12.5" font-weight="700" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">appointments</text>
+<text x="286" y="580" font-size="9.5" font-weight="700" fill="#a23b3b">PK</text>
+<text x="312" y="580" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">id</text>
+<text x="470" y="580" font-size="10.5" text-anchor="end" fill="#666">bigint</text>
+<text x="286" y="597" font-size="9.5" font-weight="700" fill="#2b5ea8">FK</text>
+<text x="312" y="597" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">department_id</text>
+<text x="470" y="597" font-size="10.5" text-anchor="end" fill="#666">bigint</text>
+<text x="286" y="614" font-size="9.5" font-weight="700" fill="#2b5ea8">FK</text>
+<text x="312" y="614" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">staff_id</text>
+<text x="470" y="614" font-size="10.5" text-anchor="end" fill="#666">nullable</text>
+<text x="286" y="631" font-size="9.5" font-weight="700" fill="#999"></text>
+<text x="312" y="631" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">patient_ref</text>
+<text x="470" y="631" font-size="10.5" text-anchor="end" fill="#666">HN</text>
+<text x="286" y="648" font-size="9.5" font-weight="700" fill="#999"></text>
+<text x="312" y="648" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">slot_start</text>
+<text x="470" y="648" font-size="10.5" text-anchor="end" fill="#666">datetime</text>
+<text x="286" y="665" font-size="9.5" font-weight="700" fill="#999"></text>
+<text x="312" y="665" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">slot_end</text>
+<text x="470" y="665" font-size="10.5" text-anchor="end" fill="#666">datetime</text>
+<text x="286" y="682" font-size="9.5" font-weight="700" fill="#999"></text>
+<text x="312" y="682" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">status</text>
+<text x="470" y="682" font-size="10.5" text-anchor="end" fill="#666">booked/…</text>
+<text x="286" y="699" font-size="9.5" font-weight="700" fill="#999"></text>
+<text x="312" y="699" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">source</text>
+<text x="470" y="699" font-size="10.5" text-anchor="end" fill="#666">manual/his</text>
+<text x="286" y="716" font-size="9.5" font-weight="700" fill="#2b5ea8">FK</text>
+<text x="312" y="716" font-size="11" font-family="'SF Mono', Menlo, Consolas, monospace" fill="#1f2a44">ticket_id</text>
+<text x="470" y="716" font-size="10.5" text-anchor="end" fill="#666">nullable</text>
 </svg>
