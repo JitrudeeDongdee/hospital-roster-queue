@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-27
+
 ### Added
 - รายการคิว: ค้นหาเลขคิว (พิมพ์ 1004 ได้คิวที่ 4 ของแผนกหลัก 1) และกรองความเร่งด่วน / แพทย์ (`number`, `priority`, `staff_id` · `status=active` = รอเรียก + กำลังตรวจ)
 - ห้องตรวจแสดง "คิวถัดไปของคุณ" และในรายการคิวแถวนั้นมีป้าย "ถัดไป"
@@ -84,7 +86,8 @@ release แรก — ตัวอย่างระบบจัดเวรแ�
 - ตั้ง timezone เป็น `Asia/Bangkok` — คิวที่ออกช่วง 00:00–07:00 ไม่ถูกนับเป็นวันก่อนหน้าแล้ว
 - หัวตารางเวรไม่มีแถวโผล่ทะลุขึ้นมาตอนเลื่อน
 
-[Unreleased]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.2.0...v0.3.0
