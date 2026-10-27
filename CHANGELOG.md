@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+## [0.7.4] - 2026-10-27
+
+### Changed
+- เอกสาร architecture ข้อ 2: ขึ้นหน้าใหม่ และอธิบายความสัมพันธ์ของตารางใต้ ER diagram ทั้ง 3 ผัง · ER diagram จัดเวรเพิ่มคอลัมน์ `departments.queue_prefix`
+
 ## [0.7.3] - 2026-10-27
 
 ### Changed
@@ -113,7 +118,8 @@ release แรก — ตัวอย่างระบบจัดเวรแ�
 - ตั้ง timezone เป็น `Asia/Bangkok` — คิวที่ออกช่วง 00:00–07:00 ไม่ถูกนับเป็นวันก่อนหน้าแล้ว
 - หัวตารางเวรไม่มีแถวโผล่ทะลุขึ้นมาตอนเลื่อน
 
-[Unreleased]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.3...HEAD
+[Unreleased]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.4...HEAD
+[0.7.4]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.3...v0.7.4
 [0.7.3]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.2...v0.7.3
 [0.7.2]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.0...v0.7.1
