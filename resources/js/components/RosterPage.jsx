@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Link, NavLink, useSearchParams } from 'react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import RosterCalendar, { calendarRange } from './RosterCalendar';
 import DoctorFilter from './DoctorFilter';
 import { Badge } from './LeavePage';
+import { RequestForm } from './ShiftRequestsPage';
 import { addDays, api, errorMessages, isoDate } from '../api';
 import { useDepartments, useStaff } from '../useLookups';
 import { useAuth } from '../auth';
@@ -31,6 +32,18 @@ export default function RosterPage({ hospitalId, view }) {
     const departments = useDepartments(hospitalId).data ?? [];
     const allStaff = useStaff(hospitalId).data ?? [];
     const [problems, setProblems] = useState(null);
+    // กล่อง "ร้องขอ" ข้างตาราง: แท็บที่เปิด + เวรที่แพทย์เลือกจะย้าย/แลก (คลิกชิปชื่อตัวเองในตารางก็ได้)
+    const [requestTab, setRequestTab] = useState('leave');
+    const [moveShiftId, setMoveShiftId] = useState('');
+    const canMove = can('shift.request.own') && !!user.staff_id;
+    const requestRef = useRef(null);
+    // ชิปของตัวเองที่ยังไม่เริ่ม → คลิกเพื่อขอย้าย/แลก (จอแคบกล่องอยู่ใต้ตาราง จึงเลื่อนไปให้เห็น)
+    const movable = (s) => canMove && s.staff_id === user.staff_id && new Date(`${s.shift_date}T${templateById[s.shift_template_id]?.start_time}`) > new Date();
+    const pickToMove = (s) => {
+        setRequestTab('shifts');
+        setMoveShiftId(String(s.id));
+        requestAnimationFrame(() => requestRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
+    };
 
     // ลิงก์ที่มีแค่ ?doctors= (เช่น จากหน้าการลา) — ใช้แผนกของแพทย์คนแรก
     const doctorFromUrl = allStaff.find((s) => s.id === Number((params.get('doctors') ?? '').split(',')[0]));
@@ -123,6 +136,7 @@ export default function RosterPage({ hospitalId, view }) {
     }, [roster.data, from, to]);
 
     const templates = roster.data?.templates ?? [];
+    const templateById = Object.fromEntries(templates.map((t) => [t.id, t]));
     const days = [];
     for (let d = from; d <= to; d = addDays(d, 1)) days.push(d);
     const gapCount = (roster.data?.gaps ?? []).filter((g) => g.date >= from && g.date <= to).length;
@@ -228,8 +242,9 @@ export default function RosterPage({ hospitalId, view }) {
                                                         {assigned.filter((s) => isShown(s.staff_id)).map((s) => (
                                                             <span
                                                                 key={s.id}
-                                                                title={s.warnings?.length ? s.warnings.join('\n') : undefined}
-                                                                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs ${s.warnings?.length ? 'bg-red-600 text-white ring-1 ring-red-700' : s.staff_id === user.staff_id ? 'bg-emerald-100 text-emerald-900 ring-1 ring-emerald-400' : 'bg-indigo-50 text-indigo-800'}`}
+                                                                onClick={movable(s) ? () => pickToMove(s) : undefined}
+                                                                title={s.warnings?.length ? s.warnings.join('\n') : movable(s) ? 'คลิกเพื่อขอย้าย/แลกเวรนี้' : undefined}
+                                                                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs ${movable(s) ? 'cursor-pointer hover:ring-2' : ''} ${s.warnings?.length ? 'bg-red-600 text-white ring-1 ring-red-700' : s.staff_id === user.staff_id ? 'bg-emerald-100 text-emerald-900 ring-1 ring-emerald-400' : 'bg-indigo-50 text-indigo-800'}`}
                                                             >
                                                                 {s.warnings?.length > 0 && <span aria-label="ผิดกติกา">⚠</span>}
                                                                 {s.staff_name}
@@ -278,12 +293,29 @@ export default function RosterPage({ hospitalId, view }) {
                     </ul>
                 </section>
                 {(can('leave.manage.any') || can('leave.manage.own')) && (
-                    <UnavailabilityPanel
-                        hospitalId={hospitalId}
-                        doctors={can('leave.manage.any') ? doctors : doctors.filter((d) => d.id === user.staff_id)}
-                        direct={can('leave.manage.any')}
-                        onChange={refresh}
-                    />
+                    <section ref={requestRef} className="scroll-mt-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                        <div className="mb-3 flex items-center justify-between gap-2">
+                            <h2 className="text-lg font-semibold">{canMove ? 'ร้องขอ' : 'บันทึกวันลา'}</h2>
+                            <Link className="text-xs text-slate-500 underline" to={`/requests/${requestTab}`}>ดูคำขอทั้งหมด</Link>
+                        </div>
+                        {canMove && (
+                            <div className="mb-3 flex rounded-md border border-slate-300 p-0.5 text-xs" role="tablist">
+                                {[['leave', 'ขอลา'], ['shifts', 'ขอย้าย/แลกเวร']].map(([value, label]) => (
+                                    <button key={value} role="tab" aria-selected={requestTab === value} onClick={() => setRequestTab(value)} className={`flex-1 rounded px-2 py-1 ${requestTab === value ? 'bg-indigo-600 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>{label}</button>
+                                ))}
+                            </div>
+                        )}
+                        {requestTab === 'shifts' && canMove && roster.isSuccess ? (
+                            <MovePanel hospitalId={hospitalId} roster={roster.data} staffId={user.staff_id} shiftId={moveShiftId} onSelect={setMoveShiftId} />
+                        ) : (
+                            <UnavailabilityPanel
+                                hospitalId={hospitalId}
+                                doctors={can('leave.manage.any') ? doctors : doctors.filter((d) => d.id === user.staff_id)}
+                                direct={can('leave.manage.any')}
+                                onChange={refresh}
+                            />
+                        )}
+                    </section>
                 )}
             </div>
         </div>
@@ -317,9 +349,8 @@ function UnavailabilityPanel({ hospitalId, doctors, direct, onChange }) {
     const input = 'w-full rounded-md border border-slate-300 px-3 py-2 text-sm';
 
     return (
-        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <h2 className="mb-1 text-lg font-semibold">{direct ? 'บันทึกวันลา' : 'ขอลา'}</h2>
-            <p className="mb-3 text-xs text-slate-500">{direct ? 'แอดมินบันทึกให้ = อนุมัติทันที' : 'ส่งคำขอแล้วรอแอดมินอนุมัติ'} · <Link className="underline" to="/requests/leave">ดูคำขอทั้งหมด</Link></p>
+        <div>
+            <p className="mb-3 text-xs text-slate-500">{direct ? 'แอดมินบันทึกให้ = อนุมัติทันที' : 'ส่งคำขอลาแล้วรอแอดมินอนุมัติ'}</p>
             <form className="space-y-2" onSubmit={(e) => { e.preventDefault(); add.mutate(); }}>
                 <select className={input} value={doctorId ?? ''} onChange={(e) => setStaffId(Number(e.target.value))}>
                     {doctors.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
@@ -335,7 +366,28 @@ function UnavailabilityPanel({ hospitalId, doctors, direct, onChange }) {
                 ))}
                 {list.data?.length === 0 && <li className="text-slate-400">ยังไม่มีวันลา</li>}
             </ul>
-        </section>
+        </div>
+    );
+}
+
+// แท็บขอย้าย/แลกเวร: เลือกเวรของตัวเองที่ยังไม่เริ่มในช่วงที่เปิดดู แล้วใช้ฟอร์มเดียวกับหน้า "ร้องขอ"
+function MovePanel({ hospitalId, roster, staffId, shiftId, onSelect }) {
+    const templates = Object.fromEntries(roster.templates.map((t) => [t.id, t]));
+    const mine = roster.shifts.filter((s) => s.staff_id === staffId && new Date(`${s.shift_date}T${templates[s.shift_template_id].start_time}`) > new Date());
+    const shift = mine.find((s) => String(s.id) === shiftId);
+
+    return (
+        <div>
+            <p className="mb-3 text-xs text-slate-500">เลือกเวรของคุณ หรือคลิกชิปชื่อตัวเองในตาราง · แลกกับเพื่อน: เพื่อนตอบรับแล้วสลับทันที</p>
+            <select className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={shift ? shiftId : ''} onChange={(e) => onSelect(e.target.value)} aria-label="เวรของฉันที่จะย้าย/แลก">
+                <option value="">{mine.length ? 'เลือกเวรของฉัน…' : 'ไม่มีเวรที่ยังไม่เริ่มในเดือนนี้'}</option>
+                {mine.map((s) => {
+                    const t = templates[s.shift_template_id];
+                    return <option key={s.id} value={s.id}>{formatDay(s.shift_date)} {t.name} {t.start_time.slice(0, 5)}–{t.end_time.slice(0, 5)}</option>;
+                })}
+            </select>
+            {shift && <RequestForm key={shift.id} hospitalId={hospitalId} shift={shift} roster={roster} staffId={staffId} onDone={() => onSelect('')} />}
+        </div>
     );
 }
 

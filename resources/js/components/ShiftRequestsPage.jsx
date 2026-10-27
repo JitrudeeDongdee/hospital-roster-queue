@@ -199,7 +199,7 @@ function MyShifts({ hospitalId, staffId, openSlots }) {
     );
 }
 
-function RequestForm({ hospitalId, shift, roster, staffId, onDone }) {
+export function RequestForm({ hospitalId, shift, roster, staffId, onDone }) {
     const refresh = useRefresh(hospitalId);
     const [type, setType] = useState('swap');
     const [toDate, setToDate] = useState('');
