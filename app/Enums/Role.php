@@ -15,8 +15,9 @@ enum Role: string
     public const PERMISSIONS = [
         'roster.view' => 'ดูตารางเวร',
         'roster.manage' => 'จัดเวร / จัดอัตโนมัติ / ลบเวร',
-        'leave.manage.any' => 'บันทึกวันลาให้แพทย์ทุกคน',
-        'leave.manage.own' => 'บันทึกวันลาของตัวเอง',
+        'leave.manage.any' => 'บันทึกวันลาให้แพทย์ทุกคน (อนุมัติทันที)',
+        'leave.manage.own' => 'ขอลา / ยกเลิกคำขอของตัวเอง',
+        'leave.approve' => 'อนุมัติ / ไม่อนุมัติคำขอลา',
         'queue.view' => 'ดูรายการคิว',
         'ticket.issue' => 'ออกบัตรคิว',
         'ticket.triage' => 'กำหนดความเร่งด่วน / ความเชี่ยวชาญ (คัดกรอง)',
@@ -38,7 +39,7 @@ enum Role: string
     public function permissions(): array
     {
         return match ($this) {
-            self::Admin => ['roster.view', 'roster.manage', 'leave.manage.any', 'queue.view', 'ticket.issue', 'ticket.triage', 'stats.view'],
+            self::Admin => ['roster.view', 'roster.manage', 'leave.manage.any', 'leave.approve', 'queue.view', 'ticket.issue', 'ticket.triage', 'stats.view'],
             self::Doctor => ['roster.view', 'leave.manage.own', 'queue.view', 'ticket.call'],
             self::Nurse => ['roster.view', 'queue.view', 'ticket.issue', 'ticket.triage'],
             self::Registration => ['ticket.issue'],

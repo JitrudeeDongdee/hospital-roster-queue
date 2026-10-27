@@ -27,7 +27,8 @@ class RosterService
         // โหลดเฉพาะเวรของแพทย์คนนี้ในช่วงที่กติกาต้องใช้ (สัปดาห์นั้น ± เวลาพัก) — ใช้ index (staff_id, starts_at)
         $shifts = $staff->shifts()->whereBetween('starts_at', [$from, $to])->get(['starts_at', 'ends_at'])
             ->map(fn (Shift $s) => [CarbonImmutable::instance($s->starts_at), CarbonImmutable::instance($s->ends_at)]);
-        $leave = $staff->unavailabilities()->whereDate('date', $date)->exists() ? [$date] : [];
+        // บังคับเฉพาะวันลาที่อนุมัติแล้ว (คำขอที่รออนุมัติ แอดมินยังลงเวรเองได้)
+        $leave = $staff->unavailabilities()->where('status', 'approved')->whereDate('date', $date)->exists() ? [$date] : [];
 
         return $this->check($staff, $template, $date, $shifts->all(), $leave, $staff->hospital);
     }
@@ -108,7 +109,8 @@ class RosterService
         $existing = Shift::whereIn('staff_id', $doctors->pluck('id'))->whereBetween('starts_at', [$loadFrom, $loadTo])->get();
         $shiftsOf = $doctors->mapWithKeys(fn (Staff $d) => [$d->id => $existing->where('staff_id', $d->id)
             ->map(fn (Shift $s) => [CarbonImmutable::instance($s->starts_at), CarbonImmutable::instance($s->ends_at)])->values()->all()])->all();
-        $leaveOf = DB::table('staff_unavailabilities')->whereIn('staff_id', $doctors->pluck('id'))->whereBetween('date', [$from, $to])->get()
+        // จัดอัตโนมัติเว้นทั้งวันลาที่อนุมัติแล้วและคำขอที่ยังรออนุมัติ — ไม่สร้างเวรที่จะชนกับคำขอลา
+        $leaveOf = DB::table('staff_unavailabilities')->whereIn('staff_id', $doctors->pluck('id'))->whereIn('status', ['approved', 'pending'])->whereBetween('date', [$from, $to])->get()
             ->groupBy('staff_id')->map(fn ($rows) => $rows->map(fn ($r) => substr($r->date, 0, 10))->all())->all();
         $slots = Shift::where('department_id', $department->id)->whereBetween('shift_date', [$from, $to])->get()
             ->groupBy(fn (Shift $s) => $s->shift_template_id.'|'.$s->shift_date->toDateString())

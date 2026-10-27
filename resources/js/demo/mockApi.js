@@ -90,8 +90,9 @@ const db = (() => {
 const PERMISSIONS = {
     'roster.view': 'ดูตารางเวร',
     'roster.manage': 'จัดเวร / จัดอัตโนมัติ / ลบเวร',
-    'leave.manage.any': 'บันทึกวันลาให้แพทย์ทุกคน',
-    'leave.manage.own': 'บันทึกวันลาของตัวเอง',
+    'leave.manage.any': 'บันทึกวันลาให้แพทย์ทุกคน (อนุมัติทันที)',
+    'leave.manage.own': 'ขอลา / ยกเลิกคำขอของตัวเอง',
+    'leave.approve': 'อนุมัติ / ไม่อนุมัติคำขอลา',
     'queue.view': 'ดูรายการคิว',
     'ticket.issue': 'ออกบัตรคิว',
     'ticket.triage': 'กำหนดความเร่งด่วน / ความเชี่ยวชาญ (คัดกรอง)',
@@ -99,7 +100,7 @@ const PERMISSIONS = {
     'stats.view': 'ดูสถิติ',
 };
 const ROLES = [
-    { value: 'admin', label: 'แอดมิน / หัวหน้าแผนก', permissions: ['roster.view', 'roster.manage', 'leave.manage.any', 'queue.view', 'ticket.issue', 'ticket.triage', 'stats.view'] },
+    { value: 'admin', label: 'แอดมิน / หัวหน้าแผนก', permissions: ['roster.view', 'roster.manage', 'leave.manage.any', 'leave.approve', 'queue.view', 'ticket.issue', 'ticket.triage', 'stats.view'] },
     { value: 'doctor', label: 'แพทย์', permissions: ['roster.view', 'leave.manage.own', 'queue.view', 'ticket.call'] },
     { value: 'nurse', label: 'พยาบาล', permissions: ['roster.view', 'queue.view', 'ticket.issue', 'ticket.triage'] },
     { value: 'registration', label: 'เวชระเบียน / ตู้คิว', permissions: ['ticket.issue'] },
@@ -141,14 +142,14 @@ function daysBetween(from, to) {
     return days;
 }
 
-function violations(member, template, date) {
+function violations(member, template, date, leaveStatuses = ['approved']) {
     const hospital = db.hospitals.find((h) => h.id === member.hospital_id);
     const [start, end] = windowOf(template, date);
     const rest = hospital.min_rest_hours * HOUR;
     const errors = [];
 
     if (template.department_id !== member.department_id) errors.push('แพทย์ไม่ได้อยู่ในแผนกของเวรนี้');
-    if (db.unavailabilities.some((u) => u.staff_id === member.id && u.date === date)) errors.push('แพทย์แจ้งลา/ไม่สะดวกในวันนี้');
+    if (db.unavailabilities.some((u) => u.staff_id === member.id && u.date === date && leaveStatuses.includes(u.status))) errors.push('แพทย์แจ้งลา/ไม่สะดวกในวันนี้');
 
     const mine = db.shifts.filter((s) => s.staff_id === member.id);
     for (const other of mine) {
@@ -221,7 +222,7 @@ function generateRoster(department, from, to) {
                 const needSkill = t.required_skill_id && !assigned.some((d) => d.skills.some((k) => k.id === t.required_skill_id));
                 const rank = (d) => [needSkill && !d.skills.some((k) => k.id === t.required_skill_id) ? 1 : 0, hours[d.id], d.id];
                 const pick = doctors
-                    .filter((d) => !assigned.includes(d) && violations(d, t, date).length === 0)
+                    .filter((d) => !assigned.includes(d) && violations(d, t, date, ['approved', 'pending']).length === 0)
                     .sort((a, b) => { const [x, y] = [rank(a), rank(b)]; return x[0] - y[0] || x[1] - y[1] || x[2] - y[2]; })[0];
                 if (!pick) break;
                 const shift = assignShift(pick, t, date);
@@ -339,15 +340,51 @@ const routes = [
     }],
     ['POST', /^\/hospitals\/(\d+)\/staff\/(\d+)\/unavailabilities$/, ([h, s], _q, body, user) => {
         const member = findIn(db.staff, s, h);
-        forbid(!(can(user, 'leave.manage.any') || (can(user, 'leave.manage.own') && user.staff_id === member.id)), 'บันทึกวันลาได้เฉพาะของตัวเอง');
-        if (db.shifts.some((x) => x.staff_id === member.id && x.shift_date === body.date)) {
-            throw new HttpError(422, 'แพทย์มีเวรในวันนี้อยู่แล้ว ต้องลบเวรออกก่อน', { date: ['แพทย์มีเวรในวันนี้อยู่แล้ว ต้องลบเวรออกก่อน'] });
+        const direct = can(user, 'leave.manage.any');
+        forbid(!(direct || (can(user, 'leave.manage.own') && user.staff_id === member.id)), 'ขอลาได้เฉพาะของตัวเอง');
+        const fail = (message) => { throw new HttpError(422, message, { date: [message] }); };
+        if (direct && db.shifts.some((x) => x.staff_id === member.id && x.shift_date === body.date)) fail('แพทย์มีเวรในวันนี้อยู่แล้ว ต้องลบเวรออกก่อน');
+        let leave = db.unavailabilities.find((u) => u.staff_id === member.id && u.date === body.date);
+        if (leave && leave.status !== 'rejected') fail(leave.status === 'pending' ? 'มีคำขอลาวันนี้รออนุมัติอยู่แล้ว' : 'วันนี้ลาอยู่แล้ว');
+        const attributes = {
+            reason: body.reason || null, status: direct ? 'approved' : 'pending', requested_by: user.id,
+            decided_by_name: direct ? user.name : null, decided_at: direct ? new Date().toISOString() : null, decision_note: null,
+        };
+        if (leave) Object.assign(leave, attributes);
+        else db.unavailabilities.push(leave = { id: (db.unavailabilities.at(-1)?.id ?? 0) + 1, staff_id: member.id, date: body.date, ...attributes });
+        return { ...leave };
+    }],
+
+    ['GET', /^\/hospitals\/(\d+)\/leave-requests$/, ([h], query) => {
+        const status = query.get('status') ?? 'pending';
+        const ours = db.unavailabilities.filter((u) => db.staff.find((m) => m.id === u.staff_id)?.hospital_id === Number(h));
+        const counts = { pending: 0, approved: 0, rejected: 0 };
+        for (const u of ours) counts[u.status]++;
+        const data = ours.filter((u) => u.status === status)
+            .sort((a, b) => (status === 'pending' ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date)))
+            .map((u) => {
+                const member = db.staff.find((m) => m.id === u.staff_id);
+                return { ...u, staff_name: member.name, department_id: member.department_id, has_shift: db.shifts.some((x) => x.staff_id === u.staff_id && x.shift_date === u.date) };
+            });
+        return { counts, data };
+    }],
+    ['POST', /^\/hospitals\/(\d+)\/leave-requests\/(\d+)\/(approve|reject)$/, ([h, id, action], _q, body, user) => {
+        const leave = db.unavailabilities.find((u) => u.id === Number(id));
+        if (!leave || db.staff.find((m) => m.id === leave.staff_id).hospital_id !== Number(h)) throw new HttpError(404, 'Not Found');
+        if (leave.status !== 'pending') throw new HttpError(422, 'คำขอนี้ตัดสินไปแล้ว');
+        if (action === 'approve' && db.shifts.some((x) => x.staff_id === leave.staff_id && x.shift_date === leave.date)) {
+            throw new HttpError(422, 'แพทย์มีเวรวันนี้ ต้องย้าย/ลบเวรก่อนจึงอนุมัติได้', { leave: ['แพทย์มีเวรวันนี้ ต้องย้าย/ลบเวรก่อนจึงอนุมัติได้'] });
         }
-        const existing = db.unavailabilities.find((u) => u.staff_id === member.id && u.date === body.date);
-        if (existing) return existing;
-        const row = { id: db.unavailabilities.length + 1, staff_id: member.id, date: body.date, reason: body.reason || null };
-        db.unavailabilities.push(row);
-        return row;
+        Object.assign(leave, { status: action === 'approve' ? 'approved' : 'rejected', decided_by_name: user.name, decided_at: new Date().toISOString(), decision_note: body?.note || null });
+        return { ...leave };
+    }],
+    ['DELETE', /^\/hospitals\/(\d+)\/leave-requests\/(\d+)$/, ([h, id], _q, _b, user) => {
+        const leave = db.unavailabilities.find((u) => u.id === Number(id));
+        if (!leave || db.staff.find((m) => m.id === leave.staff_id).hospital_id !== Number(h)) throw new HttpError(404, 'Not Found');
+        const own = can(user, 'leave.manage.own') && user.staff_id === leave.staff_id && leave.status === 'pending';
+        forbid(!(own || can(user, 'leave.manage.any')), 'ยกเลิกได้เฉพาะคำขอของตัวเองที่ยังรออนุมัติ');
+        db.unavailabilities.splice(db.unavailabilities.indexOf(leave), 1);
+        return null;
     }],
 
     ['GET', /^\/hospitals\/(\d+)\/staff\/(\d+)\/my-queue$/, ([h, s], _q, _b, user) => {
@@ -390,6 +427,8 @@ const ROUTE_PERMISSIONS = [
     ['POST', /\/shifts$/, 'roster.manage'],
     ['DELETE', /\/shifts\/\d+$/, 'roster.manage'],
     ['GET', /\/unavailabilities$/, 'roster.view'],
+    ['GET', /\/leave-requests$/, 'leave.approve'],
+    ['POST', /\/leave-requests\/\d+\/(approve|reject)$/, 'leave.approve'],
 ];
 
 export async function mockApi(path, { method = 'GET', body, token } = {}) {

@@ -7,10 +7,12 @@ import IssueTicketForm from './components/IssueTicketForm';
 import RosterPage from './components/RosterPage';
 import LoginScreen from './components/LoginScreen';
 import PermissionMatrix from './components/PermissionMatrix';
+import LeavePage, { usePendingLeaveCount } from './components/LeavePage';
 
 // เมนูหลัก: path + สิทธิ์ที่ต้องมี (ซ่อนเมนูที่ไม่มีสิทธิ์ และ RequirePermission กันการพิมพ์ URL เข้าตรง ๆ)
 const SECTIONS = [
     { path: '/roster/table', match: '/roster', label: 'จัดเวรแพทย์', allowed: (can) => can('roster.view') },
+    { path: '/leave', match: '/leave', label: 'การลา', allowed: (can) => can('leave.approve') || can('leave.manage.own') },
     { path: '/queue', match: '/queue', label: 'คิวผู้ป่วย', allowed: (can) => can('queue.view') || can('ticket.issue') },
     { path: '/roles', match: '/roles', label: 'สิทธิ์ตามบทบาท', allowed: () => true },
 ];
@@ -41,6 +43,9 @@ export default function App() {
                         </Route>
                         <Route element={<RequirePermission allowed={(can) => can('queue.view') || can('ticket.issue')} />}>
                             <Route path="queue" element={<QueueRoute />} />
+                        </Route>
+                        <Route element={<RequirePermission allowed={(can) => can('leave.approve') || can('leave.manage.own')} />}>
+                            <Route path="leave" element={<LeaveRoute />} />
                         </Route>
                         <Route path="roles" element={<PermissionMatrix />} />
                         <Route path="*" element={<Message title="ไม่พบหน้านี้ (404)" text="ลิงก์อาจผิด หรือหน้านี้ถูกย้ายไปแล้ว" />} />
@@ -81,6 +86,7 @@ function Home() {
 function Layout() {
     const { user, logout, can } = useAuth();
     const location = useLocation();
+    const pending = usePendingLeaveCount(user.hospital.id, can('leave.approve')).data ?? 0;
 
     return (
         <div className="mx-auto max-w-7xl px-4 py-6">
@@ -97,6 +103,9 @@ function Layout() {
                             className={`rounded-md px-4 py-1.5 ${location.pathname.startsWith(s.match) ? 'bg-slate-800 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
                         >
                             {s.label}
+                            {s.path === '/leave' && pending > 0 && (
+                                <span className="ml-1.5 rounded-full bg-rose-600 px-1.5 text-xs text-white" aria-label={`รออนุมัติ ${pending} รายการ`}>{pending}</span>
+                            )}
                         </NavLink>
                     ))}
                 </nav>
@@ -116,6 +125,11 @@ function Layout() {
 function RosterRoute({ view }) {
     const { user } = useAuth();
     return <RosterPage hospitalId={user.hospital.id} view={view} />;
+}
+
+function LeaveRoute() {
+    const { user } = useAuth();
+    return <LeavePage hospitalId={user.hospital.id} />;
 }
 
 function QueueRoute() {

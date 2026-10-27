@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
-import { NavLink, useNavigate, useParams, useSearchParams } from 'react-router';
+import { Link, NavLink, useNavigate, useParams, useSearchParams } from 'react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import RosterCalendar, { calendarRange } from './RosterCalendar';
 import DoctorFilter from './DoctorFilter';
+import { Badge } from './LeavePage';
 import { addDays, api, errorMessages, isoDate } from '../api';
 import { useDepartments, useStaff } from '../useLookups';
 import { useAuth } from '../auth';
@@ -256,6 +257,7 @@ export default function RosterPage({ hospitalId, view }) {
                     <UnavailabilityPanel
                         hospitalId={hospitalId}
                         doctors={can('leave.manage.any') ? doctors : doctors.filter((d) => d.id === user.staff_id)}
+                        direct={can('leave.manage.any')}
                         onChange={refresh}
                     />
                 )}
@@ -264,7 +266,7 @@ export default function RosterPage({ hospitalId, view }) {
     );
 }
 
-function UnavailabilityPanel({ hospitalId, doctors, onChange }) {
+function UnavailabilityPanel({ hospitalId, doctors, direct, onChange }) {
     const queryClient = useQueryClient();
     const [staffId, setStaffId] = useState('');
     const [date, setDate] = useState('');
@@ -282,7 +284,8 @@ function UnavailabilityPanel({ hospitalId, doctors, onChange }) {
         onSuccess: () => {
             setDate('');
             setReason('');
-            queryClient.invalidateQueries({ queryKey: ['unavailabilities', hospitalId, doctorId] });
+            queryClient.invalidateQueries({ queryKey: ['unavailabilities', hospitalId] });
+            queryClient.invalidateQueries({ queryKey: ['leave-requests', hospitalId] });
             onChange();
         },
     });
@@ -291,19 +294,20 @@ function UnavailabilityPanel({ hospitalId, doctors, onChange }) {
 
     return (
         <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <h2 className="mb-3 text-lg font-semibold">วันลา / วันไม่สะดวก</h2>
+            <h2 className="mb-1 text-lg font-semibold">{direct ? 'บันทึกวันลา' : 'ขอลา'}</h2>
+            <p className="mb-3 text-xs text-slate-500">{direct ? 'แอดมินบันทึกให้ = อนุมัติทันที' : 'ส่งคำขอแล้วรอแอดมินอนุมัติ'} · <Link className="underline" to="/leave">ดูคำขอทั้งหมด</Link></p>
             <form className="space-y-2" onSubmit={(e) => { e.preventDefault(); add.mutate(); }}>
                 <select className={input} value={doctorId ?? ''} onChange={(e) => setStaffId(Number(e.target.value))}>
                     {doctors.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
                 <input className={input} type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
                 <input className={input} placeholder="เหตุผล (ไม่บังคับ)" value={reason} onChange={(e) => setReason(e.target.value)} maxLength={100} />
-                <button className="w-full rounded-md bg-slate-800 py-2 text-sm font-medium text-white disabled:opacity-40" disabled={add.isPending}>บันทึกวันลา</button>
+                <button className="w-full rounded-md bg-slate-800 py-2 text-sm font-medium text-white disabled:opacity-40" disabled={add.isPending}>{direct ? 'บันทึกวันลา' : 'ส่งคำขอลา'}</button>
             </form>
             {add.isError && <p className="mt-2 text-sm text-red-600">{errorMessages(add.error).join(' ')}</p>}
             <ul className="mt-3 space-y-1 text-sm">
                 {list.data?.map((u) => (
-                    <li key={u.id} className="flex justify-between"><span>{formatDay(u.date.slice(0, 10))}</span><span className="text-slate-500">{u.reason}</span></li>
+                    <li key={u.id} className="flex items-center justify-between gap-2"><span>{formatDay(u.date.slice(0, 10))} <span className="text-slate-500">{u.reason}</span></span><Badge status={u.status} /></li>
                 ))}
                 {list.data?.length === 0 && <li className="text-slate-400">ยังไม่มีวันลา</li>}
             </ul>

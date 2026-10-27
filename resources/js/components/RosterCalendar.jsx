@@ -64,7 +64,8 @@ export default function RosterCalendar({ hospitalId, roster, doctors, monthStart
         queryFn: () => api(`/hospitals/${hospitalId}/staff/${doctorId}/unavailabilities?from=${gridStart}&to=${gridEnd}`),
         enabled: mode === 'doctor' && !!doctorId,
     });
-    const leaveDays = new Map((leave.data ?? []).map((u) => [u.date.slice(0, 10), u.reason]));
+    // แสดงวันลาที่อนุมัติแล้วและคำขอที่รออนุมัติ (ไม่แสดงที่ไม่อนุมัติ)
+    const leaveDays = new Map((leave.data ?? []).filter((u) => u.status !== 'rejected').map((u) => [u.date.slice(0, 10), u]));
 
     const mine = roster.shifts.filter((s) => s.staff_id === doctorId);
     const inMonth = (iso) => iso >= monthStart && iso <= monthEnd;
@@ -85,7 +86,7 @@ export default function RosterCalendar({ hospitalId, roster, doctors, monthStart
                         {templates.map((t, i) => (
                             <Stat key={t.id} label={t.name} value={monthShifts.filter((s) => s.shift_template_id === t.id).length} className={SHIFT_STYLES[i % 3]} />
                         ))}
-                        <Stat label="วันลา" value={[...leaveDays.keys()].filter(inMonth).length} />
+                        <Stat label="วันลา" value={[...leaveDays.values()].filter((u) => u.status === 'approved' && inMonth(u.date.slice(0, 10))).length} />
                     </div>
                 </div>
             )}
@@ -98,7 +99,7 @@ export default function RosterCalendar({ hospitalId, roster, doctors, monthStart
                     </span>
                 ))}
                 {mode === 'all' && <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded border-2 border-red-400" />มีช่องที่ขาด</span>}
-                {mode === 'doctor' && <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded border border-slate-300 bg-slate-200" />ลา / ไม่สะดวก</span>}
+                {mode === 'doctor' && <><span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded border border-slate-300 bg-slate-200" />ลา (อนุมัติแล้ว)</span><span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded border border-dashed border-amber-400 bg-amber-50" />รออนุมัติ</span></>}
             </div>
 
             <div className="overflow-x-auto">
@@ -131,7 +132,7 @@ export default function RosterCalendar({ hospitalId, roster, doctors, monthStart
                                                 </div>
                                                 {mode === 'all'
                                                     ? <AllDay shifts={byDay[date] ?? []} templates={templates} templateIndex={templateIndex} highlight={user.staff_id} />
-                                                    : <DoctorDay shifts={(byDay[date] ?? []).filter((s) => s.staff_id === doctorId)} templateById={templateById} templateIndex={templateIndex} leave={leaveDays.has(date) ? (leaveDays.get(date) || 'ลา') : null} />}
+                                                    : <DoctorDay shifts={(byDay[date] ?? []).filter((s) => s.staff_id === doctorId)} templateById={templateById} templateIndex={templateIndex} leave={leaveDays.get(date) ?? null} />}
                                             </td>
                                         );
                                     })}
@@ -176,7 +177,11 @@ function AllDay({ shifts, templates, templateIndex, highlight }) {
 function DoctorDay({ shifts, templateById, templateIndex, leave }) {
     return (
         <div className="space-y-0.5">
-            {leave && <div className="truncate rounded border border-slate-300 bg-slate-200 px-1 py-0.5 text-slate-700">{leave}</div>}
+            {leave && (
+                <div className={`truncate rounded border px-1 py-0.5 ${leave.status === 'pending' ? 'border-dashed border-amber-400 bg-amber-50 text-amber-900' : 'border-slate-300 bg-slate-200 text-slate-700'}`}>
+                    {leave.status === 'pending' ? 'ขอลา (รออนุมัติ)' : `ลา${leave.reason ? ` · ${leave.reason}` : ''}`}
+                </div>
+            )}
             {shifts.map((s) => {
                 const t = templateById[s.shift_template_id];
                 return (

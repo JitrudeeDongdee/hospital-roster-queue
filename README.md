@@ -20,6 +20,7 @@ Large-data techniques with sources (MySQL, Laravel, TanStack, Redis): [docs/LARG
 - **Monthly roster:** the admin plans a whole month at a time; the weekly hour limit is still checked week by week.
 - **Coverage check:** the monthly roster marks every slot that is short of doctors or has no doctor with the required skill.
 - **Auto-generate a month as a draft:** fills only the empty slots (124 shifts for a 6-doctor department in about 0.4 s; rules are checked in memory after one load, with the same `check()` used for manual assignment), never removes shifts an admin placed, and picks doctors in this order: passes every rule → has the missing skill → fewest hours so far. Slots that cannot be filled within the rules are left for the admin.
+- **Leave requests with approval:** doctors request leave (pending) and can cancel while pending; admins approve or reject with a note. Approval is refused while the doctor still has a shift that day (move it first). Approved leave blocks assignment; auto-generate also keeps pending days free. Admin-recorded leave is approved at once. The nav shows the number of pending requests.
 - **Doctor's own queue:** each doctor can always see the waiting patients they are able to take (same department, matching skill) and their next shifts.
 
 ## Roles and permissions
@@ -30,7 +31,9 @@ Demo users per hospital: an admin (head of department), every doctor, a triage n
 |---|:-:|:-:|:-:|:-:|
 | View roster | ✓ | ✓ | ✓ | |
 | Manage roster / auto-generate | ✓ | | | |
-| Leave days | anyone | own | | |
+| Record leave for any doctor (approved at once) | ✓ | | | |
+| Request / cancel own pending leave | | own | | |
+| Approve / reject leave | ✓ | | | |
 | View queue | ✓ | ✓ | ✓ | |
 | Issue tickets | ✓ | | ✓ | ✓ |
 | Set priority / required skill (triage) | ✓ | | ✓ | |
@@ -79,6 +82,7 @@ Every page has its own URL (React Router), so links can be shared and back/forwa
 | `/roster/table?dept=1&month=2026-11&doctors=1,4` | Roster table, editable by admins, filtered to selected doctors |
 | `/roster/calendar?dept=1&month=2026-11&doctors=1,4` | Month calendar of all shifts, colour per shift, red when a slot is short |
 | `/roster/doctors/5?month=2026-11` | One doctor's month: shifts, leave days, hours per week against the limit |
+| `/leave?status=pending` | Admin: leave inbox (pending / approved / rejected) · Doctor: request leave and see own requests |
 | `/queue?status=waiting&dept=1` | Patient queue |
 | `/roles` | Role × permission matrix |
 
@@ -115,7 +119,10 @@ All endpoints are under `/api/hospitals/{hospital}`, except `GET /api/hospitals`
 | POST | `/departments/{department}/roster/generate` | Fill empty slots within the rules → `created`, roster, remaining gaps |
 | POST | `/shifts` | Assign a doctor (`staff_id`, `shift_template_id`, `date`) → `201`, or `422` with the broken rules |
 | DELETE | `/shifts/{shift}` | Remove a shift |
-| GET, POST | `/staff/{staff}/unavailabilities` | Leave days |
+| GET, POST | `/staff/{staff}/unavailabilities` | Leave days with status; POST = request (doctor, pending) or record (admin, approved) |
+| GET | `/leave-requests?status=pending` | Admin inbox with counts and whether the doctor has a shift that day |
+| POST | `/leave-requests/{leave}/approve`, `/reject` | Decide a pending request (`note` optional) |
+| DELETE | `/leave-requests/{leave}` | Cancel own pending request (doctor) or remove (admin) |
 | GET | `/staff/{staff}/my-queue` | Waiting tickets this doctor can take, current ticket, next shifts |
 
 ## Run locally
@@ -151,7 +158,7 @@ Open http://127.0.0.1:8000. To build the GitHub Pages demo instead: `npm run bui
 
 ## Tests
 
-28 feature tests. Authorization: guests, other hospitals, triage, roster management, doctors acting only for themselves, leave days, stats, demo login on/off. Roster: overnight shifts, overlap, minimum rest, weekly hours, leave days,
+37 feature tests. Leave: pending vs approved, approval blocked by a shift, reject and re-request, admin-recorded leave, cancel rules, auto-generate skips pending, other hospitals. Authorization: guests, other hospitals, triage, roster management, doctors acting only for themselves, leave days, stats, demo login on/off. Roster: overnight shifts, overlap, minimum rest, weekly hours, leave days,
 coverage gaps, auto-generation (a full month within every rule, covers skills, keeps manual
 shifts, leaves gaps it cannot fill), the doctor's own queue and hospital isolation. Queue: numbering, priority,
 skill routing, isolation, cursor pagination, completing, aggregation and purging. CI runs them on

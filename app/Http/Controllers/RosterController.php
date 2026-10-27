@@ -70,29 +70,7 @@ class RosterController extends Controller
             ->where('date', '>=', $data['from'] ?? now()->subDays(7)->toDateString())
             ->when($data['to'] ?? null, fn ($q, $to) => $q->where('date', '<=', $to))
             ->orderBy('date')
-            ->get(['id', 'date', 'reason']);
-    }
-
-    // POST /api/hospitals/{hospital}/staff/{staff}/unavailabilities {date, reason}
-    public function addUnavailability(Request $request, Hospital $hospital, Staff $staff)
-    {
-        $user = $request->user();
-        abort_unless(
-            $user->can('leave.manage.any') || ($user->can('leave.manage.own') && $user->staff_id === $staff->id),
-            403,
-            'บันทึกวันลาได้เฉพาะของตัวเอง',
-        );
-
-        $data = $request->validate([
-            'date' => 'required|date_format:Y-m-d',
-            'reason' => 'nullable|string|max:100',
-        ]);
-
-        if ($staff->shifts()->whereDate('shift_date', $data['date'])->exists()) {
-            throw ValidationException::withMessages(['date' => ['แพทย์มีเวรในวันนี้อยู่แล้ว ต้องลบเวรออกก่อน']]);
-        }
-
-        return response()->json($staff->unavailabilities()->firstOrCreate(['date' => $data['date']], $data), 201);
+            ->get(['id', 'date', 'reason', 'status', 'decision_note']);
     }
 
     private function range(Request $request): array

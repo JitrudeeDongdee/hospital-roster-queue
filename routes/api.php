@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DoctorQueueController;
+use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\LookupController;
 use App\Http\Controllers\RosterController;
 use App\Http\Controllers\StatsController;
@@ -38,6 +39,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('shifts', [RosterController::class, 'store'])->middleware('can:roster.manage');
         Route::delete('shifts/{shift}', [RosterController::class, 'destroy'])->middleware('can:roster.manage');
         Route::get('staff/{staff}/unavailabilities', [RosterController::class, 'unavailabilities'])->middleware('can:roster.view');
-        Route::post('staff/{staff}/unavailabilities', [RosterController::class, 'addUnavailability']); // ตรวจสิทธิ์ใน controller (ของตัวเอง/ทุกคน)
+        Route::post('staff/{staff}/unavailabilities', [LeaveController::class, 'store']); // ตรวจสิทธิ์ใน controller (ขอของตัวเอง / บันทึกให้ทุกคน)
+
+        // คำขอลา: แพทย์ขอ → แอดมินอนุมัติ
+        Route::get('leave-requests', [LeaveController::class, 'index'])->middleware('can:leave.approve');
+        Route::post('leave-requests/{leave}/approve', [LeaveController::class, 'approve'])->middleware('can:leave.approve');
+        Route::post('leave-requests/{leave}/reject', [LeaveController::class, 'reject'])->middleware('can:leave.approve');
+        Route::delete('leave-requests/{leave}', [LeaveController::class, 'destroy']); // ตรวจสิทธิ์ใน controller
     });
 });

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Hospital extends Model
 {
@@ -27,6 +28,12 @@ class Hospital extends Model
     public function shifts(): HasMany
     {
         return $this->hasMany(Shift::class);
+    }
+
+    // คำขอลาของแพทย์ในโรงพยาบาลนี้ (ใช้กับ scopeBindings ของ route {leave})
+    public function leaves(): HasManyThrough
+    {
+        return $this->hasManyThrough(StaffUnavailability::class, Staff::class);
     }
 
     public function dailyStats(): HasMany
