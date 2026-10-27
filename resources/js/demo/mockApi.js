@@ -117,6 +117,7 @@ const PERMISSIONS = {
     'leave.approve': 'อนุมัติ / ไม่อนุมัติคำขอลา',
     'shift.request.own': 'ขอย้าย/แลกเวรของตัวเอง · ตอบรับคำขอแลก · ส่งเวรที่อยากลง',
     'shift.request.resolve': 'เคลียร์คำขอย้าย/แลกเวรที่ติดกติกา',
+    'staff.manage': 'ดูรายละเอียดแพทย์ · เพิ่มแพทย์ · แก้ชื่อ/ความเชี่ยวชาญ',
     'queue.view': 'ดูรายการคิว',
     'ticket.issue': 'ออกบัตรคิว',
     'ticket.triage': 'กำหนดความเร่งด่วน / ความเชี่ยวชาญ (คัดกรอง)',
@@ -124,7 +125,7 @@ const PERMISSIONS = {
     'stats.view': 'ดูสถิติ',
 };
 const ROLES = [
-    { value: 'admin', label: 'แอดมิน / หัวหน้าแผนก', permissions: ['roster.view', 'roster.manage', 'leave.manage.any', 'leave.approve', 'shift.request.resolve', 'queue.view', 'ticket.issue', 'ticket.triage', 'stats.view'] },
+    { value: 'admin', label: 'แอดมิน / หัวหน้าแผนก', permissions: ['roster.view', 'roster.manage', 'leave.manage.any', 'leave.approve', 'shift.request.resolve', 'staff.manage', 'queue.view', 'ticket.issue', 'ticket.triage', 'stats.view'] },
     { value: 'doctor', label: 'แพทย์', permissions: ['roster.view', 'leave.manage.own', 'shift.request.own', 'queue.view', 'ticket.call'] },
     { value: 'nurse', label: 'พยาบาล', permissions: ['roster.view', 'queue.view', 'ticket.issue', 'ticket.triage'] },
     { value: 'registration', label: 'เวชระเบียน / ตู้คิว', permissions: ['ticket.issue'] },
@@ -610,6 +611,43 @@ const routes = [
         return null;
     }],
 
+    ['GET', /^\/hospitals\/(\d+)\/staff-directory$/, ([h]) => {
+        const now = new Date();
+        const first = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-01`;
+        const last = isoOf(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+        return db.staff.filter((m) => m.hospital_id === Number(h)).map((m) => {
+            const mine = db.shifts.filter((x) => x.staff_id === m.id);
+            const month = mine.filter((x) => x.shift_date >= first && x.shift_date <= last);
+            const next = mine.filter((x) => new Date(x.starts_at) > now).sort((a, b) => a.starts_at.localeCompare(b.starts_at))[0];
+            return {
+                id: m.id, name: m.name, department_id: m.department_id, is_active: true, skills: m.skills,
+                shifts_this_month: month.length,
+                hours_this_month: month.reduce((sum, x) => sum + (new Date(x.ends_at) - new Date(x.starts_at)) / HOUR, 0),
+                next_shift: next ? { date: next.shift_date, name: templateOf(next.shift_template_id).name } : null,
+                pending_leave: db.unavailabilities.filter((u) => u.staff_id === m.id && u.status === 'pending').length,
+                has_account: db.users.some((u) => u.staff_id === m.id),
+            };
+        });
+    }],
+    ['POST', /^\/hospitals\/(\d+)\/staff$/, ([h], _q, body) => {
+        if (!body.name?.trim()) fail422('name', ['กรุณาใส่ชื่อ']);
+        findIn(db.departments, body.department_id, h);
+        const skills = (body.skill_ids ?? []).map((id) => db.skills.find((k) => k.id === id) ?? fail422('skill_ids', ['ความเชี่ยวชาญไม่ถูกต้อง']));
+        const member = { id: db.staff.length + 1, hospital_id: Number(h), department_id: Number(body.department_id), name: body.name.trim(), skills };
+        db.staff.push(member);
+        db.users.push({ id: db.users.length + 1, name: member.name, role: 'doctor', hospital_id: member.hospital_id, staff_id: member.id });
+        return { id: member.id, name: member.name, department_id: member.department_id, is_active: true, skills };
+    }],
+    ['PATCH', /^\/hospitals\/(\d+)\/staff\/(\d+)$/, ([h, s], _q, body) => {
+        const member = findIn(db.staff, s, h);
+        if (body.name !== undefined) {
+            if (!body.name.trim()) fail422('name', ['กรุณาใส่ชื่อ']);
+            member.name = body.name.trim();
+            for (const u of db.users.filter((x) => x.staff_id === member.id)) u.name = member.name;
+        }
+        if (body.skill_ids) member.skills = body.skill_ids.map((id) => db.skills.find((k) => k.id === id) ?? fail422('skill_ids', ['ความเชี่ยวชาญไม่ถูกต้อง']));
+        return { id: member.id, name: member.name, department_id: member.department_id, is_active: true, skills: member.skills };
+    }],
     ['GET', /^\/hospitals\/(\d+)\/on-duty$/, ([h]) => {
         const now = new Date();
         return db.shifts
@@ -756,6 +794,9 @@ const ROUTE_PERMISSIONS = [
     ['PATCH', /\/triage$/, 'ticket.triage'],
     ['GET', /\/my-queue$/, 'queue.view'],
     ['GET', /\/on-duty$/, 'queue.view'],
+    ['GET', /\/staff-directory$/, 'staff.manage'],
+    ['POST', /\/staff$/, 'staff.manage'],
+    ['PATCH', /\/staff\/\d+$/, 'staff.manage'],
     ['GET', /\/roster$/, 'roster.view'],
     ['POST', /\/roster\/generate$/, 'roster.manage'],
     ['POST', /\/shifts$/, 'roster.manage'],

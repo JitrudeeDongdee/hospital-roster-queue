@@ -38,6 +38,7 @@ Demo users per hospital: an admin (head of department), every doctor, a triage n
 | Approve / reject leave | ✓ | | | |
 | Move / swap own shifts, answer swap requests, send shift preferences | | own | | |
 | Resolve move/swap requests that break a rule | ✓ | | | |
+| Manage doctors: view details, add, edit name and skills | ✓ | | | |
 | View queue | ✓ | ✓ | ✓ | |
 | Issue tickets | ✓ | | ✓ | ✓ |
 | Set priority / required skill (triage), at issue or later on a waiting ticket | ✓ | | ✓ | |
@@ -88,6 +89,7 @@ Every page has its own URL (React Router), so links can be shared and back/forwa
 | `/roster/table?dept=1&month=2026-11&doctors=1,4` | Roster table, editable by admins, filtered to selected doctors |
 | `/roster/calendar?dept=1&month=2026-11&doctors=1,4` | Month calendar filtered by the same doctor picker as the table; colour per shift, red when a slot is short. With exactly one doctor selected (`doctors=5`) it also shows that doctor's leave days and hours per week against the limit. Old `/roster/doctors/5` links redirect here |
 | `/requests/leave?status=pending` | "Requests" menu, leave tab — Admin: leave inbox (pending / approved / rejected) · Doctor: request leave and see own requests |
+| `/staff?dept=1&id=5` | Admin: every doctor with skills, shifts and hours this month, next shift and pending leave; click a row to edit name and skills, or add a doctor (also creates their doctor account) |
 | `/requests/shifts` | "Requests" menu, move/swap tab — Doctor: own upcoming shifts, swap requests to answer, own requests · Admin: requests that need clearing. Old `/leave` and `/shifts` links redirect |
 | `/queue/list?date=2026-10-26&status=waiting&dept=1` | Tickets of a day with issue time, call time and wait (minutes) |
 | `/queue/month?date=2026-10-01` | Month calendar: tickets, completed and average wait per day (heat-shaded); past days from the daily summary table, today live |
@@ -140,6 +142,9 @@ All endpoints are under `/api/hospitals/{hospital}`, except `GET /api/hospitals`
 | POST | `/shift-requests/{id}/approve`, `/reject` | Admin resolves (`note` optional); approve returns `422` while a rule is still broken |
 | DELETE | `/shift-requests/{id}` | Requester cancels while open |
 | GET, PUT | `/staff/{staff}/preferences?month=YYYY-MM` | Want / inconvenient slots for one month; PUT replaces the month, `422` once the roster exists |
+| GET | `/staff-directory` | Admin: doctors with skills, shifts/hours this month, next shift, pending leave, whether they have an account |
+| POST | `/staff` | Admin adds a doctor `{name, department_id, skill_ids[]}` and a doctor user account → `201` |
+| PATCH | `/staff/{staff}` | Admin edits `name` and/or `skill_ids` |
 | GET | `/on-duty` | Doctors whose shift covers now (staff, department, shift name), used by the queue list to show who will take a waiting ticket |
 | GET | `/staff/{staff}/my-queue` | Waiting tickets this doctor can take, current ticket, next shifts |
 
@@ -194,7 +199,7 @@ Open http://127.0.0.1:8000. To build the GitHub Pages demo instead: `npm run bui
 
 ## Tests
 
-55 feature tests. On-duty doctors from the roster. Triage of a waiting ticket issued by registration. Shift requests: move applied at once, move that leaves a slot short goes to the admin, move into a rule break refused, swap applied when the colleague accepts, swap that breaks a rule waits until the admin clears it, swap that drops a required skill, decline/cancel/one open request per shift, own upcoming shifts only; preferences saved per month and locked once the roster exists; the generator honours wants and avoids, and keeps a doctor free for the slot they asked for. Queue calendar: month from the daily summary + live today, hourly grouping, range limits. Leave: pending vs approved, approval blocked by a shift, reject and re-request, admin-recorded leave, cancel rules, auto-generate skips pending, other hospitals. Authorization: guests, other hospitals, triage, roster management, doctors acting only for themselves, leave days, stats, demo login on/off. Roster: overnight shifts, overlap, minimum rest, weekly hours, leave days,
+59 feature tests. Doctor management: add with skills and account, edit name/skills, directory figures, admin-only and own hospital only. On-duty doctors from the roster. Triage of a waiting ticket issued by registration. Shift requests: move applied at once, move that leaves a slot short goes to the admin, move into a rule break refused, swap applied when the colleague accepts, swap that breaks a rule waits until the admin clears it, swap that drops a required skill, decline/cancel/one open request per shift, own upcoming shifts only; preferences saved per month and locked once the roster exists; the generator honours wants and avoids, and keeps a doctor free for the slot they asked for. Queue calendar: month from the daily summary + live today, hourly grouping, range limits. Leave: pending vs approved, approval blocked by a shift, reject and re-request, admin-recorded leave, cancel rules, auto-generate skips pending, other hospitals. Authorization: guests, other hospitals, triage, roster management, doctors acting only for themselves, leave days, stats, demo login on/off. Roster: overnight shifts, overlap, minimum rest, weekly hours, leave days,
 coverage gaps, auto-generation (a full month within every rule, covers skills, keeps manual
 shifts, leaves gaps it cannot fill), the doctor's own queue and hospital isolation. Queue: numbering, priority,
 skill routing, isolation, cursor pagination, completing, aggregation and purging. CI runs them on

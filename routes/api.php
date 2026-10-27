@@ -8,6 +8,7 @@ use App\Http\Controllers\QueueSummaryController;
 use App\Http\Controllers\RosterController;
 use App\Http\Controllers\ShiftPreferenceController;
 use App\Http\Controllers\ShiftRequestController;
+use App\Http\Controllers\StaffController;
 use App\Http\Controllers\StatsController;
 use App\Http\Controllers\TicketController;
 use Illuminate\Support\Facades\Route;
@@ -27,6 +28,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('hospital.member')->scopeBindings()->prefix('hospitals/{hospital}')->group(function () {
         Route::get('departments', [LookupController::class, 'departments']);
         Route::get('staff', [LookupController::class, 'staff']);
+
+        // จัดการแพทย์ (หัวหน้าแผนก)
+        Route::get('staff-directory', [StaffController::class, 'index'])->middleware('can:staff.manage');
+        Route::post('staff', [StaffController::class, 'store'])->middleware('can:staff.manage');
+        Route::patch('staff/{staff}', [StaffController::class, 'update'])->middleware('can:staff.manage');
 
         // คิวผู้ป่วย
         Route::get('tickets', [TicketController::class, 'index'])->middleware('can:queue.view');

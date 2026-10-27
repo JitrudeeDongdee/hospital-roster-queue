@@ -9,10 +9,12 @@ import LeavePage, { usePendingLeaveCount } from './components/LeavePage';
 import QueuePage from './components/QueuePage';
 import ShiftRequestsPage, { useShiftRequestCount } from './components/ShiftRequestsPage';
 import PreferencesPage from './components/PreferencesPage';
+import StaffPage from './components/StaffPage';
 
 // เมนูหลัก: path + สิทธิ์ที่ต้องมี (ซ่อนเมนูที่ไม่มีสิทธิ์ และ RequirePermission กันการพิมพ์ URL เข้าตรง ๆ)
 const SECTIONS = [
     { path: '/roster/table', match: '/roster', label: 'จัดเวรแพทย์', allowed: (can) => can('roster.view') },
+    { path: '/staff', match: '/staff', label: 'แพทย์', allowed: (can) => can('staff.manage') },
     { path: '/requests', match: '/requests', label: 'ร้องขอ', allowed: (can) => canLeave(can) || canShiftRequest(can) },
     { path: '/preferences', match: '/preferences', label: 'เวรที่อยากลง', allowed: (can) => can('shift.request.own') },
     { path: '/queue/list', match: '/queue', label: 'คิวผู้ป่วย', allowed: (can) => can('queue.view') || can('ticket.issue') },
@@ -64,6 +66,9 @@ export default function App() {
                         <Route path="shifts" element={<Navigate to="/requests/shifts" replace />} />
                         <Route element={<RequirePermission allowed={(can) => can('shift.request.own')} />}>
                             <Route path="preferences" element={<PreferencesRoute />} />
+                        </Route>
+                        <Route element={<RequirePermission allowed={(can) => can('staff.manage')} />}>
+                            <Route path="staff" element={<StaffRoute />} />
                         </Route>
                         <Route path="roles" element={<PermissionMatrix />} />
                         <Route path="*" element={<Message title="ไม่พบหน้านี้ (404)" text="ลิงก์อาจผิด หรือหน้านี้ถูกย้ายไปแล้ว" />} />
@@ -165,6 +170,11 @@ function LegacyDoctorCalendar() {
     const params = new URLSearchParams(location.search);
     if (staffId) params.set('doctors', staffId);
     return <Navigate to={{ pathname: '/roster/calendar', search: `?${params}` }} replace />;
+}
+
+function StaffRoute() {
+    const { user } = useAuth();
+    return <StaffPage hospitalId={user.hospital.id} />;
 }
 
 function RequestsRoute() {
