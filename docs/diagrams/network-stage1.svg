@@ -1,0 +1,149 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 920" width="940" height="920" font-family="Sarabun, 'Noto Sans Thai', Thonburi, 'Helvetica Neue', sans-serif">
+<title>ขั้น 1</title>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3b4a6b"/></marker></defs>
+<rect width="940" height="920" fill="#fff"/>
+<rect x="10" y="10" width="640" height="132" fill="#f7f9fc" stroke="#5a6b8c" stroke-width="1.6"/>
+<rect x="10" y="10" width="22" height="22" fill="#5a6b8c"/>
+<text x="40" y="25.5" font-size="12" font-weight="700" fill="#1f2a44" text-anchor="start">โรงพยาบาล × 15 แห่ง (on-premises)</text>
+<rect x="73" y="40" width="44" height="44" rx="6" fill="#232F3E"/>
+<rect x="87" y="50" width="16" height="16" rx="2" fill="none" stroke="#fff" stroke-width="2"/><path d="M95,66 V72 M88,73 H102" stroke="#fff" stroke-width="2"/>
+<text x="95" y="100" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">ตู้ออกบัตรคิว</text>
+<rect x="223" y="40" width="44" height="44" rx="6" fill="#232F3E"/>
+<rect x="232" y="52" width="26" height="16" rx="2" fill="none" stroke="#fff" stroke-width="2"/><path d="M245,68 V72 M238,73 H252" stroke="#fff" stroke-width="2"/>
+<text x="245" y="100" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">จอแสดงคิว</text>
+<text x="245" y="115" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">รับ event แบบ push</text>
+<rect x="378" y="40" width="44" height="44" rx="6" fill="#232F3E"/>
+<circle cx="400" cy="57" r="6" fill="none" stroke="#fff" stroke-width="2"/><path d="M389,74 C389,64 411,64 411,74" fill="none" stroke="#fff" stroke-width="2"/>
+<text x="400" y="100" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">แพทย์/พยาบาล</text>
+<text x="400" y="115" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">เว็บจัดเวร · คิว</text>
+<rect x="548" y="40" width="44" height="44" rx="6" fill="#232F3E"/>
+<rect x="559" y="50" width="22" height="10" rx="1.5" fill="none" stroke="#fff" stroke-width="2"/><rect x="559" y="63" width="22" height="10" rx="1.5" fill="none" stroke="#fff" stroke-width="2"/>
+<text x="570" y="100" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">HIS</text>
+<text x="570" y="115" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">ของโรงพยาบาล</text>
+<rect x="670" y="10" width="260" height="132" fill="#f7f9fc" stroke="#5a6b8c" stroke-width="1.6"/>
+<rect x="670" y="10" width="22" height="22" fill="#5a6b8c"/>
+<text x="700" y="25.5" font-size="12" font-weight="700" fill="#1f2a44" text-anchor="start">CI/CD (ภายนอก)</text>
+<rect x="818" y="40" width="44" height="44" rx="6" fill="#232F3E"/>
+<circle cx="834" cy="54" r="3.5" fill="#fff"/><circle cx="834" cy="71" r="3.5" fill="#fff"/><circle cx="847" cy="60" r="3.5" fill="#fff"/><path d="M834,57 V68 M834,65 C834,60 847,64 847,63" fill="none" stroke="#fff" stroke-width="2"/>
+<text x="840" y="100" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">GitHub Actions</text>
+<text x="840" y="115" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">test → build → deploy</text>
+<rect x="10" y="160" width="920" height="736" fill="#fff" stroke="#232F3E" stroke-width="1.6"/>
+<rect x="10" y="160" width="22" height="22" fill="#232F3E"/>
+<text x="40" y="175.5" font-size="12" font-weight="700" fill="#232F3E" text-anchor="start">AWS Cloud</text>
+<rect x="228" y="196" width="44" height="44" rx="6" fill="#8C4FFF"/>
+<path d="M238,226 L244,208 L250,220 L256,208 L262,226" fill="none" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/>
+<text x="250" y="256" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">Route 53</text>
+<text x="250" y="271" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">DNS</text>
+<rect x="398" y="196" width="44" height="44" rx="6" fill="#8C4FFF"/>
+<circle cx="420" cy="218" r="11" fill="none" stroke="#fff" stroke-width="2"/><path d="M409,218 H431 M420,207 C413,214 413,222 420,229 M420,207 C427,214 427,222 420,229" fill="none" stroke="#fff" stroke-width="1.6"/>
+<text x="420" y="256" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">CloudFront</text>
+<text x="420" y="271" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">cache หน้าเว็บ · WSS</text>
+<rect x="538" y="196" width="44" height="44" rx="6" fill="#DD344C"/>
+<rect x="548" y="208" width="24" height="20" fill="none" stroke="#fff" stroke-width="2"/><path d="M548,215 H572 M548,222 H572 M556,208 V215 M564,215 V222 M556,222 V228" stroke="#fff" stroke-width="1.6"/>
+<text x="560" y="256" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">AWS WAF + Shield</text>
+<text x="560" y="271" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">กรอง request · กัน DDoS</text>
+<rect x="24" y="296" width="892" height="586" fill="none" stroke="#00A4A6" stroke-width="1.6" stroke-dasharray="6 4"/>
+<rect x="24" y="296" width="22" height="22" fill="#00A4A6"/>
+<text x="54" y="311.5" font-size="12" font-weight="700" fill="#007d80" text-anchor="start">Region: Asia Pacific (Thailand) ap-southeast-7</text>
+<rect x="38" y="326" width="734" height="542" fill="#fdfcff" stroke="#8C4FFF" stroke-width="1.6"/>
+<rect x="38" y="326" width="22" height="22" fill="#8C4FFF"/>
+<text x="68" y="341.5" font-size="12" font-weight="700" fill="#5b2bbf" text-anchor="start">VPC · 2 Availability Zones (Multi-AZ)</text>
+<rect x="52" y="358" width="706" height="112" fill="#f4f9ee" stroke="#7AA116" stroke-width="1.6"/>
+<rect x="52" y="358" width="22" height="22" fill="#7AA116"/>
+<text x="82" y="373.5" font-size="12" font-weight="700" fill="#4d6b10" text-anchor="start">Public subnet</text>
+<rect x="148" y="382" width="44" height="44" rx="6" fill="#8C4FFF"/>
+<path d="M159,410 H174 M159,398 H174" stroke="#fff" stroke-width="2"/><path d="M172,393 L181,398 L172,403 M172,405 L181,410 L172,415" fill="none" stroke="#fff" stroke-width="2"/>
+<text x="170" y="442" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">NAT Gateway</text>
+<text x="170" y="457" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">ขาออก internet</text>
+<rect x="368" y="382" width="44" height="44" rx="6" fill="#8C4FFF"/>
+<circle cx="382" cy="404" r="5" fill="#fff"/><path d="M387,404 L400,395 M387,404 H400 M387,404 L400,413" stroke="#fff" stroke-width="2"/><circle cx="401" cy="395" r="2.6" fill="#fff"/><circle cx="401" cy="404" r="2.6" fill="#fff"/><circle cx="401" cy="413" r="2.6" fill="#fff"/>
+<text x="390" y="442" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">Application Load Balancer</text>
+<text x="390" y="457" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">HTTPS · WebSocket</text>
+<rect x="633" y="382" width="44" height="44" rx="6" fill="#8C4FFF"/>
+<rect x="646" y="402" width="18" height="13" rx="2" fill="#fff"/><path d="M649,402 V397 A6,6 0 0 1 661,397 V402" fill="none" stroke="#fff" stroke-width="2.2"/>
+<text x="655" y="442" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">Site-to-Site VPN</text>
+<text x="655" y="457" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">เชื่อม HIS</text>
+<rect x="52" y="490" width="706" height="144" fill="#eef8f8" stroke="#00A4A6" stroke-width="1.6"/>
+<rect x="52" y="490" width="22" height="22" fill="#00A4A6"/>
+<text x="82" y="505.5" font-size="12" font-weight="700" fill="#007d80" text-anchor="start">Private subnet · app · Amazon ECS on Fargate · อย่างน้อย 2 task ต่อ service</text>
+<rect x="108" y="524" width="44" height="44" rx="6" fill="#ED7100"/>
+<rect x="118" y="537" width="24" height="18" rx="2" fill="none" stroke="#fff" stroke-width="2"/><path d="M126,537 V555 M134,537 V555" stroke="#fff" stroke-width="1.6"/>
+<text x="130" y="584" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">Web × N</text>
+<text x="130" y="599" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">Next.js (SSR)</text>
+<rect x="278" y="524" width="44" height="44" rx="6" fill="#ED7100"/>
+<rect x="288" y="537" width="24" height="18" rx="2" fill="none" stroke="#fff" stroke-width="2"/><path d="M296,537 V555 M304,537 V555" stroke="#fff" stroke-width="1.6"/>
+<text x="300" y="584" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">API × N</text>
+<text x="300" y="599" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">Laravel</text>
+<rect x="448" y="524" width="44" height="44" rx="6" fill="#ED7100"/>
+<rect x="458" y="537" width="24" height="18" rx="2" fill="none" stroke="#fff" stroke-width="2"/><path d="M466,537 V555 M474,537 V555" stroke="#fff" stroke-width="1.6"/>
+<text x="470" y="584" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">WebSocket × N</text>
+<text x="470" y="599" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">Laravel Reverb</text>
+<rect x="633" y="524" width="44" height="44" rx="6" fill="#ED7100"/>
+<circle cx="655" cy="546" r="11" fill="none" stroke="#fff" stroke-width="2"/><path d="M655,539 V546 L660,550" fill="none" stroke="#fff" stroke-width="2"/>
+<text x="655" y="584" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">Worker + Scheduler</text>
+<text x="655" y="599" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">job · สรุปยอด 00:30</text>
+<rect x="828" y="358" width="44" height="44" rx="6" fill="#ED7100"/>
+<path d="M850,368 L861,374 V386 L850,392 L839,386 V374 Z" fill="none" stroke="#fff" stroke-width="2"/><path d="M839,374 L850,380 L861,374 M850,380 V392" stroke="#fff" stroke-width="1.6" fill="none"/>
+<text x="850" y="418" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">Amazon ECR</text>
+<text x="850" y="433" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">container image</text>
+<rect x="828" y="478" width="44" height="44" rx="6" fill="#DD344C"/>
+<circle cx="845" cy="500" r="6" fill="none" stroke="#fff" stroke-width="2.2"/><path d="M851,500 H862 M858,500 V505 M862,500 V505" stroke="#fff" stroke-width="2.2"/>
+<text x="850" y="538" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">Secrets Manager</text>
+<text x="850" y="553" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">รหัส DB · API key</text>
+<rect x="828" y="598" width="44" height="44" rx="6" fill="#E7157B"/>
+<rect x="838" y="610" width="24" height="20" rx="2" fill="none" stroke="#fff" stroke-width="2"/><path d="M841,624 L847,618 L852,622 L859,614" fill="none" stroke="#fff" stroke-width="2"/>
+<text x="850" y="658" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">CloudWatch</text>
+<text x="850" y="673" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">log · metric · alarm</text>
+<rect x="828" y="748" width="44" height="44" rx="6" fill="#7AA116"/>
+<path d="M838,762 L842,781 H858 L862,762" fill="none" stroke="#fff" stroke-width="2"/><ellipse cx="850" cy="762" rx="12" ry="4" fill="none" stroke="#fff" stroke-width="2"/>
+<text x="850" y="808" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">Amazon S3</text>
+<text x="850" y="823" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">backup · export</text>
+<path d="M95,122 V148 H400" fill="none" stroke="#3b4a6b" stroke-width="1.4"/>
+<path d="M245,122 V148" fill="none" stroke="#3b4a6b" stroke-width="1.4"/>
+<path d="M400,122 V148 H420 V196" fill="none" stroke="#3b4a6b" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M272,218 H398" fill="none" stroke="#3b4a6b" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<path d="M442,218 H538" fill="none" stroke="#3b4a6b" stroke-width="1.4"/>
+<path d="M420,276 V340 H390 V382" fill="none" stroke="#3b4a6b" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M390,458 V476 H130 V524" fill="none" stroke="#3b4a6b" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M300,476 V524" fill="none" stroke="#3b4a6b" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M390,476 H470 V524" fill="none" stroke="#3b4a6b" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M570,122 V146 H655 V382" fill="none" stroke="#3b4a6b" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M655,458 V524" fill="none" stroke="#3b4a6b" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M840,122 V356" fill="none" stroke="#3b4a6b" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<path d="M828,380 H790 V560 H758" fill="none" stroke="#3b4a6b" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<path d="M828,500 H806 V590 H758" fill="none" stroke="#3b4a6b" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<path d="M758,620 H828" fill="none" stroke="#3b4a6b" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<rect x="52" y="656" width="706" height="194" fill="#f8f4fb" stroke="#00A4A6" stroke-width="1.6"/>
+<rect x="52" y="656" width="22" height="22" fill="#00A4A6"/>
+<text x="82" y="671.5" font-size="12" font-weight="700" fill="#007d80" text-anchor="start">Private subnet · data · ไม่มี public IP</text>
+<rect x="128" y="716" width="44" height="44" rx="6" fill="#C925D1"/>
+<rect x="138" y="730" width="24" height="16" rx="2" fill="none" stroke="#fff" stroke-width="2"/><path d="M143,735 H157 M143,741 H153" stroke="#fff" stroke-width="1.8"/><path d="M136,750 H164" stroke="#fff" stroke-width="1.6"/>
+<text x="150" y="776" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">ElastiCache (Redis)</text>
+<text x="150" y="791" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">cache · queue · pub/sub</text>
+<path d="M150,634 V716" fill="none" stroke="#3b4a6b" stroke-width="1.4" marker-end="url(#a)" marker-start="url(#a)"/>
+<rect x="368" y="716" width="44" height="44" rx="6" fill="#C925D1"/>
+<ellipse cx="390" cy="730" rx="11" ry="4" fill="none" stroke="#fff" stroke-width="2"/><path d="M379,730 V746 A11,4 0 0 0 401,746 V730 M379,738 A11,4 0 0 0 401,738" fill="none" stroke="#fff" stroke-width="2"/>
+<text x="390" y="776" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">RDS for MySQL</text>
+<text x="390" y="791" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">Multi-AZ · PITR</text>
+<path d="M390,634 V716" fill="none" stroke="#3b4a6b" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M390,814 V834 H806 V770 H828" fill="none" stroke="#3b4a6b" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<rect x="210.0" y="138" width="80.0" height="17" rx="8.5" fill="#fff" stroke="#7d8aa6"/>
+<text x="250" y="150.5" font-size="10.5" font-weight="700" fill="#3b4a6b" text-anchor="middle">HTTPS / WSS</text>
+<rect x="395.0" y="274" width="50.0" height="17" rx="8.5" fill="#fff" stroke="#7d8aa6"/>
+<text x="420" y="286.5" font-size="10.5" font-weight="700" fill="#3b4a6b" text-anchor="middle">origin</text>
+<rect x="618.0" y="252" width="74.0" height="17" rx="8.5" fill="#fff" stroke="#7d8aa6"/>
+<text x="655" y="264.5" font-size="10.5" font-weight="700" fill="#3b4a6b" text-anchor="middle">HL7 / FHIR</text>
+<rect x="615.0" y="481" width="80.0" height="17" rx="8.5" fill="#fff" stroke="#7d8aa6"/>
+<text x="655" y="493.5" font-size="10.5" font-weight="700" fill="#3b4a6b" text-anchor="middle">sync นัดหมาย</text>
+<rect x="803.0" y="240" width="74.0" height="17" rx="8.5" fill="#fff" stroke="#7d8aa6"/>
+<text x="840" y="252.5" font-size="10.5" font-weight="700" fill="#3b4a6b" text-anchor="middle">push image</text>
+<rect x="771.0" y="445" width="38.0" height="17" rx="8.5" fill="#fff" stroke="#7d8aa6"/>
+<text x="790" y="457.5" font-size="10.5" font-weight="700" fill="#3b4a6b" text-anchor="middle">pull</text>
+<rect x="74.0" y="640" width="152.0" height="17" rx="8.5" fill="#fff" stroke="#7d8aa6"/>
+<text x="150" y="652.5" font-size="10.5" font-weight="700" fill="#3b4a6b" text-anchor="middle">cache · queue · pub/sub</text>
+<rect x="359.0" y="640" width="62.0" height="17" rx="8.5" fill="#fff" stroke="#7d8aa6"/>
+<text x="390" y="652.5" font-size="10.5" font-weight="700" fill="#3b4a6b" text-anchor="middle">อ่าน/เขียน</text>
+<rect x="534.0" y="824" width="128.0" height="17" rx="8.5" fill="#fff" stroke="#7d8aa6"/>
+<text x="598.0" y="836.5" font-size="10.5" font-weight="700" fill="#3b4a6b" text-anchor="middle">backup รายวัน + PITR</text>
+<text x="470.0" y="910" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">region ประเทศไทย: ข้อมูลผู้ป่วยอยู่ในประเทศ (PDPA) · เส้นทึบ = request/ข้อมูล · เส้นประ = deploy · monitoring · backup · ลูกศรสองหัว = WebSocket ส่ง event ผ่าน Redis · เข้ารหัสทั้งตอนเก็บและตอนส่ง</text>
+</svg>

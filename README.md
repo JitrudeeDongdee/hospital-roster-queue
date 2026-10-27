@@ -10,7 +10,7 @@ MySQL 8.4 and React 19**. It is a practice project for a hospital system that st
 15 hospitals and grows to 30. Doctor scheduling is the main feature; each doctor's own
 queue view is a supporting feature.
 
-Architecture, BPMN, ER diagram and the scaling and migration plan: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+Architecture, BPMN, ER diagram, AWS network for each scaling stage and feature proposals: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 Large-data techniques with sources (MySQL, Laravel, TanStack, Redis): [docs/LARGE-DATA.md](docs/LARGE-DATA.md)
 
 ## Doctor roster (main feature)

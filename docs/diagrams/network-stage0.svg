@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 640" width="940" height="640" font-family="Sarabun, 'Noto Sans Thai', Thonburi, 'Helvetica Neue', sans-serif">
+<title>ขั้น 0: เดโม / pilot บน EC2 เครื่องเดียว</title>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3b4a6b"/></marker></defs>
+<rect width="940" height="640" fill="#fff"/>
+<rect x="10" y="10" width="640" height="132" fill="#f7f9fc" stroke="#5a6b8c" stroke-width="1.6"/>
+<rect x="10" y="10" width="22" height="22" fill="#5a6b8c"/>
+<text x="40" y="25.5" font-size="12" font-weight="700" fill="#1f2a44" text-anchor="start">โรงพยาบาล × 1–2 แห่ง (pilot) (on-premises)</text>
+<rect x="73" y="40" width="44" height="44" rx="6" fill="#232F3E"/>
+<rect x="87" y="50" width="16" height="16" rx="2" fill="none" stroke="#fff" stroke-width="2"/><path d="M95,66 V72 M88,73 H102" stroke="#fff" stroke-width="2"/>
+<text x="95" y="100" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">ตู้ออกบัตรคิว</text>
+<rect x="223" y="40" width="44" height="44" rx="6" fill="#232F3E"/>
+<rect x="232" y="52" width="26" height="16" rx="2" fill="none" stroke="#fff" stroke-width="2"/><path d="M245,68 V72 M238,73 H252" stroke="#fff" stroke-width="2"/>
+<text x="245" y="100" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">จอแสดงคิว</text>
+<text x="245" y="115" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">refresh ทุก 15 วินาที</text>
+<rect x="378" y="40" width="44" height="44" rx="6" fill="#232F3E"/>
+<circle cx="400" cy="57" r="6" fill="none" stroke="#fff" stroke-width="2"/><path d="M389,74 C389,64 411,64 411,74" fill="none" stroke="#fff" stroke-width="2"/>
+<text x="400" y="100" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">แพทย์/พยาบาล</text>
+<text x="400" y="115" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">เว็บจัดเวร · คิว</text>
+<rect x="670" y="10" width="260" height="132" fill="#f7f9fc" stroke="#5a6b8c" stroke-width="1.6"/>
+<rect x="670" y="10" width="22" height="22" fill="#5a6b8c"/>
+<text x="700" y="25.5" font-size="12" font-weight="700" fill="#1f2a44" text-anchor="start">CI/CD (ภายนอก)</text>
+<rect x="818" y="40" width="44" height="44" rx="6" fill="#232F3E"/>
+<circle cx="834" cy="54" r="3.5" fill="#fff"/><circle cx="834" cy="71" r="3.5" fill="#fff"/><circle cx="847" cy="60" r="3.5" fill="#fff"/><path d="M834,57 V68 M834,65 C834,60 847,64 847,63" fill="none" stroke="#fff" stroke-width="2"/>
+<text x="840" y="100" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">GitHub Actions</text>
+<text x="840" y="115" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">test → build → deploy</text>
+<rect x="10" y="160" width="920" height="450" fill="#fff" stroke="#232F3E" stroke-width="1.6"/>
+<rect x="10" y="160" width="22" height="22" fill="#232F3E"/>
+<text x="40" y="175.5" font-size="12" font-weight="700" fill="#232F3E" text-anchor="start">AWS Cloud</text>
+<rect x="278" y="200" width="44" height="44" rx="6" fill="#8C4FFF"/>
+<path d="M288,230 L294,212 L300,224 L306,212 L312,230" fill="none" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/>
+<text x="300" y="260" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">Route 53</text>
+<text x="300" y="275" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">DNS</text>
+<rect x="24" y="290" width="892" height="306" fill="none" stroke="#00A4A6" stroke-width="1.6" stroke-dasharray="6 4"/>
+<rect x="24" y="290" width="22" height="22" fill="#00A4A6"/>
+<text x="54" y="305.5" font-size="12" font-weight="700" fill="#007d80" text-anchor="start">Region: Asia Pacific (Thailand) ap-southeast-7</text>
+<rect x="38" y="320" width="640" height="262" fill="#fdfcff" stroke="#8C4FFF" stroke-width="1.6"/>
+<rect x="38" y="320" width="22" height="22" fill="#8C4FFF"/>
+<text x="68" y="335.5" font-size="12" font-weight="700" fill="#5b2bbf" text-anchor="start">VPC</text>
+<rect x="52" y="352" width="612" height="216" fill="#f4f9ee" stroke="#7AA116" stroke-width="1.6"/>
+<rect x="52" y="352" width="22" height="22" fill="#7AA116"/>
+<text x="82" y="367.5" font-size="12" font-weight="700" fill="#4d6b10" text-anchor="start">Public subnet · Elastic IP · Security group เปิดแค่ 443</text>
+<rect x="178" y="418" width="44" height="44" rx="6" fill="#ED7100"/>
+<rect x="188" y="428" width="24" height="24" rx="2" fill="none" stroke="#fff" stroke-width="2"/><rect x="194" y="434" width="12" height="12" fill="#fff"/>
+<text x="200" y="478" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">Amazon EC2 (1 เครื่อง)</text>
+<text x="200" y="493" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">docker compose:</text>
+<text x="200" y="507" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">Nginx · Laravel · MySQL · scheduler</text>
+<rect x="478" y="418" width="44" height="44" rx="6" fill="#ED7100"/>
+<rect x="488" y="428" width="24" height="24" rx="2" fill="none" stroke="#fff" stroke-width="2"/><rect x="494" y="434" width="12" height="12" fill="#fff"/>
+<text x="500" y="478" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">EBS</text>
+<text x="500" y="493" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">ดิสก์ของ MySQL</text>
+<text x="500" y="507" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">snapshot รายวัน</text>
+<rect x="818" y="358" width="44" height="44" rx="6" fill="#7AA116"/>
+<path d="M828,372 L832,391 H848 L852,372" fill="none" stroke="#fff" stroke-width="2"/><ellipse cx="840" cy="372" rx="12" ry="4" fill="none" stroke="#fff" stroke-width="2"/>
+<text x="840" y="418" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">Amazon S3</text>
+<text x="840" y="433" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">backup รายวัน</text>
+<rect x="818" y="488" width="44" height="44" rx="6" fill="#E7157B"/>
+<rect x="828" y="500" width="24" height="20" rx="2" fill="none" stroke="#fff" stroke-width="2"/><path d="M831,514 L837,508 L842,512 L849,504" fill="none" stroke="#fff" stroke-width="2"/>
+<text x="840" y="548" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">CloudWatch</text>
+<text x="840" y="563" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">alarm พื้นฐาน</text>
+<path d="M95,122 V150 H400" fill="none" stroke="#3b4a6b" stroke-width="1.4"/>
+<path d="M245,122 V150" fill="none" stroke="#3b4a6b" stroke-width="1.4"/>
+<path d="M400,122 V150" fill="none" stroke="#3b4a6b" stroke-width="1.4"/>
+<path d="M190,150 V418" fill="none" stroke="#3b4a6b" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M222,440 H478" fill="none" stroke="#3b4a6b" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M522,440 H700 V380 H818" fill="none" stroke="#3b4a6b" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<path d="M178,440 H100 V545 H700 V510 H818" fill="none" stroke="#3b4a6b" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<path d="M840,122 V185 H212 V418" fill="none" stroke="#3b4a6b" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<rect x="248.0" y="140" width="104.0" height="17" rx="8.5" fill="#fff" stroke="#7d8aa6"/>
+<text x="300" y="152.5" font-size="10.5" font-weight="700" fill="#3b4a6b" text-anchor="middle">HTTPS (polling)</text>
+<rect x="328.0" y="430" width="44.0" height="17" rx="8.5" fill="#fff" stroke="#7d8aa6"/>
+<text x="350" y="442.5" font-size="10.5" font-weight="700" fill="#3b4a6b" text-anchor="middle">mount</text>
+<rect x="675.0" y="400" width="50.0" height="17" rx="8.5" fill="#fff" stroke="#7d8aa6"/>
+<text x="700" y="412.5" font-size="10.5" font-weight="700" fill="#3b4a6b" text-anchor="middle">backup</text>
+<rect x="417.0" y="535" width="86.0" height="17" rx="8.5" fill="#fff" stroke="#7d8aa6"/>
+<text x="460" y="547.5" font-size="10.5" font-weight="700" fill="#3b4a6b" text-anchor="middle">metric · log</text>
+<rect x="499.0" y="170" width="122.0" height="17" rx="8.5" fill="#fff" stroke="#7d8aa6"/>
+<text x="560" y="182.5" font-size="10.5" font-weight="700" fill="#3b4a6b" text-anchor="middle">deploy (SSH / SSM)</text>
+<text x="470.0" y="630" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">เส้นทึบ = request/ข้อมูล · เส้นประ = deploy · monitoring · backup</text>
+</svg>

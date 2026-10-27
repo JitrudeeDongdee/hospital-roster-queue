@@ -5,6 +5,15 @@
 
 ## [Unreleased]
 
+## [0.7.7] - 2026-10-27
+
+### Changed
+- เอกสาร architecture ข้อ 3: ผัง network บน AWS แยกตามขั้นการขยาย (ขั้น 0–3) ใช้สัญลักษณ์และกลุ่มแบบ AWS Architecture diagram (AWS Cloud → Region ap-southeast-7 → VPC → subnet) เว้นระยะไม่ให้ข้อความทับเส้น · ใช้ CloudFront + WAF, ALB, ECS Fargate, RDS, ElastiCache, S3, CloudWatch, ECR, Secrets Manager, Site-to-Site VPN
+- ข้อ 4 (เดิม 5) ข้อเสนอฟีเจอร์: ให้ HR อนุมัติการลาเป็นแถวหนึ่งในตารางข้อเสนออื่น
+
+### Removed
+- แผนย้ายจาก PHP/Laravel ไป Next.js + NestJS (ข้อ 4 เดิม) และผัง strangler fig / ผัง BPMN ข้อเสนอลา 2 ขั้น
+
 ## [0.7.6] - 2026-10-27
 
 ### Fixed
@@ -128,7 +137,8 @@ release แรก — ตัวอย่างระบบจัดเวรแ�
 - ตั้ง timezone เป็น `Asia/Bangkok` — คิวที่ออกช่วง 00:00–07:00 ไม่ถูกนับเป็นวันก่อนหน้าแล้ว
 - หัวตารางเวรไม่มีแถวโผล่ทะลุขึ้นมาตอนเลื่อน
 
-[Unreleased]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.6...HEAD
+[Unreleased]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.7...HEAD
+[0.7.7]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.6...v0.7.7
 [0.7.6]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.5...v0.7.6
 [0.7.5]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.4...v0.7.5
 [0.7.4]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.3...v0.7.4
