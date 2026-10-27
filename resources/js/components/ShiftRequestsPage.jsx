@@ -42,7 +42,7 @@ export default function ShiftRequestsPage({ hospitalId }) {
     const requests = useShiftRequests(hospitalId);
 
     return (
-        <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
             <div className="space-y-6">
                 {can('shift.request.resolve') && <AdminInbox hospitalId={hospitalId} data={requests.data} />}
                 {own && <Incoming hospitalId={hospitalId} list={requests.data?.incoming ?? []} />}

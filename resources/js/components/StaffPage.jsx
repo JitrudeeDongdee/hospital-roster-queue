@@ -25,7 +25,7 @@ export default function StaffPage({ hospitalId }) {
     const current = (directory.data ?? []).find((s) => String(s.id) === selected);
 
     return (
-        <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
             <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
                 <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 p-4">
                     <h2 className="mr-auto text-lg font-semibold">แพทย์ ({list.length})</h2>

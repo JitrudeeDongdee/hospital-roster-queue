@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { PRIORITY, api, queueNo } from '../api';
+import { clock } from './TicketBoard';
 import { byId, useDepartments, useStaff } from '../useLookups';
 import { useAuth } from '../auth';
 
@@ -22,6 +23,10 @@ export default function StaffPanel({ hospitalId }) {
         enabled: !!staffId,
         refetchInterval: 15_000,
     });
+
+    // คิวปัจจุบัน: ค่าจาก server (รีเฟรชหน้า/เปิดดูของแพทย์คนอื่นก็ยังเห็น) · ค่าในเครื่องใช้ระหว่างกดเรียก/เสร็จสิ้น
+    const shown = current ?? myQueue.data?.current ?? null;
+    const isOwn = canCall && user.staff_id === Number(staffId);
 
     const refreshBoard = () => {
         queryClient.invalidateQueries({ queryKey: ['tickets', hospitalId] });
@@ -72,7 +77,8 @@ export default function StaffPanel({ hospitalId }) {
 
             {canCall && <button
                 className="mt-4 w-full rounded-md bg-indigo-600 py-2.5 font-medium text-white hover:bg-indigo-700 disabled:opacity-40"
-                disabled={!staffId || callNext.isPending || current?.status === 'called'}
+                disabled={!staffId || callNext.isPending || shown?.status === 'called'}
+                title={shown?.status === 'called' ? 'กดเสร็จสิ้นคิวปัจจุบันก่อน' : undefined}
                 onClick={() => callNext.mutate()}
             >
                 {callNext.isPending ? 'กำลังเรียก…' : 'เรียกคิวถัดไป'}
@@ -84,21 +90,32 @@ export default function StaffPanel({ hospitalId }) {
                 </p>
             )}
 
-            {current && (
-                <div className="mt-4 rounded-lg border border-slate-200 p-4 text-center">
-                    <p className="text-xs text-slate-500">กำลังให้บริการ</p>
-                    <p className="font-mono text-4xl font-bold">
-                        {queueNo(departments[current.department_id], current.number)}
-                    </p>
-                    <p className="mt-1 text-sm">{PRIORITY[current.priority]?.label}</p>
-                    <button
-                        className="mt-3 w-full rounded-md border border-emerald-600 py-2 text-emerald-700 hover:bg-emerald-50 disabled:opacity-40"
-                        disabled={current.status !== 'called'}
-                        onClick={() => complete.mutate(current)}
-                    >
-                        {current.status === 'completed' ? 'เสร็จสิ้นแล้ว ✓' : 'เสร็จสิ้น'}
-                    </button>
-                    {complete.isError && <p className="mt-2 text-sm text-red-600">{complete.error.message}</p>}
+            {member && (
+                <div className={`mt-4 rounded-lg border p-4 text-center ${shown?.status === 'called' ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200'}`}>
+                    <p className="text-xs font-medium text-slate-500">คิวปัจจุบัน</p>
+                    {shown ? (
+                        <>
+                            <p className="font-mono text-5xl font-bold tracking-wider">{queueNo(departments[shown.department_id], shown.number)}</p>
+                            <p className="mt-1 text-sm">
+                                <span className={`rounded-full px-2 py-0.5 text-xs ${PRIORITY[shown.priority]?.className}`}>{PRIORITY[shown.priority]?.label}</span>
+                                {shown.called_at && <span className="ml-2 text-xs text-slate-500">เรียกเมื่อ {clock(shown.called_at)} ({Math.max(0, Math.round((Date.now() - new Date(shown.called_at)) / 60000))} นาที)</span>}
+                            </p>
+                            {isOwn ? (
+                                <button
+                                    className="mt-3 w-full rounded-md border border-emerald-600 bg-white py-2 text-emerald-700 hover:bg-emerald-50 disabled:opacity-40"
+                                    disabled={shown.status !== 'called'}
+                                    onClick={() => complete.mutate(shown)}
+                                >
+                                    {shown.status === 'completed' ? 'เสร็จสิ้นแล้ว ✓' : 'เสร็จสิ้น'}
+                                </button>
+                            ) : (
+                                <p className="mt-2 text-xs text-slate-500">{shown.status === 'completed' ? 'ตรวจเสร็จแล้ว' : 'กำลังตรวจ'}</p>
+                            )}
+                            {complete.isError && <p className="mt-2 text-sm text-red-600">{complete.error.message}</p>}
+                        </>
+                    ) : (
+                        <p className="py-3 text-sm text-slate-400">{myQueue.isPending ? 'กำลังโหลด…' : 'ยังไม่มีคิวที่กำลังตรวจ'}</p>
+                    )}
                 </div>
             )}
 

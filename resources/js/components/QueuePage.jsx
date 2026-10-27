@@ -76,10 +76,11 @@ export default function QueuePage({ hospitalId, view }) {
         <>
             {toolbar}
             {view === 'list' && (
-                <div className={`grid gap-6 ${date === today() ? 'lg:grid-cols-[1fr_340px]' : ''}`}>
+                <div className={`grid gap-6 ${date === today() ? 'xl:grid-cols-[minmax(0,1fr)_340px]' : ''}`}>
                     <TicketBoard hospitalId={hospitalId} date={date} />
                     {date === today() && (
-                        <div className="space-y-6">
+                        // จอแคบ: แพทย์เห็นห้องตรวจของตัวเอง (คิวปัจจุบัน + ปุ่มเรียก) ก่อนรายการคิว
+                        <div className={`space-y-6 ${can('ticket.call') ? 'order-first xl:order-none' : ''}`}>
                             <StaffPanel hospitalId={hospitalId} />
                             {can('ticket.issue') && <IssueTicketForm hospitalId={hospitalId} />}
                         </div>

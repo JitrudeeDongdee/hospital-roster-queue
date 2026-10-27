@@ -18,7 +18,7 @@ export default function LeavePage({ hospitalId }) {
     const { can, user } = useAuth();
 
     return (
-        <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
             {can('leave.approve') ? <ApprovalInbox hospitalId={hospitalId} /> : <MyRequests hospitalId={hospitalId} staffId={user.staff_id} />}
             <div className="space-y-6">
                 {can('leave.manage.own') && user.staff_id && <RequestForm hospitalId={hospitalId} staffId={user.staff_id} />}

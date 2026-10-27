@@ -62,7 +62,7 @@ export default function PreferencesPage({ hospitalId, staffId }) {
     const toggle = (key) => !locked && setDraft({ ...draft, [key]: NEXT[draft[key]] });
 
     return (
-        <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
             <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
                 <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 p-4">
                     <h2 className="mr-auto text-lg font-semibold">เวรที่อยากลง</h2>
