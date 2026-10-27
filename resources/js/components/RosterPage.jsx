@@ -8,6 +8,7 @@ import { RequestForm } from './ShiftRequestsPage';
 import { addDays, api, errorMessages, isoDate } from '../api';
 import { useDepartments, useStaff } from '../useLookups';
 import { useAuth } from '../auth';
+import Select from './Select';
 
 const DAY_NAMES = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
 
@@ -168,9 +169,7 @@ export default function RosterPage({ hospitalId, view }) {
                             </NavLink>
                         ))}
                     </nav>
-                    <select className="rounded-md border border-slate-300 px-2 py-1.5 text-sm" value={deptId ?? ''} onChange={(e) => setDept(e.target.value)}>
-                        {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-                    </select>
+                    <Select className="w-40 rounded-md border border-slate-300 px-2 py-1.5 text-sm" value={deptId ?? ''} onChange={setDept} ariaLabel="แผนก" options={departments.map((d) => ({ value: d.id, label: d.name }))} />
                     <div className="flex items-center gap-1 text-sm">
                         <button className="rounded-md border border-slate-300 px-2 py-1.5" onClick={() => setMonth(shiftMonth(monthStart, -1))} aria-label="เดือนก่อน">‹</button>
                         <span className="w-36 text-center font-medium">{monthLabel(from)}</span>
@@ -273,16 +272,14 @@ export default function RosterPage({ hospitalId, view }) {
                                                             </span>
                                                         ))}
                                                     </div>
-                                                    {canManage && <select
-                                                        className="mt-1 w-full rounded border border-dashed border-slate-300 bg-transparent px-1 py-0.5 text-xs text-slate-500"
+                                                    {canManage && <Select
+                                                        className="mt-1 block w-full rounded border border-dashed border-slate-300 px-1 py-0.5 text-xs text-slate-500"
                                                         value=""
-                                                        onChange={(e) => assign.mutate({ staff_id: Number(e.target.value), shift_template_id: t.id, date })}
-                                                    >
-                                                        <option value="">+ ลงเวร</option>
-                                                        {doctors.filter((d) => !assigned.some((s) => s.staff_id === d.id)).map((d) => (
-                                                            <option key={d.id} value={d.id}>{d.name}</option>
-                                                        ))}
-                                                    </select>}
+                                                        placeholder="+ ลงเวร"
+                                                        ariaLabel={`ลงเวร ${t.name} ${date}`}
+                                                        onChange={(v) => assign.mutate({ staff_id: Number(v), shift_template_id: t.id, date })}
+                                                        options={doctors.filter((d) => !assigned.some((s) => s.staff_id === d.id)).map((d) => ({ value: d.id, label: d.name }))}
+                                                    />}
                                                     {canManage && contested[key] && (
                                                         <div className="mt-1 rounded-md border-2 border-orange-400 bg-orange-50 p-1.5 text-[11px] text-orange-900">
                                                             <p className="mb-1 font-medium">ต้องเลือก: อยากลง {contested[key].staff_ids.length} คน · ต้องการอีก {contested[key].seats} คน</p>
@@ -391,9 +388,7 @@ function UnavailabilityPanel({ hospitalId, doctors, direct, onChange }) {
         <div>
             <p className="mb-3 text-xs text-slate-500">{direct ? 'แอดมินบันทึกให้ = อนุมัติทันที' : 'ส่งคำขอลาแล้วรอแอดมินอนุมัติ'}</p>
             <form className="space-y-2" onSubmit={(e) => { e.preventDefault(); add.mutate(); }}>
-                <select className={input} value={doctorId ?? ''} onChange={(e) => setStaffId(Number(e.target.value))}>
-                    {doctors.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-                </select>
+                <Select className={`block ${input}`} value={doctorId ?? ''} onChange={(v) => setStaffId(Number(v))} ariaLabel="แพทย์" options={doctors.map((d) => ({ value: d.id, label: d.name }))} />
                 <input className={input} type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
                 <input className={input} placeholder="เหตุผล (ไม่บังคับ)" value={reason} onChange={(e) => setReason(e.target.value)} maxLength={100} />
                 <button className="w-full rounded-md bg-slate-800 py-2 text-sm font-medium text-white disabled:opacity-40" disabled={add.isPending}>{direct ? 'บันทึกวันลา' : 'ส่งคำขอลา'}</button>
@@ -418,13 +413,17 @@ function MovePanel({ hospitalId, roster, staffId, shiftId, onSelect }) {
     return (
         <div>
             <p className="mb-3 text-xs text-slate-500">เลือกเวรของคุณ หรือคลิกชิปชื่อตัวเองในตาราง · แลกกับเพื่อน: เพื่อนตอบรับแล้วสลับทันที</p>
-            <select className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={shift ? shiftId : ''} onChange={(e) => onSelect(e.target.value)} aria-label="เวรของฉันที่จะย้าย/แลก">
-                <option value="">{mine.length ? 'เลือกเวรของฉัน…' : 'ไม่มีเวรที่ยังไม่เริ่มในเดือนนี้'}</option>
-                {mine.map((s) => {
+            <Select
+                className="block w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                value={shift ? shiftId : ''}
+                onChange={onSelect}
+                placeholder={mine.length ? 'เลือกเวรของฉัน…' : 'ไม่มีเวรที่ยังไม่เริ่มในเดือนนี้'}
+                ariaLabel="เวรของฉันที่จะย้าย/แลก"
+                options={mine.map((s) => {
                     const t = templates[s.shift_template_id];
-                    return <option key={s.id} value={s.id}>{formatDay(s.shift_date)} {t.name} {t.start_time.slice(0, 5)}–{t.end_time.slice(0, 5)}</option>;
+                    return { value: s.id, label: `${formatDay(s.shift_date)} ${t.name} ${t.start_time.slice(0, 5)}–${t.end_time.slice(0, 5)}` };
                 })}
-            </select>
+            />
             {shift && <RequestForm key={shift.id} hospitalId={hospitalId} shift={shift} roster={roster} staffId={staffId} onDone={() => onSelect('')} />}
         </div>
     );

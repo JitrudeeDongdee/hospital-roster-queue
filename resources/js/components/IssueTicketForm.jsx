@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { PRIORITY, api, queueNo } from '../api';
 import { useDepartments, useSkills } from '../useLookups';
 import { useAuth } from '../auth';
+import Select from './Select';
 
 export default function IssueTicketForm({ hospitalId }) {
     const queryClient = useQueryClient();
@@ -35,25 +36,17 @@ export default function IssueTicketForm({ hospitalId }) {
         <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
             <h2 className="mb-3 text-lg font-semibold">ออกบัตรคิว</h2>
             <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); issue.mutate(); }}>
-                <select className={input} value={form.department_id} onChange={set('department_id')} required>
-                    <option value="">เลือกแผนก</option>
-                    {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-                </select>
+                <Select className={`block ${input}`} value={form.department_id} onChange={(v) => setForm({ ...form, department_id: v })} required placeholder="เลือกแผนก" ariaLabel="แผนก" options={departments.map((d) => ({ value: d.id, label: d.name }))} />
                 <input className={input} placeholder="รหัสอ้างอิงผู้ป่วย เช่น P000123" value={form.patient_ref} onChange={set('patient_ref')} required maxLength={64} />
                 {canTriage ? (
                     <>
                         <label className="block text-sm">
                             <span className="mb-1 block font-medium text-slate-700">ความเร่งด่วน</span>
-                            <select className={input} value={form.priority} onChange={set('priority')}>
-                                {Object.entries(PRIORITY).map(([value, p]) => <option key={value} value={value}>{p.label}</option>)}
-                            </select>
+                            <Select className={`block ${input}`} value={form.priority} onChange={(v) => setForm({ ...form, priority: v })} ariaLabel="ความเร่งด่วน" options={Object.entries(PRIORITY).map(([value, p]) => ({ value, label: p.label }))} />
                         </label>
                         <label className="block text-sm">
                             <span className="mb-1 block font-medium text-slate-700">ความเชี่ยวชาญที่ต้องการ</span>
-                            <select className={input} value={form.required_skill_id} onChange={set('required_skill_id')}>
-                                <option value="">ไม่ระบุ (แพทย์ทุกคนรับได้)</option>
-                                {skills.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                            </select>
+                            <Select className={`block ${input}`} value={form.required_skill_id} onChange={(v) => setForm({ ...form, required_skill_id: v })} ariaLabel="ความเชี่ยวชาญที่ต้องการ" options={[{ value: '', label: 'ไม่ระบุ (แพทย์ทุกคนรับได้)' }, ...skills.map((s) => ({ value: s.id, label: s.name }))]} />
                         </label>
                     </>
                 ) : (

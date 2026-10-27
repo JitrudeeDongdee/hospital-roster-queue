@@ -4,6 +4,7 @@ import { PRIORITY, api, queueNo } from '../api';
 import { clock } from './TicketBoard';
 import { byId, useDepartments, useStaff } from '../useLookups';
 import { useAuth } from '../auth';
+import Select from './Select';
 
 export default function StaffPanel({ hospitalId }) {
     const queryClient = useQueryClient();
@@ -56,16 +57,14 @@ export default function StaffPanel({ hospitalId }) {
         <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
             <h2 className="mb-3 text-lg font-semibold">{user.staff_id ? 'ห้องตรวจของฉัน' : 'คิวของแพทย์'}</h2>
 
-            {!user.staff_id && <select
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            {!user.staff_id && <Select
+                className="block w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                 value={staffId}
-                onChange={(e) => { setChosen(e.target.value); setCurrent(null); callNext.reset(); }}
-            >
-                <option value="">เลือกเจ้าหน้าที่</option>
-                {staff.data?.map((s) => (
-                    <option key={s.id} value={s.id}>{departments[s.department_id]?.code} · {s.name}</option>
-                ))}
-            </select>}
+                onChange={(v) => { setChosen(v); setCurrent(null); callNext.reset(); }}
+                placeholder="เลือกแพทย์"
+                ariaLabel="แพทย์"
+                options={(staff.data ?? []).map((s) => ({ value: s.id, label: `${departments[s.department_id]?.name ?? ''} · ${s.name}` }))}
+            />}
 
             {member && (
                 <div className="mt-2 flex flex-wrap gap-1">

@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-27
+
+### Changed
+- dropdown ทุกจุดในระบบ (18 จุด) เปลี่ยนเป็นตัวเลือกที่ค้นหาได้ (`components/Select.jsx`): พิมพ์กรองได้ ใช้ลูกศร/Enter/Esc ได้ รายการสูงไม่เกิน 240px แล้วเลื่อนในกล่อง แสดงลอยบนหน้า (portal) จึงไม่โดนตารางที่เลื่อนได้ตัด และไม่ล้นขอบจอ
+
 ## [0.6.0] - 2026-10-27
 
 ### Added
@@ -86,7 +91,8 @@ release แรก — ตัวอย่างระบบจัดเวรแ�
 - ตั้ง timezone เป็น `Asia/Bangkok` — คิวที่ออกช่วง 00:00–07:00 ไม่ถูกนับเป็นวันก่อนหน้าแล้ว
 - หัวตารางเวรไม่มีแถวโผล่ทะลุขึ้นมาตอนเลื่อน
 
-[Unreleased]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.3.0...v0.4.0

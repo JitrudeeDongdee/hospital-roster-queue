@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorMessages } from '../api';
 import { byId, useDepartments, useSkills } from '../useLookups';
+import Select from './Select';
 
 const formatDay = (iso) => new Date(`${iso}T00:00:00`).toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric', month: 'short' });
 
@@ -29,10 +30,13 @@ export default function StaffPage({ hospitalId }) {
             <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
                 <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 p-4">
                     <h2 className="mr-auto text-lg font-semibold">แพทย์ ({list.length})</h2>
-                    <select className="rounded-md border border-slate-300 px-2 py-1.5 text-sm" value={dept ?? ''} onChange={(e) => set({ dept: e.target.value || null })} aria-label="แผนก">
-                        <option value="">ทุกแผนก</option>
-                        {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-                    </select>
+                    <Select
+                        className="w-40 rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                        value={dept ?? ''}
+                        onChange={(v) => set({ dept: v || null })}
+                        ariaLabel="แผนก"
+                        options={[{ value: '', label: 'ทุกแผนก' }, ...departments.map((d) => ({ value: d.id, label: d.name }))]}
+                    />
                     <button className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700" onClick={() => set({ id: 'new' })}>+ เพิ่มแพทย์</button>
                 </div>
 
@@ -141,9 +145,7 @@ function StaffForm({ hospitalId, departments, doctor, defaultDept, onDone }) {
                 {!doctor && (
                     <label className="block text-sm">
                         <span className="mb-1 block font-medium text-slate-700">แผนก</span>
-                        <select className={input} value={departmentId} onChange={(e) => setDepartmentId(e.target.value)} required>
-                            {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-                        </select>
+                        <Select className={`block ${input}`} value={departmentId} onChange={setDepartmentId} required ariaLabel="แผนก" options={departments.map((d) => ({ value: d.id, label: d.name }))} />
                     </label>
                 )}
                 <fieldset className="text-sm">

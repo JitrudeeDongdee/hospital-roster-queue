@@ -8,6 +8,7 @@ import TicketBoard, { clock, waitMinutes } from './TicketBoard';
 import StaffPanel from './StaffPanel';
 import IssueTicketForm from './IssueTicketForm';
 import { calendarRange } from './RosterCalendar';
+import Select from './Select';
 
 const VIEWS = [['list', 'รายการ'], ['month', 'เดือน'], ['week', 'สัปดาห์'], ['day', 'วัน']];
 const WEEKDAYS = ['จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.', 'อา.'];
@@ -54,10 +55,13 @@ export default function QueuePage({ hospitalId, view }) {
                     </NavLink>
                 ))}
             </nav>
-            <select className="rounded-md border border-slate-300 px-2 py-1.5 text-sm" value={dept} onChange={(e) => setParams(withParams({ dept: e.target.value }))} aria-label="แผนก">
-                <option value="">ทุกแผนก</option>
-                {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-            </select>
+            <Select
+                className="w-40 rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                value={dept}
+                onChange={(v) => setParams(withParams({ dept: v }))}
+                ariaLabel="แผนก"
+                options={[{ value: '', label: 'ทุกแผนก' }, ...departments.map((d) => ({ value: d.id, label: d.name }))]}
+            />
             <div className="ml-auto flex items-center gap-1 text-sm">
                 <button className="rounded-md border border-slate-300 px-2 py-1.5" onClick={() => setParams(withParams({ date: step(-1) }))} aria-label="ก่อนหน้า">‹</button>
                 <span className="min-w-44 text-center font-medium">{label}</span>

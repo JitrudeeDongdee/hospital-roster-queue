@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { addDays, api, errorMessages, isoDate } from '../api';
 import { useAuth } from '../auth';
 import { useStaff } from '../useLookups';
+import Select from './Select';
 
 export const REQUEST_STATUS = {
     pending_peer: { label: 'รอเพื่อนตอบ', className: 'bg-sky-100 text-sky-900 border-sky-300' },
@@ -244,19 +245,28 @@ export function RequestForm({ hospitalId, shift, roster, staffId, onDone }) {
                 ))}
             </div>
             {type === 'swap' ? (
-                <select className={`${input} w-full`} value={target} onChange={(e) => setTarget(e.target.value)} required aria-label="เวรของเพื่อนที่จะแลก">
-                    <option value="">เลือกเวรของเพื่อน…</option>
-                    {colleagues.map((s) => {
+                <Select
+                    className={`block w-full bg-white ${input}`}
+                    value={target}
+                    onChange={setTarget}
+                    required
+                    placeholder="เลือกเวรของเพื่อน…"
+                    ariaLabel="เวรของเพื่อนที่จะแลก"
+                    options={colleagues.map((s) => {
                         const t = templates[s.shift_template_id];
-                        return <option key={s.id} value={s.id}>{day(s.shift_date)} {t.name} {t.start_time.slice(0, 5)} — {s.staff_name}</option>;
+                        return { value: s.id, label: `${day(s.shift_date)} ${t.name} ${t.start_time.slice(0, 5)} — ${s.staff_name}` };
                     })}
-                </select>
+                />
             ) : (
                 <div className="flex gap-2">
                     <input className={`${input} flex-1`} type="date" min={now} value={toDate} onChange={(e) => setToDate(e.target.value)} required aria-label="วันที่ใหม่" />
-                    <select className={input} value={toTemplate} onChange={(e) => setToTemplate(e.target.value)} aria-label="ช่วงเวรใหม่">
-                        {roster.templates.map((t) => <option key={t.id} value={t.id}>{t.name}{toDate && gapKeys.has(`${toDate}|${t.id}`) ? ' (ยังขาดคน)' : ''}</option>)}
-                    </select>
+                    <Select
+                        className={`w-36 bg-white ${input}`}
+                        value={toTemplate}
+                        onChange={setToTemplate}
+                        ariaLabel="ช่วงเวรใหม่"
+                        options={roster.templates.map((t) => ({ value: t.id, label: `${t.name}${toDate && gapKeys.has(`${toDate}|${t.id}`) ? ' (ยังขาดคน)' : ''}` }))}
+                    />
                 </div>
             )}
             <input className={`${input} w-full`} placeholder="เหตุผล (ไม่บังคับ)" value={reason} onChange={(e) => setReason(e.target.value)} maxLength={200} />

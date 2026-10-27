@@ -5,6 +5,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { PRIORITY, STATUS, api, errorMessages, isoDate, queueNo } from '../api';
 import { useAuth } from '../auth';
 import { byId, useDepartments, useSkills, useStaff } from '../useLookups';
+import Select from './Select';
 
 const ROW_HEIGHT = 44;
 
@@ -145,19 +146,28 @@ export default function TicketBoard({ hospitalId, date }) {
                     onChange={(e) => setOrClear('q', e.target.value.replace(/\D/g, ''))}
                     aria-label="ค้นหาเลขคิว"
                 />
-                <select className="rounded-md border border-slate-300 px-2 py-1.5 text-sm" value={priority} onChange={(e) => setOrClear('pri', e.target.value)} aria-label="ความเร่งด่วน">
-                    <option value="">ทุกความเร่งด่วน</option>
-                    {Object.entries(PRIORITY).map(([value, p]) => <option key={value} value={value}>{p.label}</option>)}
-                </select>
-                <select className="rounded-md border border-slate-300 px-2 py-1.5 text-sm" value={doctor} onChange={(e) => setOrClear('doc', e.target.value)} aria-label="แพทย์">
-                    <option value="">ทุกแพทย์</option>
-                    {Object.values(staff).filter((m) => !departmentId || m.department_id === Number(departmentId)).map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-                </select>
+                <Select
+                    className="w-40 rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                    value={priority}
+                    onChange={(v) => setOrClear('pri', v)}
+                    ariaLabel="ความเร่งด่วน"
+                    options={[{ value: '', label: 'ทุกความเร่งด่วน' }, ...Object.entries(PRIORITY).map(([value, p]) => ({ value, label: p.label }))]}
+                />
+                <Select
+                    className="w-40 rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                    value={doctor}
+                    onChange={(v) => setOrClear('doc', v)}
+                    ariaLabel="แพทย์"
+                    options={[{ value: '', label: 'ทุกแพทย์' }, ...Object.values(staff).filter((m) => !departmentId || m.department_id === Number(departmentId)).map((m) => ({ value: m.id, label: m.name }))]}
+                />
                 {(q || priority || doctor) && <button className="text-xs text-slate-500 underline" onClick={() => { const next = new URLSearchParams(params); ['q', 'pri', 'doc'].forEach((k) => next.delete(k)); setParams(next, { replace: true }); }}>ล้างตัวกรอง</button>}
-                <select className="rounded-md border border-slate-300 px-2 py-1.5 text-sm" value={status} onChange={(e) => setFilter('status', e.target.value)} aria-label="สถานะ">
-                    <option value="">ทั้งหมด (เสร็จแล้วอยู่ล่าง)</option>
-                    {Object.entries(STATUS).map(([value, s]) => <option key={value} value={value}>{s.label}</option>)}
-                </select>
+                <Select
+                    className="w-52 rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                    value={status}
+                    onChange={(v) => setFilter('status', v)}
+                    ariaLabel="สถานะ"
+                    options={[{ value: '', label: 'ทั้งหมด (เสร็จแล้วอยู่ล่าง)' }, ...Object.entries(STATUS).map(([value, s]) => ({ value, label: s.label }))]}
+                />
             </div>
 
             <div className="grid grid-cols-[56px_1fr_1fr_1fr_1.3fr_52px_52px_44px_84px] gap-2 border-b border-slate-100 bg-slate-50 px-4 py-2 text-xs font-medium text-slate-500">
@@ -196,25 +206,22 @@ export default function TicketBoard({ hospitalId, date }) {
                                         <span>{departments[t.department_id]?.name ?? '…'}</span>
                                         {canTriage && t.status === 'waiting' ? (
                                             <>
-                                                <select
-                                                    className={`w-full rounded border px-1 py-0.5 text-xs ${PRIORITY[t.priority].className} border-slate-300`}
+                                                <Select
+                                                    className={`block w-full rounded border px-1 py-0.5 text-xs ${PRIORITY[t.priority].className} border-slate-300`}
                                                     value={t.priority}
                                                     disabled={triage.isPending}
-                                                    onChange={(e) => triage.mutate({ id: t.id, priority: Number(e.target.value), required_skill_id: t.required_skill_id })}
-                                                    aria-label={`ความเร่งด่วนของคิว ${t.number}`}
-                                                >
-                                                    {Object.entries(PRIORITY).map(([value, p]) => <option key={value} value={value}>{p.label}</option>)}
-                                                </select>
-                                                <select
-                                                    className="w-full rounded border border-slate-300 px-1 py-0.5 text-xs text-slate-600"
+                                                    onChange={(v) => triage.mutate({ id: t.id, priority: Number(v), required_skill_id: t.required_skill_id })}
+                                                    ariaLabel={`ความเร่งด่วนของคิว ${t.number}`}
+                                                    options={Object.entries(PRIORITY).map(([value, p]) => ({ value, label: p.label }))}
+                                                />
+                                                <Select
+                                                    className="block w-full rounded border border-slate-300 px-1 py-0.5 text-xs text-slate-600"
                                                     value={t.required_skill_id ?? ''}
                                                     disabled={triage.isPending}
-                                                    onChange={(e) => triage.mutate({ id: t.id, priority: t.priority, required_skill_id: e.target.value ? Number(e.target.value) : null })}
-                                                    aria-label={`ความเชี่ยวชาญที่ต้องการของคิว ${t.number}`}
-                                                >
-                                                    <option value="">— ไม่ระบุ</option>
-                                                    {skillList.map((k) => <option key={k.id} value={k.id}>{k.name}</option>)}
-                                                </select>
+                                                    onChange={(v) => triage.mutate({ id: t.id, priority: t.priority, required_skill_id: v ? Number(v) : null })}
+                                                    ariaLabel={`ความเชี่ยวชาญที่ต้องการของคิว ${t.number}`}
+                                                    options={[{ value: '', label: '— ไม่ระบุ' }, ...skillList.map((k) => ({ value: k.id, label: k.name }))]}
+                                                />
                                             </>
                                         ) : (
                                             <>
