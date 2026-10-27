@@ -34,6 +34,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('departments/{department}/tickets', [TicketController::class, 'store'])->middleware('can:ticket.issue');
         Route::post('staff/{staff}/call-next', [TicketController::class, 'callNext'])->middleware('can:ticket.call');
         Route::post('tickets/{ticket}/complete', [TicketController::class, 'complete'])->middleware('can:ticket.call');
+        Route::patch('tickets/{ticket}/triage', [TicketController::class, 'triage'])->middleware('can:ticket.triage');
         Route::get('staff/{staff}/my-queue', [DoctorQueueController::class, 'show'])->middleware('can:queue.view');
         Route::get('stats', [StatsController::class, 'index'])->middleware('can:stats.view');
 

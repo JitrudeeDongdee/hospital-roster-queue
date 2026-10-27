@@ -79,6 +79,34 @@ class QueueTest extends TestCase
             ->assertOk()->assertJsonPath('id', $heartCase['id']);
     }
 
+    public function test_nurse_triages_a_ticket_issued_by_registration_and_it_jumps_the_queue(): void
+    {
+        [$hospital, $opd] = $this->hospitalWithDepartment();
+        $cardio = Skill::create(['code' => 'CARD', 'name' => 'Cardiology']);
+        $doctor = Staff::create(['hospital_id' => $hospital->id, 'department_id' => $opd->id, 'name' => 'Dr. Heart']);
+        $doctor->skills()->attach($cardio);
+
+        $this->actingAsRole('registration', $hospital);
+        $first = $this->postJson("/api/hospitals/{$hospital->id}/departments/{$opd->id}/tickets", ['patient_ref' => 'P1'])->assertCreated()->json();
+        $second = $this->postJson("/api/hospitals/{$hospital->id}/departments/{$opd->id}/tickets", ['patient_ref' => 'P2'])->assertCreated()->json();
+        $url = "/api/hospitals/{$hospital->id}/tickets/{$second['id']}/triage";
+
+        // เวชระเบียนคัดกรองเองไม่ได้
+        $this->patchJson($url, ['priority' => 2, 'required_skill_id' => $cardio->id])->assertForbidden();
+
+        $this->actingAsRole('nurse', $hospital);
+        $this->patchJson($url, ['priority' => 2, 'required_skill_id' => $cardio->id])
+            ->assertOk()->assertJsonPath('priority', 2)->assertJsonPath('required_skill_id', $cardio->id);
+        $this->patchJson($url, ['priority' => 5, 'required_skill_id' => null])->assertUnprocessable();
+
+        // คิวที่สองถูกยกเป็นเร่งด่วน แพทย์จึงได้คิวนี้ก่อน · เรียกแล้วคัดกรองซ้ำไม่ได้
+        $this->actingAsDoctor($doctor);
+        $this->postJson("/api/hospitals/{$hospital->id}/staff/{$doctor->id}/call-next")->assertOk()->assertJsonPath('id', $second['id']);
+        $this->actingAsRole('nurse', $hospital);
+        $this->patchJson($url, ['priority' => 0, 'required_skill_id' => null])->assertUnprocessable();
+        $this->assertSame(0, QueueTicket::find($first['id'])->priority);
+    }
+
     public function test_one_hospital_cannot_reach_another_hospitals_data(): void
     {
         [$hospitalA] = $this->hospitalWithDepartment('H001');

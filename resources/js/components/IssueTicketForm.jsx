@@ -42,16 +42,22 @@ export default function IssueTicketForm({ hospitalId }) {
                 <input className={input} placeholder="รหัสอ้างอิงผู้ป่วย เช่น P000123" value={form.patient_ref} onChange={set('patient_ref')} required maxLength={64} />
                 {canTriage ? (
                     <>
-                        <select className={input} value={form.priority} onChange={set('priority')}>
-                            {Object.entries(PRIORITY).map(([value, p]) => <option key={value} value={value}>{p.label}</option>)}
-                        </select>
-                        <select className={input} value={form.required_skill_id} onChange={set('required_skill_id')}>
-                            <option value="">ไม่ระบุความเชี่ยวชาญ</option>
-                            {skills.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                        </select>
+                        <label className="block text-sm">
+                            <span className="mb-1 block font-medium text-slate-700">ความเร่งด่วน</span>
+                            <select className={input} value={form.priority} onChange={set('priority')}>
+                                {Object.entries(PRIORITY).map(([value, p]) => <option key={value} value={value}>{p.label}</option>)}
+                            </select>
+                        </label>
+                        <label className="block text-sm">
+                            <span className="mb-1 block font-medium text-slate-700">ความเชี่ยวชาญที่ต้องการ</span>
+                            <select className={input} value={form.required_skill_id} onChange={set('required_skill_id')}>
+                                <option value="">ไม่ระบุ (แพทย์ทุกคนรับได้)</option>
+                                {skills.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                            </select>
+                        </label>
                     </>
                 ) : (
-                    <p className="text-xs text-slate-500">ออกบัตรคิวปกติ · พยาบาลคัดกรองเป็นคนกำหนดความเร่งด่วน/ความเชี่ยวชาญ</p>
+                    <p className="text-xs text-slate-500">ออกบัตรคิวปกติ · พยาบาลคัดกรองจะกำหนดความเร่งด่วน/ความเชี่ยวชาญในรายการคิวภายหลัง</p>
                 )}
                 <button className="w-full rounded-md bg-slate-800 py-2.5 font-medium text-white hover:bg-slate-900 disabled:opacity-40" disabled={issue.isPending}>
                     {issue.isPending ? 'กำลังออกบัตร…' : 'ออกบัตรคิว'}

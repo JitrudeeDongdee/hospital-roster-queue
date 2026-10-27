@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { api, isoDate, PRIORITY, STATUS } from '../api';
+import { api, errorMessages, isoDate, PRIORITY, STATUS } from '../api';
+import { useAuth } from '../auth';
 import { byId, useDepartments, useSkills } from '../useLookups';
 
 const ROW_HEIGHT = 44;
@@ -22,7 +23,15 @@ export default function TicketBoard({ hospitalId, date }) {
         setParams(next, { replace: true });
     };
     const departments = byId(useDepartments(hospitalId).data);
-    const skills = byId(useSkills().data);
+    const skillList = useSkills().data ?? [];
+    const skills = byId(skillList);
+    const queryClient = useQueryClient();
+    // พยาบาลคัดกรองแก้ความเร่งด่วน/ความเชี่ยวชาญของคิววันนี้ที่ยังรอเรียกได้ในแถวเลย (เช่น บัตรที่เวชระเบียนออกให้)
+    const canTriage = useAuth().can('ticket.triage') && isToday;
+    const triage = useMutation({
+        mutationFn: ({ id, ...body }) => api(`/hospitals/${hospitalId}/tickets/${id}/triage`, { method: 'PATCH', body }),
+        onSettled: () => queryClient.invalidateQueries({ queryKey: ['tickets', hospitalId] }),
+    });
 
     // ตัวกรองส่งไปให้ server กรอง — ไม่โหลดทุกคิวมากรองใน browser
     const tickets = useInfiniteQuery({
@@ -93,8 +102,34 @@ export default function TicketBoard({ hospitalId, date }) {
                                     <>
                                         <span className="font-mono font-semibold">{departments[t.department_id]?.code}-{String(t.number).padStart(3, '0')}</span>
                                         <span>{departments[t.department_id]?.name ?? '…'}</span>
-                                        <span><Badge {...PRIORITY[t.priority]} /></span>
-                                        <span className="truncate text-slate-500">{t.required_skill_id ? skills[t.required_skill_id]?.name : '—'}</span>
+                                        {canTriage && t.status === 'waiting' ? (
+                                            <>
+                                                <select
+                                                    className={`w-full rounded border px-1 py-0.5 text-xs ${PRIORITY[t.priority].className} border-slate-300`}
+                                                    value={t.priority}
+                                                    disabled={triage.isPending}
+                                                    onChange={(e) => triage.mutate({ id: t.id, priority: Number(e.target.value), required_skill_id: t.required_skill_id })}
+                                                    aria-label={`ความเร่งด่วนของคิว ${t.number}`}
+                                                >
+                                                    {Object.entries(PRIORITY).map(([value, p]) => <option key={value} value={value}>{p.label}</option>)}
+                                                </select>
+                                                <select
+                                                    className="w-full rounded border border-slate-300 px-1 py-0.5 text-xs text-slate-600"
+                                                    value={t.required_skill_id ?? ''}
+                                                    disabled={triage.isPending}
+                                                    onChange={(e) => triage.mutate({ id: t.id, priority: t.priority, required_skill_id: e.target.value ? Number(e.target.value) : null })}
+                                                    aria-label={`ความเชี่ยวชาญที่ต้องการของคิว ${t.number}`}
+                                                >
+                                                    <option value="">— ไม่ระบุ</option>
+                                                    {skillList.map((k) => <option key={k.id} value={k.id}>{k.name}</option>)}
+                                                </select>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span><Badge {...PRIORITY[t.priority]} /></span>
+                                                <span className="truncate text-slate-500">{t.required_skill_id ? skills[t.required_skill_id]?.name : '—'}</span>
+                                            </>
+                                        )}
                                         <span className="font-mono text-xs">{clock(t.created_at)}</span>
                                         <span className="font-mono text-xs">{clock(t.called_at)}</span>
                                         <span className="font-mono text-xs">{waitMinutes(t) ?? '—'}</span>
@@ -109,6 +144,8 @@ export default function TicketBoard({ hospitalId, date }) {
                 </div>
             </div>
 
+            {canTriage && <p className="border-t border-slate-200 bg-sky-50 px-4 py-2 text-xs text-sky-900">คัดกรอง: เปลี่ยนความเร่งด่วน/ความเชี่ยวชาญของคิวที่ยังรอเรียกได้ในแถวเลย แพทย์จะได้คิวตามค่าใหม่ทันที</p>}
+            {triage.isError && <p className="border-t border-slate-200 bg-rose-50 px-4 py-2 text-xs text-rose-800">{errorMessages(triage.error).join(' ')}</p>}
             <p className="border-t border-slate-200 px-4 py-2 text-xs text-slate-500">
                 โหลดแล้ว {rows.length.toLocaleString()} คิว ({tickets.data?.pages.length ?? 0} หน้า) · แถวที่วาดใน DOM จริง {items.length}
                 {tickets.isFetching && ' · กำลังอัปเดต…'}

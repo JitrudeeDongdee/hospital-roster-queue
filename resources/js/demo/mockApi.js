@@ -692,6 +692,13 @@ const routes = [
         };
     }],
 
+    ['PATCH', /^\/hospitals\/(\d+)\/tickets\/(\d+)\/triage$/, ([h, t], _q, body) => {
+        const ticket = findIn(db.tickets, t, h);
+        if (![0, 1, 2].includes(Number(body.priority))) throw new HttpError(422, 'The selected priority is invalid.', { priority: ['The selected priority is invalid.'] });
+        if (ticket.status !== 'waiting') throw new HttpError(422, 'คิวนี้ถูกเรียกไปแล้ว แก้ความเร่งด่วน/ความเชี่ยวชาญไม่ได้');
+        Object.assign(ticket, { priority: Number(body.priority), required_skill_id: body.required_skill_id ?? null });
+        return { ...ticket };
+    }],
     ['POST', /^\/hospitals\/(\d+)\/tickets\/(\d+)\/complete$/, ([h, t], _q, _b, user) => {
         const ticket = findIn(db.tickets, t, h);
         forbid(ticket.staff_id !== null && ticket.staff_id !== user.staff_id, 'ปิดได้เฉพาะคิวที่ตัวเองเรียก');
@@ -707,6 +714,7 @@ const ROUTE_PERMISSIONS = [
     ['POST', /\/departments\/\d+\/tickets$/, 'ticket.issue'],
     ['POST', /\/call-next$/, 'ticket.call'],
     ['POST', /\/complete$/, 'ticket.call'],
+    ['PATCH', /\/triage$/, 'ticket.triage'],
     ['GET', /\/my-queue$/, 'queue.view'],
     ['GET', /\/roster$/, 'roster.view'],
     ['POST', /\/roster\/generate$/, 'roster.manage'],

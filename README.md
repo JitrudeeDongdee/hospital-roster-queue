@@ -40,7 +40,7 @@ Demo users per hospital: an admin (head of department), every doctor, a triage n
 | Resolve move/swap requests that break a rule | ✓ | | | |
 | View queue | ✓ | ✓ | ✓ | |
 | Issue tickets | ✓ | | ✓ | ✓ |
-| Set priority / required skill (triage) | ✓ | | ✓ | |
+| Set priority / required skill (triage), at issue or later on a waiting ticket | ✓ | | ✓ | |
 | Call next / complete | | own | | |
 | View stats | ✓ | | | |
 
@@ -117,6 +117,7 @@ All endpoints are under `/api/hospitals/{hospital}`, except `GET /api/hospitals`
 | POST | `/departments/{department}/tickets` | Issue a ticket → `201` |
 | POST | `/staff/{staff}/call-next` | Call the next ticket this staff member can take (`404` if none) |
 | POST | `/tickets/{ticket}/complete` | Complete a called ticket |
+| PATCH | `/tickets/{ticket}/triage` | Nurse sets `priority` and `required_skill_id` on a waiting ticket (for example one issued by registration); `422` once called |
 | GET | `/departments`, `/staff` | Reference data for the page (staff include their skills) |
 | GET | `/tickets?status=waiting&department_id=…&date=YYYY-MM-DD&cursor=…` | Today's tickets, 50 per page, cursor-paginated |
 | GET | `/tickets/summary?from=&to=&group=day\|hour&department_id=` | Calendar data: `day` (≤ 42 days) reads past days from `daily_queue_stats` and counts today live; `hour` (≤ 7 days) groups by hour of issue |
@@ -190,7 +191,7 @@ Open http://127.0.0.1:8000. To build the GitHub Pages demo instead: `npm run bui
 
 ## Tests
 
-52 feature tests. Shift requests: move applied at once, move that leaves a slot short goes to the admin, move into a rule break refused, swap applied when the colleague accepts, swap that breaks a rule waits until the admin clears it, swap that drops a required skill, decline/cancel/one open request per shift, own upcoming shifts only; preferences saved per month and locked once the roster exists; the generator honours wants and avoids, and keeps a doctor free for the slot they asked for. Queue calendar: month from the daily summary + live today, hourly grouping, range limits. Leave: pending vs approved, approval blocked by a shift, reject and re-request, admin-recorded leave, cancel rules, auto-generate skips pending, other hospitals. Authorization: guests, other hospitals, triage, roster management, doctors acting only for themselves, leave days, stats, demo login on/off. Roster: overnight shifts, overlap, minimum rest, weekly hours, leave days,
+53 feature tests. Triage of a waiting ticket issued by registration. Shift requests: move applied at once, move that leaves a slot short goes to the admin, move into a rule break refused, swap applied when the colleague accepts, swap that breaks a rule waits until the admin clears it, swap that drops a required skill, decline/cancel/one open request per shift, own upcoming shifts only; preferences saved per month and locked once the roster exists; the generator honours wants and avoids, and keeps a doctor free for the slot they asked for. Queue calendar: month from the daily summary + live today, hourly grouping, range limits. Leave: pending vs approved, approval blocked by a shift, reject and re-request, admin-recorded leave, cancel rules, auto-generate skips pending, other hospitals. Authorization: guests, other hospitals, triage, roster management, doctors acting only for themselves, leave days, stats, demo login on/off. Roster: overnight shifts, overlap, minimum rest, weekly hours, leave days,
 coverage gaps, auto-generation (a full month within every rule, covers skills, keeps manual
 shifts, leaves gaps it cannot fill), the doctor's own queue and hospital isolation. Queue: numbering, priority,
 skill routing, isolation, cursor pagination, completing, aggregation and purging. CI runs them on

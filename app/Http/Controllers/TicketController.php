@@ -65,4 +65,20 @@ class TicketController extends Controller
 
         return $ticket;
     }
+
+    // PATCH /api/hospitals/{hospital}/tickets/{ticket}/triage {priority, required_skill_id}
+    // พยาบาลคัดกรองบัตรที่เวชระเบียน/ตู้คิวออกไปแล้ว — แก้ได้เฉพาะคิวที่ยังรอเรียก
+    public function triage(Request $request, Hospital $hospital, QueueTicket $ticket)
+    {
+        $data = $request->validate([
+            'priority' => 'required|integer|in:0,1,2',
+            'required_skill_id' => 'present|nullable|integer|exists:skills,id',
+        ]);
+
+        // อัปเดตแบบมีเงื่อนไขในคำสั่งเดียว — ถ้าแพทย์เรียกคิวนี้ไปพอดี จะไม่แก้คิวที่ถูกเรียกแล้ว
+        $updated = QueueTicket::whereKey($ticket->id)->where('status', QueueTicket::WAITING)->update($data + ['updated_at' => now()]);
+        abort_unless($updated === 1, 422, 'คิวนี้ถูกเรียกไปแล้ว แก้ความเร่งด่วน/ความเชี่ยวชาญไม่ได้');
+
+        return $ticket->fresh();
+    }
 }
