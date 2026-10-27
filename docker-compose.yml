@@ -1,0 +1,15 @@
+# MySQL สำหรับรันเครื่องตัวเอง: docker compose up -d แล้วตั้ง DB_* ใน .env ตาม README
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: hospital_queue
+      MYSQL_USER: queue
+      MYSQL_PASSWORD: queue
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3317:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      interval: 3s
+      retries: 30
