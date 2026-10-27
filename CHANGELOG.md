@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-27
+
 ### Added
 - แพทย์ขอย้ายเวรของตัวเองไปช่องอื่น หรือขอแลกกับเวรของเพื่อนในแผนก (`/shifts`)
   - เพื่อนตอบรับแล้วสลับทันทีโดยไม่ต้องรอแอดมิน ถ้าไม่ผิดกติกาของทั้งสองคนและทั้งสองช่องยังครบ
@@ -37,5 +39,6 @@ release แรก — ตัวอย่างระบบจัดเวรแ�
 - ตั้ง timezone เป็น `Asia/Bangkok` — คิวที่ออกช่วง 00:00–07:00 ไม่ถูกนับเป็นวันก่อนหน้าแล้ว
 - หัวตารางเวรไม่มีแถวโผล่ทะลุขึ้นมาตอนเลื่อน
 
-[Unreleased]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/JitrudeeDongdee/waka-crud/releases/tag/v0.1.0
