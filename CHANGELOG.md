@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+## [0.7.6] - 2026-10-27
+
+### Fixed
+- เอกสาร architecture ข้อ 3.1: ตัวเลขประมาณการถูกขีดฆ่า เพราะ markdown อ่าน `~…~` เป็นขีดฆ่า — เปลี่ยนเครื่องหมายประมาณเป็น `≈`
+
 ## [0.7.5] - 2026-10-27
 
 ### Removed
@@ -123,7 +128,8 @@ release แรก — ตัวอย่างระบบจัดเวรแ�
 - ตั้ง timezone เป็น `Asia/Bangkok` — คิวที่ออกช่วง 00:00–07:00 ไม่ถูกนับเป็นวันก่อนหน้าแล้ว
 - หัวตารางเวรไม่มีแถวโผล่ทะลุขึ้นมาตอนเลื่อน
 
-[Unreleased]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.5...HEAD
+[Unreleased]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.6...HEAD
+[0.7.6]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.5...v0.7.6
 [0.7.5]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.4...v0.7.5
 [0.7.4]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.3...v0.7.4
 [0.7.3]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.2...v0.7.3
