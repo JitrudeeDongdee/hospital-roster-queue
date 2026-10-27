@@ -1,6 +1,6 @@
 # ระบบจัดเวรแพทย์และจัดคิวโรงพยาบาล — Architecture
 
-จิตฤดี ดวงดี · 27 ต.ค. 2569 · โค้ด: [github.com/JitrudeeDongdee/hospital-roster-queue](https://github.com/JitrudeeDongdee/hospital-roster-queue) · เดโม: [jitrudeedongdee.github.io/hospital-roster-queue](https://jitrudeedongdee.github.io/hospital-roster-queue/) · ตรงกับเวอร์ชัน v0.8.0
+จิตฤดี ดวงดี · 27 ต.ค. 2569 · โค้ด: [github.com/JitrudeeDongdee/hospital-roster-queue](https://github.com/JitrudeeDongdee/hospital-roster-queue) · เดโม: [jitrudeedongdee.github.io/hospital-roster-queue](https://jitrudeedongdee.github.io/hospital-roster-queue/) · ตรงกับเวอร์ชัน v0.8.1
 
 เอกสารนี้อธิบายระบบที่เริ่มจาก 15 โรงพยาบาลและขยายไปถึง 30 แห่ง ได้แก่ ขั้นตอนการทำงาน (BPMN), โครงสร้างฐานข้อมูล (ER diagram), server และ network บน AWS ทีละขั้นของการขยาย, ข้อเสนอฟีเจอร์ถัดไป และหน้าจอเดโม
 

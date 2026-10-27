@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-10-27
+
+### Changed
+- BPMN วางตารางเวร: ทางแยกตรวจกติกาแยกสองทางให้ชัด — ไม่ผ่าน = ไม่บันทึก หัวหน้าเห็นเหตุผลแล้วเลือกแพทย์ใหม่ · ผ่าน = บันทึกเวร (เกิน ชม./สัปดาห์ บันทึกได้แต่เตือนสีแดง) แล้วกลับไปดูช่องที่ยังขาด
+- ผัง BPMN เว้นที่ให้เส้นที่ย้อนขึ้น ไม่ทับเส้นขอบเลน
+
 ## [0.8.0] - 2026-10-27
 
 ### Added
@@ -164,7 +170,8 @@ release แรก — ตัวอย่างระบบจัดเวรแ�
 - ตั้ง timezone เป็น `Asia/Bangkok` — คิวที่ออกช่วง 00:00–07:00 ไม่ถูกนับเป็นวันก่อนหน้าแล้ว
 - หัวตารางเวรไม่มีแถวโผล่ทะลุขึ้นมาตอนเลื่อน
 
-[Unreleased]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.8.1...HEAD
+[0.8.1]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.7.9...v0.8.0
 [0.7.9]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.7.8...v0.7.9
 [0.7.8]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.7.7...v0.7.8
