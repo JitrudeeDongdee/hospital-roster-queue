@@ -74,7 +74,8 @@
 | รายการคิวของโรงพยาบาล (keyset) | `queue_tickets (hospital_id, service_date, id)` | ไม่มี `status` คั่นกลาง `ORDER BY id` จึงไม่ต้อง sort ซ้ำ |
 | ตรวจกติกาเวรของแพทย์ | `shifts (staff_id, starts_at)` | หาเวรที่อยู่ใกล้กันในช่วงเวลาพักได้ด้วย range scan |
 | ตารางเวรของแผนก | `shifts (department_id, shift_date)` | ดึงทั้งเดือนได้ในครั้งเดียว |
-| Dashboard | `daily_queue_stats (hospital_id, service_date)` | อ่านจากตารางสรุป ไม่ต้อง `COUNT` จากคิวหลายล้านแถว |
+| Dashboard / ปฏิทินคิวรายเดือน | `daily_queue_stats (hospital_id, service_date)` | วันที่ผ่านมาอ่านจากตารางสรุป วันนี้เท่านั้นที่นับสด ไม่ต้อง `COUNT` คิวทั้งเดือน |
+| ปฏิทินคิวรายสัปดาห์/รายวัน | `queue_tickets (hospital_id, service_date, id)` | นับตามชั่วโมงจากคิวจริง แต่จำกัดช่วงไม่เกิน 7 วัน |
 
 ### 2.3 สิทธิ์ตามบทบาท (RBAC)
 

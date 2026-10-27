@@ -55,7 +55,8 @@ class RosterTest extends TestCase
     {
         $this->assign($this->doctor(), $this->evening, '2026-11-02')
             ->assertCreated()
-            ->assertJsonPath('ends_at', fn ($v) => str_starts_with($v, '2026-11-03T00:00'));
+            // API ส่งเวลาเป็น UTC (ISO 8601) — เทียบเป็นเวลาไทย
+            ->assertJsonPath('ends_at', fn ($v) => now()->parse($v)->setTimezone('Asia/Bangkok')->format('Y-m-d H:i') === '2026-11-03 00:00');
     }
 
     public function test_overlapping_shift_is_rejected(): void

@@ -83,7 +83,10 @@ Every page has its own URL (React Router), so links can be shared and back/forwa
 | `/roster/calendar?dept=1&month=2026-11&doctors=1,4` | Month calendar of all shifts, colour per shift, red when a slot is short |
 | `/roster/doctors/5?month=2026-11` | One doctor's month: shifts, leave days, hours per week against the limit |
 | `/leave?status=pending` | Admin: leave inbox (pending / approved / rejected) · Doctor: request leave and see own requests |
-| `/queue?status=waiting&dept=1` | Patient queue |
+| `/queue/list?date=2026-10-26&status=waiting&dept=1` | Tickets of a day with issue time, call time and wait (minutes) |
+| `/queue/month?date=2026-10-01` | Month calendar: tickets, completed and average wait per day (heat-shaded); past days from the daily summary table, today live |
+| `/queue/week?date=2026-10-27` | Day × hour grid of tickets issued — shows the busy hours |
+| `/queue/day?date=2026-10-27` | Tickets of one day grouped by hour, coloured by status |
 | `/roles` | Role × permission matrix |
 
 Pages a role cannot use show a 403 page; unknown paths show a 404 page. Laravel serves the app
@@ -112,6 +115,7 @@ All endpoints are under `/api/hospitals/{hospital}`, except `GET /api/hospitals`
 | POST | `/tickets/{ticket}/complete` | Complete a called ticket |
 | GET | `/departments`, `/staff` | Reference data for the page (staff include their skills) |
 | GET | `/tickets?status=waiting&department_id=…&date=YYYY-MM-DD&cursor=…` | Today's tickets, 50 per page, cursor-paginated |
+| GET | `/tickets/summary?from=&to=&group=day\|hour&department_id=` | Calendar data: `day` (≤ 42 days) reads past days from `daily_queue_stats` and counts today live; `hour` (≤ 7 days) groups by hour of issue |
 | GET | `/stats?from=YYYY-MM-DD&to=YYYY-MM-DD` | Daily totals and average wait per department |
 | GET | `/api/demo-users`, POST `/api/demo-login` | Demo users and token (only with `DEMO_LOGIN=true`) |
 | GET | `/api/me`, `/api/roles` | Current user with permissions; role × permission matrix |
@@ -129,7 +133,7 @@ All endpoints are under `/api/hospitals/{hospital}`, except `GET /api/hospitals`
 
 ```bash
 composer install
-cp .env.example .env   # set DEMO_LOGIN=true to use the demo users
+cp .env.example .env   # set DEMO_LOGIN=true to use the demo users · APP_TIMEZONE defaults to Asia/Bangkok
 php artisan key:generate
 docker compose up -d --wait
 ```
@@ -158,7 +162,7 @@ Open http://127.0.0.1:8000. To build the GitHub Pages demo instead: `npm run bui
 
 ## Tests
 
-37 feature tests. Leave: pending vs approved, approval blocked by a shift, reject and re-request, admin-recorded leave, cancel rules, auto-generate skips pending, other hospitals. Authorization: guests, other hospitals, triage, roster management, doctors acting only for themselves, leave days, stats, demo login on/off. Roster: overnight shifts, overlap, minimum rest, weekly hours, leave days,
+40 feature tests. Queue calendar: month from the daily summary + live today, hourly grouping, range limits. Leave: pending vs approved, approval blocked by a shift, reject and re-request, admin-recorded leave, cancel rules, auto-generate skips pending, other hospitals. Authorization: guests, other hospitals, triage, roster management, doctors acting only for themselves, leave days, stats, demo login on/off. Roster: overnight shifts, overlap, minimum rest, weekly hours, leave days,
 coverage gaps, auto-generation (a full month within every rule, covers skills, keeps manual
 shifts, leaves gaps it cannot fill), the doctor's own queue and hospital isolation. Queue: numbering, priority,
 skill routing, isolation, cursor pagination, completing, aggregation and purging. CI runs them on

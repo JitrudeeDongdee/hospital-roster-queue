@@ -114,6 +114,9 @@ class SeedDemoQueue extends Command
         $this->newLine();
 
         $this->seedToday($departments, $skills, (int) $this->option('today'));
+
+        // สรุปวันที่ผ่านมาแล้วเข้า daily_queue_stats ให้ปฏิทินรายเดือนอ่านได้เลย
+        $this->call('queue:aggregate-stats', ['--from' => now()->subDays($days)->toDateString(), '--to' => now()->subDay()->toDateString()]);
         $this->info(sprintf('Inserted %d tickets for %d departments in %.1fs', $total, $departments->count(), microtime(true) - $started));
 
         return self::SUCCESS;
@@ -129,7 +132,10 @@ class SeedDemoQueue extends Command
         for ($i = 0; $i < $count; $i++) {
             $department = $departments->random();
             $numbers[$department->id] = ($numbers[$department->id] ?? 0) + 1;
-            $createdAt = now()->subMinutes($count - $i)->toDateTimeString();
+            // กระจายเวลาออกบัตรระหว่าง 07:00 ถึงตอนนี้ (ถ้ายังไม่ถึง 07:30 ใช้ตั้งแต่เที่ยงคืน)
+            $open = now()->setTime(7, 0);
+            $start = now()->lt($open->copy()->addMinutes(30)) ? now()->startOfDay() : $open;
+            $createdAt = $start->copy()->addSeconds((int) ($start->diffInSeconds(now()) * ($i + 1) / ($count + 1)))->toDateTimeString();
 
             $rows[] = [
                 'hospital_id' => $department->hospital_id,

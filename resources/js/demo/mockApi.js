@@ -3,7 +3,8 @@
 // ข้อมูลอยู่ใน memory ของ browser เท่านั้น รีเฟรชแล้วเริ่มใหม่
 
 const PAGE_SIZE = 50;
-const today = new Date().toISOString().slice(0, 10);
+const pad = (n) => String(n).padStart(2, '0');
+const today = (() => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; })();
 
 function prng(seed) {
     return () => {
@@ -54,24 +55,45 @@ const db = (() => {
         }
     }
 
-    // คิววันนี้ ~3,000 ใบต่อโรงพยาบาล — พอให้เห็น infinite scroll + virtualization ทำงาน
-    for (let i = 0; i < 45_000; i++) {
-        const department = pick(departments);
-        counters[department.id] = (counters[department.id] ?? 0) + 1;
+    // คิวย้อนหลัง 35 วัน (~90 ใบ/โรงพยาบาล/วัน) + วันนี้ (~200 ใบ/โรงพยาบาล) — เวลาออกบัตร 07:00–16:00
+    const at = (date, minutes) => {
+        const d = new Date(`${date}T07:00:00`);
+        d.setMinutes(d.getMinutes() + minutes);
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+    };
+    const now = new Date();
+    const minutesSinceOpen = Math.max(30, (now.getHours() - 7) * 60 + now.getMinutes());
+    const addTicket = (department, date, created, status, waitMin) => {
+        const key = `${department.id}|${date}`;
+        counters[key] = (counters[key] ?? 0) + 1;
         const roll = random();
         tickets.push({
-            id: i + 1,
+            id: tickets.length + 1,
             hospital_id: department.hospital_id,
             department_id: department.id,
             required_skill_id: random() < 0.25 ? pick(skills).id : null,
-            number: counters[department.id],
+            number: counters[key],
             priority: roll < 0.05 ? 2 : roll < 0.2 ? 1 : 0,
-            status: random() < 0.55 ? 'completed' : 'waiting',
+            status,
             staff_id: null,
-            service_date: today,
-            created_at: new Date().toISOString(),
-            called_at: null,
+            service_date: date,
+            created_at: created,
+            called_at: waitMin === null ? null : at(date, Math.round((new Date(created) - new Date(`${date}T07:00:00`)) / 60000) + waitMin),
         });
+    };
+    for (let back = 35; back >= 1; back--) {
+        const d = new Date(now); d.setDate(d.getDate() - back);
+        const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        const perDay = 15 * (70 + Math.floor(random() * 40));
+        const day = [];
+        for (let i = 0; i < perDay; i++) day.push([pick(departments), Math.floor(random() * 540)]);
+        day.sort((a, b) => a[1] - b[1]).forEach(([department, minute]) => addTicket(department, date, at(date, minute), 'completed', 5 + Math.floor(random() * 55)));
+    }
+    const todayIso = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    for (let i = 0; i < 3000; i++) {
+        const minute = Math.floor((minutesSinceOpen * i) / 3000);
+        const done = minute < minutesSinceOpen - 60 && random() < 0.6;
+        addTicket(pick(departments), todayIso, at(todayIso, minute), done ? 'completed' : 'waiting', done ? 5 + Math.floor(random() * 40) : null);
     }
 
     // ผู้ใช้ทดลอง: แอดมิน/พยาบาล/เวชระเบียน 1 คนต่อโรงพยาบาล + แพทย์ทุกคน
@@ -123,7 +145,6 @@ class HttpError extends Error {
 
 // ---- จัดเวร: ตรรกะเดียวกับ RosterService.php ----
 const HOUR = 3_600_000;
-const pad = (n) => String(n).padStart(2, '0');
 const localIso = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
 const fmt = (d) => `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 
@@ -263,10 +284,11 @@ const routes = [
         const after = Number(query.get('cursor') ?? 0); // keyset: id > cursor
         const status = query.get('status');
         const departmentId = Number(query.get('department_id') ?? 0);
+        const date = query.get('date') ?? today;
         const page = [];
 
         for (const t of db.tickets) {
-            if (t.id <= after || t.hospital_id !== Number(h)) continue;
+            if (t.id <= after || t.hospital_id !== Number(h) || t.service_date !== date) continue;
             if (status && t.status !== status) continue;
             if (departmentId && t.department_id !== departmentId) continue;
             page.push(t);
@@ -278,17 +300,39 @@ const routes = [
         return { data, per_page: PAGE_SIZE, next_cursor: hasMore ? String(data.at(-1).id) : null };
     }],
 
+    ['GET', /^\/hospitals\/(\d+)\/tickets\/summary$/, ([h], query) => {
+        const from = query.get('from');
+        const to = query.get('to');
+        const group = query.get('group');
+        const dept = Number(query.get('department_id') ?? 0);
+        const buckets = new Map();
+        for (const t of db.tickets) {
+            if (t.hospital_id !== Number(h) || t.service_date < from || t.service_date > to || (dept && t.department_id !== dept)) continue;
+            const hour = new Date(t.created_at).getHours();
+            const key = group === 'hour' ? `${t.service_date}|${hour}` : t.service_date;
+            const b = buckets.get(key) ?? { date: t.service_date, ...(group === 'hour' ? { hour } : {}), total: 0, waiting: 0, called: 0, completed: 0, waitSum: 0, waitN: 0 };
+            b.total++; b[t.status]++;
+            if (t.called_at) { b.waitSum += (new Date(t.called_at) - new Date(t.created_at)) / 1000; b.waitN++; }
+            buckets.set(key, b);
+        }
+        const data = [...buckets.values()]
+            .map(({ waitSum, waitN, ...b }) => ({ ...b, avg_wait_seconds: waitN ? Math.round(waitSum / waitN) : null, ...(group === 'day' ? { source: b.date === today ? 'live' : 'summary' } : {}) }))
+            .sort((a, b) => a.date.localeCompare(b.date) || (a.hour ?? 0) - (b.hour ?? 0));
+        return { group, data };
+    }],
+
     ['POST', /^\/hospitals\/(\d+)\/departments\/(\d+)\/tickets$/, ([h, d], _query, body, user) => {
         const department = findIn(db.departments, d, h);
         forbid((Number(body?.priority) > 0 || body?.required_skill_id) && !can(user, 'ticket.triage'), 'ต้องเป็นพยาบาลคัดกรองจึงกำหนดความเร่งด่วน/ความเชี่ยวชาญได้');
         if (!body?.patient_ref) throw new HttpError(422, 'The patient ref field is required.');
-        db.counters[department.id] = (db.counters[department.id] ?? 0) + 1;
+        const counterKey = `${department.id}|${today}`;
+        db.counters[counterKey] = (db.counters[counterKey] ?? 0) + 1;
         const ticket = {
             id: db.tickets.length + 1,
             hospital_id: department.hospital_id,
             department_id: department.id,
             required_skill_id: body.required_skill_id ?? null,
-            number: db.counters[department.id],
+            number: db.counters[counterKey],
             priority: body.priority ?? 0,
             status: 'waiting',
             staff_id: null,
@@ -306,7 +350,7 @@ const routes = [
         const skillIds = member.skills.map((skill) => skill.id);
         // เหมือน QueueService::callNext — คิวที่ไม่ระบุความเชี่ยวชาญหรือที่ตรงกับเจ้าหน้าที่, priority DESC แล้ว id ASC
         const next = db.tickets
-            .filter((t) => t.department_id === member.department_id && t.status === 'waiting'
+            .filter((t) => t.department_id === member.department_id && t.status === 'waiting' && t.service_date === today
                 && (t.required_skill_id === null || skillIds.includes(t.required_skill_id)))
             .sort((a, b) => b.priority - a.priority || a.id - b.id)[0];
         if (!next) throw new HttpError(404, 'No waiting tickets for this staff member.');
@@ -395,7 +439,7 @@ const routes = [
         return {
             current: db.tickets.find((t) => t.staff_id === member.id && t.status === 'called') ?? null,
             waiting: db.tickets
-                .filter((t) => t.department_id === member.department_id && t.status === 'waiting' && (t.required_skill_id === null || skillIds.includes(t.required_skill_id)))
+                .filter((t) => t.department_id === member.department_id && t.status === 'waiting' && t.service_date === today && (t.required_skill_id === null || skillIds.includes(t.required_skill_id)))
                 .sort((a, b) => b.priority - a.priority || a.id - b.id)
                 .slice(0, 20),
             next_shifts: db.shifts

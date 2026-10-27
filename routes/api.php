@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DoctorQueueController;
 use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\LookupController;
+use App\Http\Controllers\QueueSummaryController;
 use App\Http\Controllers\RosterController;
 use App\Http\Controllers\StatsController;
 use App\Http\Controllers\TicketController;
@@ -27,6 +28,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // คิวผู้ป่วย
         Route::get('tickets', [TicketController::class, 'index'])->middleware('can:queue.view');
+        Route::get('tickets/summary', [QueueSummaryController::class, 'show'])->middleware('can:queue.view');
         Route::post('departments/{department}/tickets', [TicketController::class, 'store'])->middleware('can:ticket.issue');
         Route::post('staff/{staff}/call-next', [TicketController::class, 'callNext'])->middleware('can:ticket.call');
         Route::post('tickets/{ticket}/complete', [TicketController::class, 'complete'])->middleware('can:ticket.call');

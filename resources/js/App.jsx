@@ -1,19 +1,18 @@
-import { Navigate, NavLink, Outlet, Route, Routes, useLocation } from 'react-router';
+import { Navigate, NavLink, Outlet, Route, Routes, useLocation, useParams } from 'react-router';
 import { DEMO } from './api';
 import { useAuth } from './auth';
-import TicketBoard from './components/TicketBoard';
-import StaffPanel from './components/StaffPanel';
 import IssueTicketForm from './components/IssueTicketForm';
 import RosterPage from './components/RosterPage';
 import LoginScreen from './components/LoginScreen';
 import PermissionMatrix from './components/PermissionMatrix';
 import LeavePage, { usePendingLeaveCount } from './components/LeavePage';
+import QueuePage from './components/QueuePage';
 
 // เมนูหลัก: path + สิทธิ์ที่ต้องมี (ซ่อนเมนูที่ไม่มีสิทธิ์ และ RequirePermission กันการพิมพ์ URL เข้าตรง ๆ)
 const SECTIONS = [
     { path: '/roster/table', match: '/roster', label: 'จัดเวรแพทย์', allowed: (can) => can('roster.view') },
     { path: '/leave', match: '/leave', label: 'การลา', allowed: (can) => can('leave.approve') || can('leave.manage.own') },
-    { path: '/queue', match: '/queue', label: 'คิวผู้ป่วย', allowed: (can) => can('queue.view') || can('ticket.issue') },
+    { path: '/queue/list', match: '/queue', label: 'คิวผู้ป่วย', allowed: (can) => can('queue.view') || can('ticket.issue') },
     { path: '/roles', match: '/roles', label: 'สิทธิ์ตามบทบาท', allowed: () => true },
 ];
 
@@ -43,6 +42,7 @@ export default function App() {
                         </Route>
                         <Route element={<RequirePermission allowed={(can) => can('queue.view') || can('ticket.issue')} />}>
                             <Route path="queue" element={<QueueRoute />} />
+                            <Route path="queue/:view" element={<QueueRoute />} />
                         </Route>
                         <Route element={<RequirePermission allowed={(can) => can('leave.approve') || can('leave.manage.own')} />}>
                             <Route path="leave" element={<LeaveRoute />} />
@@ -134,18 +134,12 @@ function LeaveRoute() {
 
 function QueueRoute() {
     const { user, can } = useAuth();
+    const { view } = useParams();
     const hospitalId = user.hospital.id;
+    // เวชระเบียนออกบัตรได้อย่างเดียว ไม่เห็นรายการคิว
     if (!can('queue.view')) return <div className="max-w-md"><IssueTicketForm hospitalId={hospitalId} /></div>;
-
-    return (
-        <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-            <TicketBoard hospitalId={hospitalId} />
-            <div className="space-y-6">
-                <StaffPanel hospitalId={hospitalId} />
-                {can('ticket.issue') && <IssueTicketForm hospitalId={hospitalId} />}
-            </div>
-        </div>
-    );
+    if (!['list', 'month', 'week', 'day'].includes(view)) return <Navigate to={{ pathname: '/queue/list', search: location.search }} replace />;
+    return <QueuePage hospitalId={hospitalId} view={view} />;
 }
 
 function Message({ title, text }) {
