@@ -184,14 +184,14 @@ export default function RosterPage({ hospitalId, view }) {
                         onSelectDoctor={(id) => navigate({ pathname: `/roster/doctors/${id}`, search: `?${query({})}` })}
                     />
                 )}
-                <div className={`max-h-[70vh] overflow-auto p-4 ${view === 'table' ? '' : 'hidden'}`}>
+                <div className={`max-h-[70vh] overflow-auto px-4 pb-4 ${view === 'table' ? '' : 'hidden'}`}>
                     {roster.isSuccess && view === 'table' && (
                         <table className="w-full min-w-[640px] table-fixed border-collapse text-sm">
-                            <thead className="sticky top-0 z-10 bg-white">
+                            <thead className="sticky top-0 z-10 bg-white shadow-[0_1px_0_#e2e8f0]">
                                 <tr>
-                                    <th className="w-24 p-2 text-left text-xs font-medium text-slate-500">วัน</th>
+                                    <th className="w-24 bg-white p-2 pt-4 text-left text-xs font-medium text-slate-500">วัน</th>
                                     {templates.map((t) => (
-                                        <th key={t.id} className="p-2 text-left text-xs font-medium text-slate-500">
+                                        <th key={t.id} className="bg-white p-2 pt-4 text-left text-xs font-medium text-slate-500">
                                             {t.name} <span className="font-normal">{t.start_time.slice(0, 5)}–{t.end_time.slice(0, 5)}</span>
                                             <div className="font-normal text-slate-400">ขั้นต่ำ {t.min_staff} คน{t.required_skill_id ? ' · ต้องมีความเชี่ยวชาญ' : ''}</div>
                                         </th>
