@@ -44,6 +44,11 @@ return [
     // เลือกผู้ใช้ทดลองโดยไม่ต้องใช้รหัสผ่าน — ห้ามเปิดบน production
     'demo_login' => (bool) env('DEMO_LOGIN', false),
 
+    // เลขเวอร์ชันมาจาก git tag ที่ CI ใส่ให้ตอน build (APP_VERSION=1.2.3) — ห้าม hardcode ที่อื่น
+    'version' => env('APP_VERSION', '0.0.0-dev'),
+    'build_sha' => env('APP_BUILD_SHA'),
+    'built_at' => env('APP_BUILT_AT'),
+
     /*
     |--------------------------------------------------------------------------
     | Application URL

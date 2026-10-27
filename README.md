@@ -129,6 +129,24 @@ All endpoints are under `/api/hospitals/{hospital}`, except `GET /api/hospitals`
 | DELETE | `/leave-requests/{leave}` | Cancel own pending request (doctor) or remove (admin) |
 | GET | `/staff/{staff}/my-queue` | Waiting tickets this doctor can take, current ticket, next shifts |
 
+## Versioning and releases
+
+Versions follow [SemVer](https://semver.org/). The pushed git tag is the only source of the number:
+CI reads it, builds with it, and the running app reports it.
+
+- `GET /version` (Laravel) and `/waka-crud/version.json` (Pages) return `{"version","sha","built_at"}`.
+  The version also shows at the bottom of every page.
+- Pushing to `main` runs the tests and builds as `0.0.0-dev.<run>`, but does not deploy.
+- Pushing a tag `vX.Y.Z` runs the tests, deploys Pages, and creates a GitHub Release from that
+  version's section in [CHANGELOG.md](CHANGELOG.md).
+
+To release, move the `[Unreleased]` notes under a new version heading in `CHANGELOG.md`, commit, then:
+
+```bash
+git tag -a v0.2.0 -m "v0.2.0"
+git push origin v0.2.0
+```
+
 ## Run locally
 
 ```bash

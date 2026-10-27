@@ -118,6 +118,10 @@ function Layout() {
                 </div>
             </header>
             <Outlet />
+            <footer className="mt-8 text-center text-xs text-slate-400">
+                v{import.meta.env.VITE_APP_VERSION || '0.0.0-dev'}
+                {import.meta.env.VITE_APP_SHA && <> · {import.meta.env.VITE_APP_SHA.slice(0, 7)}</>}
+            </footer>
         </div>
     );
 }

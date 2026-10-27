@@ -3,6 +3,7 @@ name: CI/CD
 on:
   push:
     branches: [main]
+    tags: ['v*'] # push tag vX.Y.Z = ปล่อย release → deploy Pages + สร้าง GitHub Release
   pull_request:
   workflow_dispatch:
 
@@ -71,6 +72,16 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # เลขเวอร์ชันมาจาก git tag เท่านั้น (ตัด v ออก) · build ที่ไม่ใช่ tag เป็น 0.0.0-dev.<run> ไว้แยกออกจาก release
+      - name: Version from tag
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then v="${GITHUB_REF_NAME#v}"; else v="0.0.0-dev.${GITHUB_RUN_NUMBER}"; fi
+          {
+            echo "VITE_APP_VERSION=$v"
+            echo "VITE_APP_SHA=$GITHUB_SHA"
+            echo "VITE_APP_BUILT_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } >> "$GITHUB_ENV"
+          echo "version: $v"
       - run: npm run build # build ที่ Laravel ใช้
       - run: npm run build:pages # build เดโมสำหรับ GitHub Pages
       - uses: actions/upload-pages-artifact@v3
@@ -80,9 +91,9 @@ jobs:
 
   deploy:
     name: Deploy to GitHub Pages
-    # deploy เฉพาะเมื่อทดสอบผ่านทั้ง SQLite และ MySQL และ build หน้าเว็บผ่าน
+    # deploy เฉพาะ release (push tag v*) และต้องทดสอบผ่านทั้ง SQLite และ MySQL และ build หน้าเว็บผ่าน
     needs: [test, frontend]
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
       pages: write
@@ -93,3 +104,22 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  release:
+    name: GitHub Release
+    needs: deploy
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      # เนื้อหา release = หัวข้อของเวอร์ชันนี้ใน CHANGELOG.md
+      - name: Create release from CHANGELOG
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          v="${GITHUB_REF_NAME#v}"
+          awk -v v="$v" '$0 ~ "^## \\[" v "\\]" {on=1; next} /^## \[/ {on=0} on' CHANGELOG.md > notes.md
+          test -s notes.md || { echo "CHANGELOG.md has no section for [$v]"; exit 1; }
+          gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file notes.md --verify-tag
