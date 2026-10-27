@@ -319,7 +319,7 @@ function UnavailabilityPanel({ hospitalId, doctors, direct, onChange }) {
     return (
         <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
             <h2 className="mb-1 text-lg font-semibold">{direct ? 'บันทึกวันลา' : 'ขอลา'}</h2>
-            <p className="mb-3 text-xs text-slate-500">{direct ? 'แอดมินบันทึกให้ = อนุมัติทันที' : 'ส่งคำขอแล้วรอแอดมินอนุมัติ'} · <Link className="underline" to="/leave">ดูคำขอทั้งหมด</Link></p>
+            <p className="mb-3 text-xs text-slate-500">{direct ? 'แอดมินบันทึกให้ = อนุมัติทันที' : 'ส่งคำขอแล้วรอแอดมินอนุมัติ'} · <Link className="underline" to="/requests/leave">ดูคำขอทั้งหมด</Link></p>
             <form className="space-y-2" onSubmit={(e) => { e.preventDefault(); add.mutate(); }}>
                 <select className={input} value={doctorId ?? ''} onChange={(e) => setStaffId(Number(e.target.value))}>
                     {doctors.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}

@@ -10,7 +10,7 @@ class SpaRoutingTest extends TestCase
     {
         $this->withoutVite();
 
-        foreach (['/', '/login', '/roster/calendar', '/roster/doctors/3?month=2026-11', '/queue?status=waiting', '/roles', '/not/a/page'] as $url) {
+        foreach (['/', '/login', '/roster/calendar', '/roster/doctors/3?month=2026-11', '/requests/leave', '/requests/shifts', '/queue?status=waiting', '/roles', '/not/a/page'] as $url) {
             $this->get($url)->assertOk()->assertSee('<div id="app"></div>', false);
         }
     }

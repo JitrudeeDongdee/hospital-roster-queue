@@ -13,18 +13,25 @@ import PreferencesPage from './components/PreferencesPage';
 // เมนูหลัก: path + สิทธิ์ที่ต้องมี (ซ่อนเมนูที่ไม่มีสิทธิ์ และ RequirePermission กันการพิมพ์ URL เข้าตรง ๆ)
 const SECTIONS = [
     { path: '/roster/table', match: '/roster', label: 'จัดเวรแพทย์', allowed: (can) => can('roster.view') },
-    { path: '/shifts', match: '/shifts', label: 'ย้าย/แลกเวร', allowed: (can) => can('shift.request.own') || can('shift.request.resolve') },
+    { path: '/requests', match: '/requests', label: 'ร้องขอ', allowed: (can) => canLeave(can) || canShiftRequest(can) },
     { path: '/preferences', match: '/preferences', label: 'เวรที่อยากลง', allowed: (can) => can('shift.request.own') },
-    { path: '/leave', match: '/leave', label: 'การลา', allowed: (can) => can('leave.approve') || can('leave.manage.own') },
     { path: '/queue/list', match: '/queue', label: 'คิวผู้ป่วย', allowed: (can) => can('queue.view') || can('ticket.issue') },
     { path: '/roles', match: '/roles', label: 'สิทธิ์ตามบทบาท', allowed: () => true },
+];
+
+const canLeave = (can) => can('leave.approve') || can('leave.manage.own');
+const canShiftRequest = (can) => can('shift.request.own') || can('shift.request.resolve');
+// หน้า "ร้องขอ": เลือกว่าจะขอลา หรือขอย้าย/แลกเวร
+const REQUEST_KINDS = [
+    { kind: 'leave', label: 'ขอลา', allowed: canLeave },
+    { kind: 'shifts', label: 'ขอย้าย/แลกเวร', allowed: canShiftRequest },
 ];
 
 export default function App() {
     return (
         <>
             {DEMO && (
-                <div className="mx-auto mt-4 max-w-7xl px-4">
+                <div className="mx-auto mt-4 max-w-[1440px] px-4">
                     <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
                         <strong>โหมดเดโม:</strong> หน้านี้อยู่บน GitHub Pages จึงใช้ API จำลองใน browser (ข้อมูลตัวอย่าง รีเฟรชแล้วเริ่มใหม่)
                         ตรรกะและสิทธิ์เหมือน Laravel API ใน{' '}
@@ -48,12 +55,13 @@ export default function App() {
                             <Route path="queue" element={<QueueRoute />} />
                             <Route path="queue/:view" element={<QueueRoute />} />
                         </Route>
-                        <Route element={<RequirePermission allowed={(can) => can('leave.approve') || can('leave.manage.own')} />}>
-                            <Route path="leave" element={<LeaveRoute />} />
+                        <Route element={<RequirePermission allowed={(can) => canLeave(can) || canShiftRequest(can)} />}>
+                            <Route path="requests" element={<RequestsRoute />} />
+                            <Route path="requests/:kind" element={<RequestsRoute />} />
                         </Route>
-                        <Route element={<RequirePermission allowed={(can) => can('shift.request.own') || can('shift.request.resolve')} />}>
-                            <Route path="shifts" element={<ShiftsRoute />} />
-                        </Route>
+                        {/* ลิงก์เก่า */}
+                        <Route path="leave" element={<Navigate to={{ pathname: '/requests/leave', search: location.search }} replace />} />
+                        <Route path="shifts" element={<Navigate to="/requests/shifts" replace />} />
                         <Route element={<RequirePermission allowed={(can) => can('shift.request.own')} />}>
                             <Route path="preferences" element={<PreferencesRoute />} />
                         </Route>
@@ -98,42 +106,49 @@ function Layout() {
     const location = useLocation();
     const pending = usePendingLeaveCount(user.hospital.id, can('leave.approve')).data ?? 0;
     const shiftRequests = useShiftRequestCount(user.hospital.id, can('shift.request.own') || can('shift.request.resolve'));
-    const badges = { '/leave': [pending, `รออนุมัติ ${pending} รายการ`], '/shifts': [shiftRequests, `รอดำเนินการ ${shiftRequests} รายการ`] };
+    const badges = { '/requests': [pending + shiftRequests, `รอดำเนินการ ${pending + shiftRequests} รายการ`] };
 
     return (
-        <div className="mx-auto max-w-7xl px-4 py-6">
-            <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
-                <div>
-                    <h1 className="text-2xl font-semibold">ระบบจัดเวรแพทย์และจัดคิว</h1>
+        <div className="mx-auto max-w-[1440px] px-4 py-6 lg:flex lg:items-start lg:gap-6">
+            {/* จอกว้าง: เมนูเป็นแถบด้านข้าง · มือถือ: แถบด้านบนเลื่อนซ้ายขวาได้ */}
+            <aside className="mb-6 lg:sticky lg:top-6 lg:mb-0 lg:w-56 lg:shrink-0">
+                <div className="mb-4">
+                    <h1 className="text-xl font-semibold leading-tight">ระบบจัดเวรแพทย์และจัดคิว</h1>
                     <p className="text-sm text-slate-500">{user.hospital.code} · {user.hospital.name}</p>
                 </div>
-                <nav className="flex rounded-lg border border-slate-300 bg-white p-1 text-sm" aria-label="เมนูหลัก">
+                <nav className="-mx-1 flex gap-1 overflow-x-auto rounded-lg border border-slate-300 bg-white p-1 text-sm lg:mx-0 lg:flex-col" aria-label="เมนูหลัก">
                     {SECTIONS.filter((s) => s.allowed(can)).map((s) => (
                         <NavLink
                             key={s.path}
                             to={s.path}
-                            className={`rounded-md px-4 py-1.5 ${location.pathname.startsWith(s.match) ? 'bg-slate-800 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
+                            className={`flex shrink-0 items-center justify-between gap-2 whitespace-nowrap rounded-md px-3 py-2 ${location.pathname.startsWith(s.match) ? 'bg-slate-800 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
                         >
                             {s.label}
                             {badges[s.path]?.[0] > 0 && (
-                                <span className="ml-1.5 rounded-full bg-rose-600 px-1.5 text-xs text-white" aria-label={badges[s.path][1]}>{badges[s.path][0]}</span>
+                                <span className="rounded-full bg-rose-600 px-1.5 text-xs text-white" aria-label={badges[s.path][1]}>{badges[s.path][0]}</span>
                             )}
                         </NavLink>
                     ))}
                 </nav>
-                <div className="flex items-center gap-3 text-sm">
+                <div className="mt-4 flex flex-wrap items-center gap-2 text-sm lg:flex-col lg:items-stretch">
                     <span>
                         {user.name}
                         <span className="ml-2 rounded-full bg-indigo-50 px-2 py-0.5 text-xs text-indigo-800">{user.role_label}</span>
                     </span>
                     <button className="rounded-md border border-slate-300 px-3 py-1.5 hover:bg-slate-100" onClick={logout}>เปลี่ยนผู้ใช้</button>
                 </div>
-            </header>
-            <Outlet />
-            <footer className="mt-8 text-center text-xs text-slate-400">
-                v{import.meta.env.VITE_APP_VERSION || '0.0.0-dev'}
-                {import.meta.env.VITE_APP_SHA && <> · {import.meta.env.VITE_APP_SHA.slice(0, 7)}</>}
-            </footer>
+                <p className="mt-4 hidden text-xs text-slate-400 lg:block">
+                    v{import.meta.env.VITE_APP_VERSION || '0.0.0-dev'}
+                    {import.meta.env.VITE_APP_SHA && <> · {import.meta.env.VITE_APP_SHA.slice(0, 7)}</>}
+                </p>
+            </aside>
+            <main className="min-w-0 flex-1">
+                <Outlet />
+                <footer className="mt-8 text-center text-xs text-slate-400 lg:hidden">
+                    v{import.meta.env.VITE_APP_VERSION || '0.0.0-dev'}
+                    {import.meta.env.VITE_APP_SHA && <> · {import.meta.env.VITE_APP_SHA.slice(0, 7)}</>}
+                </footer>
+            </main>
         </div>
     );
 }
@@ -152,9 +167,30 @@ function LegacyDoctorCalendar() {
     return <Navigate to={{ pathname: '/roster/calendar', search: `?${params}` }} replace />;
 }
 
-function LeaveRoute() {
-    const { user } = useAuth();
-    return <LeavePage hospitalId={user.hospital.id} />;
+function RequestsRoute() {
+    const { user, can } = useAuth();
+    const { kind } = useParams();
+    const location = useLocation();
+    const hospitalId = user.hospital.id;
+    const kinds = REQUEST_KINDS.filter((k) => k.allowed(can));
+    const pending = usePendingLeaveCount(hospitalId, can('leave.approve')).data ?? 0;
+    const shiftRequests = useShiftRequestCount(hospitalId, canShiftRequest(can));
+    const counts = { leave: pending, shifts: shiftRequests };
+    if (!kinds.some((k) => k.kind === kind)) return <Navigate to={{ pathname: `/requests/${kinds[0].kind}`, search: location.search }} replace />;
+
+    return (
+        <>
+            <nav className="mb-4 inline-flex rounded-lg border border-slate-300 bg-white p-1 text-sm" aria-label="ประเภทคำร้อง">
+                {kinds.map((k) => (
+                    <NavLink key={k.kind} to={`/requests/${k.kind}`} className={({ isActive }) => `rounded-md px-4 py-1.5 ${isActive ? 'bg-indigo-600 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+                        {k.label}
+                        {counts[k.kind] > 0 && <span className="ml-1.5 rounded-full bg-rose-600 px-1.5 text-xs text-white">{counts[k.kind]}</span>}
+                    </NavLink>
+                ))}
+            </nav>
+            {kind === 'leave' ? <LeavePage hospitalId={hospitalId} /> : <ShiftRequestsPage hospitalId={hospitalId} />}
+        </>
+    );
 }
 
 function QueueRoute() {
@@ -167,10 +203,6 @@ function QueueRoute() {
     return <QueuePage hospitalId={hospitalId} view={view} />;
 }
 
-function ShiftsRoute() {
-    const { user } = useAuth();
-    return <ShiftRequestsPage hospitalId={user.hospital.id} />;
-}
 
 function PreferencesRoute() {
     const { user } = useAuth();
