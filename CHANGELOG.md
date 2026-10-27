@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+## [0.7.5] - 2026-10-27
+
+### Removed
+- เอกสาร architecture ข้อ 2.2: ตาราง "Index ที่ออกแบบตาม query จริง" (รายละเอียด index อยู่ใน LARGE-DATA.md แล้ว)
+
 ## [0.7.4] - 2026-10-27
 
 ### Changed
@@ -118,7 +123,8 @@ release แรก — ตัวอย่างระบบจัดเวรแ�
 - ตั้ง timezone เป็น `Asia/Bangkok` — คิวที่ออกช่วง 00:00–07:00 ไม่ถูกนับเป็นวันก่อนหน้าแล้ว
 - หัวตารางเวรไม่มีแถวโผล่ทะลุขึ้นมาตอนเลื่อน
 
-[Unreleased]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.4...HEAD
+[Unreleased]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.5...HEAD
+[0.7.5]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.4...v0.7.5
 [0.7.4]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.3...v0.7.4
 [0.7.3]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.2...v0.7.3
 [0.7.2]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.1...v0.7.2

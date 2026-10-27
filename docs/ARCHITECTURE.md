@@ -1,6 +1,6 @@
 # ระบบจัดเวรแพทย์และจัดคิวโรงพยาบาล — Architecture
 
-จิตฤดี ดวงดี · 27 ต.ค. 2569 · โค้ด: [github.com/JitrudeeDongdee/waka-crud](https://github.com/JitrudeeDongdee/waka-crud) · เดโม: [jitrudeedongdee.github.io/waka-crud](https://jitrudeedongdee.github.io/waka-crud/) · ตรงกับเวอร์ชัน v0.7.4
+จิตฤดี ดวงดี · 27 ต.ค. 2569 · โค้ด: [github.com/JitrudeeDongdee/waka-crud](https://github.com/JitrudeeDongdee/waka-crud) · เดโม: [jitrudeedongdee.github.io/waka-crud](https://jitrudeedongdee.github.io/waka-crud/) · ตรงกับเวอร์ชัน v0.7.5
 
 เอกสารนี้อธิบาย 5 เรื่องของระบบที่เริ่มจาก 15 โรงพยาบาลและขยายไปถึง 30 แห่ง ได้แก่ ขั้นตอนการทำงาน (BPMN), โครงสร้างฐานข้อมูล (ER diagram), โครงสร้าง server และ network ตอนขยายขึ้น cloud แผนย้ายจาก PHP/Laravel ไปเป็น Next.js + NestJS และข้อเสนอฟีเจอร์ถัดไป
 
@@ -96,17 +96,6 @@
 - **สรุปรายวัน (`daily_queue_stats`):** แผนกละ 1 แถวต่อวัน สรุปจากคิวดิบทุกคืน ให้ dashboard และปฏิทินรายเดือนอ่านโดยไม่ต้องนับคิวดิบ
 
 กรอบเส้นประ = ตารางจากข้อ 2.1 · ขีดคู่ = ฝั่ง "หนึ่ง" · ตีนกา + วงกลม = ฝั่ง "ศูนย์ถึงหลาย"
-
-**Index ที่ออกแบบตาม query จริง** (ตรวจด้วย `EXPLAIN` บน MySQL 8.4 กับข้อมูล 200,000 คิวแล้ว ไม่มี filesort)
-
-| Query | Index | เหตุผล |
-|---|---|---|
-| เรียกคิวถัดไป | `queue_tickets (department_id, service_date, status, priority DESC, id)` | ตรงกับ `WHERE` + `ORDER BY priority DESC, id` ทั้งชุด อ่านแถวแรกได้ทันที |
-| รายการคิวของโรงพยาบาล (keyset) | `queue_tickets (hospital_id, service_date, id)` | ไม่มี `status` คั่นกลาง `ORDER BY id` จึงไม่ต้อง sort ซ้ำ |
-| ตรวจกติกาเวรของแพทย์ | `shifts (staff_id, starts_at)` | หาเวรที่อยู่ใกล้กันในช่วงเวลาพักได้ด้วย range scan |
-| ตารางเวรของแผนก | `shifts (department_id, shift_date)` | ดึงทั้งเดือนได้ในครั้งเดียว |
-| Dashboard / ปฏิทินคิวรายเดือน | `daily_queue_stats (hospital_id, service_date)` | วันที่ผ่านมาอ่านจากตารางสรุป วันนี้เท่านั้นที่นับสด ไม่ต้อง `COUNT` คิวทั้งเดือน |
-| ปฏิทินคิวรายสัปดาห์/รายวัน | `queue_tickets (hospital_id, service_date, id)` | นับตามชั่วโมงจากคิวจริง แต่จำกัดช่วงไม่เกิน 7 วัน |
 
 ### 2.3 สิทธิ์ตามบทบาท (RBAC)
 
