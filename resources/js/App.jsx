@@ -4,10 +4,12 @@ import { useHospitals } from './useLookups';
 import TicketBoard from './components/TicketBoard';
 import StaffPanel from './components/StaffPanel';
 import IssueTicketForm from './components/IssueTicketForm';
+import RosterPage from './components/RosterPage';
 
 export default function App() {
     const hospitals = useHospitals();
     const [hospitalId, setHospitalId] = useState(null);
+    const [tab, setTab] = useState('roster');
 
     useEffect(() => {
         if (!hospitalId && hospitals.data?.length) setHospitalId(hospitals.data[0].id);
@@ -25,8 +27,19 @@ export default function App() {
             <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <h1 className="text-2xl font-semibold">ระบบจัดคิวโรงพยาบาล</h1>
-                    <p className="text-sm text-slate-500">Laravel + React · cursor pagination · virtualization · React Query</p>
+                    <p className="text-sm text-slate-500">จัดเวรแพทย์ + จัดคิวผู้ป่วย · Laravel + React</p>
                 </div>
+                <nav className="flex rounded-lg border border-slate-300 bg-white p-1 text-sm">
+                    {[['roster', 'จัดเวรแพทย์'], ['queue', 'คิวผู้ป่วย']].map(([value, label]) => (
+                        <button
+                            key={value}
+                            className={`rounded-md px-4 py-1.5 ${tab === value ? 'bg-slate-800 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
+                            onClick={() => setTab(value)}
+                        >
+                            {label}
+                        </button>
+                    ))}
+                </nav>
                 <label className="flex items-center gap-2 text-sm">
                     โรงพยาบาล
                     <select
@@ -48,12 +61,18 @@ export default function App() {
 
             {hospitalId && (
                 // key = hospitalId: สลับโรงพยาบาลแล้ว state ในแต่ละแผงเริ่มใหม่ ไม่มีข้อมูลค้างข้ามโรงพยาบาล
-                <div key={hospitalId} className="grid gap-6 lg:grid-cols-[1fr_360px]">
-                    <TicketBoard hospitalId={hospitalId} />
-                    <div className="space-y-6">
-                        <StaffPanel hospitalId={hospitalId} />
-                        <IssueTicketForm hospitalId={hospitalId} />
-                    </div>
+                <div key={hospitalId}>
+                    {tab === 'roster' ? (
+                        <RosterPage hospitalId={hospitalId} />
+                    ) : (
+                        <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+                            <TicketBoard hospitalId={hospitalId} />
+                            <div className="space-y-6">
+                                <StaffPanel hospitalId={hospitalId} />
+                                <IssueTicketForm hospitalId={hospitalId} />
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

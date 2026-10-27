@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, PRIORITY } from '../api';
 import { byId, useDepartments, useStaff } from '../useLookups';
 
@@ -11,7 +11,18 @@ export default function StaffPanel({ hospitalId }) {
     const [current, setCurrent] = useState(null);
     const member = staff.data?.find((s) => s.id === Number(staffId));
 
-    const refreshBoard = () => queryClient.invalidateQueries({ queryKey: ['tickets', hospitalId] });
+    // ฟังก์ชันเสริม: หมอเห็นได้ตลอดว่ามีคิวไหนที่ตัวเองรับได้ + เวรถัดไป
+    const myQueue = useQuery({
+        queryKey: ['my-queue', hospitalId, staffId],
+        queryFn: () => api(`/hospitals/${hospitalId}/staff/${staffId}/my-queue`),
+        enabled: !!staffId,
+        refetchInterval: 15_000,
+    });
+
+    const refreshBoard = () => {
+        queryClient.invalidateQueries({ queryKey: ['tickets', hospitalId] });
+        queryClient.invalidateQueries({ queryKey: ['my-queue', hospitalId] });
+    };
 
     const callNext = useMutation({
         mutationFn: () => api(`/hospitals/${hospitalId}/staff/${staffId}/call-next`, { method: 'POST' }),
@@ -86,6 +97,33 @@ export default function StaffPanel({ hospitalId }) {
                     {complete.isError && <p className="mt-2 text-sm text-red-600">{complete.error.message}</p>}
                 </div>
             )}
+
+            {member && myQueue.data && (
+                <div className="mt-5 border-t border-slate-200 pt-4 text-sm">
+                    <h3 className="mb-2 font-medium">คิวที่รอคุณ ({myQueue.data.waiting.length}{myQueue.data.waiting.length === 20 ? '+' : ''})</h3>
+                    <ol className="max-h-48 space-y-1 overflow-auto">
+                        {myQueue.data.waiting.map((t) => (
+                            <li key={t.id} className="flex justify-between">
+                                <span className="font-mono">{departments[member.department_id]?.code}-{String(t.number).padStart(3, '0')}</span>
+                                <span className={`rounded-full px-2 text-xs ${PRIORITY[t.priority].className}`}>{PRIORITY[t.priority].label}</span>
+                            </li>
+                        ))}
+                        {myQueue.data.waiting.length === 0 && <li className="text-slate-400">ไม่มีคิวที่คุณรับได้</li>}
+                    </ol>
+                    <h3 className="mb-1 mt-4 font-medium">เวรถัดไปของคุณ</h3>
+                    <ul className="space-y-1 text-slate-600">
+                        {myQueue.data.next_shifts.map((s) => (
+                            <li key={s.id}>{s.template.name} · {formatDateTime(s.starts_at)}</li>
+                        ))}
+                        {myQueue.data.next_shifts.length === 0 && <li className="text-slate-400">ยังไม่มีเวร</li>}
+                    </ul>
+                </div>
+            )}
         </section>
     );
+}
+
+function formatDateTime(value) {
+    const d = new Date(value);
+    return d.toLocaleString('th-TH', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 }

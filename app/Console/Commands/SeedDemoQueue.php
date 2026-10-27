@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Department;
 use App\Models\Hospital;
+use App\Models\ShiftTemplate;
 use App\Models\Skill;
 use App\Models\Staff;
 use Illuminate\Console\Command;
@@ -35,11 +36,20 @@ class SeedDemoQueue extends Command
                 $department = Department::create(['hospital_id' => $hospital->id, 'code' => $code, 'name' => $name]);
                 $departments->push($department);
 
-                for ($s = 1; $s <= 3; $s++) {
+                foreach ([['M', 'เวรเช้า', '08:00', '16:00', 2], ['A', 'เวรบ่าย', '16:00', '00:00', 1], ['N', 'เวรดึก', '00:00', '08:00', 1]] as $i => [$tc, $tn, $from, $to, $min]) {
+                    ShiftTemplate::create([
+                        'department_id' => $department->id, 'code' => $tc, 'name' => $tn,
+                        'start_time' => $from, 'end_time' => $to, 'min_staff' => $min, 'sort_order' => $i,
+                        // OPD เวรเช้าต้องมีหมออายุรกรรมหัวใจอย่างน้อย 1 คน
+                        'required_skill_id' => $code === 'OPD' && $tc === 'M' ? $skills->firstWhere('code', 'CARD')->id : null,
+                    ]);
+                }
+
+                for ($s = 1; $s <= 6; $s++) {
                     $staff = Staff::create([
                         'hospital_id' => $hospital->id,
                         'department_id' => $department->id,
-                        'name' => "{$code} staff {$s}",
+                        'name' => "Dr. {$code}-{$s}",
                     ]);
                     $staff->skills()->attach($skills->random(2)->pluck('id'));
                 }

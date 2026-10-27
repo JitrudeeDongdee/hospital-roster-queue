@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Hospital extends Model
 {
-    protected $fillable = ['code', 'name'];
+    protected $fillable = ['code', 'name', 'min_rest_hours', 'max_weekly_hours'];
 
     public function departments(): HasMany
     {
@@ -22,6 +22,11 @@ class Hospital extends Model
     public function tickets(): HasMany
     {
         return $this->hasMany(QueueTicket::class);
+    }
+
+    public function shifts(): HasMany
+    {
+        return $this->hasMany(Shift::class);
     }
 
     public function dailyStats(): HasMany

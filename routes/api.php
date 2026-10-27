@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\DoctorQueueController;
 use App\Http\Controllers\LookupController;
+use App\Http\Controllers\RosterController;
 use App\Http\Controllers\StatsController;
 use App\Http\Controllers\TicketController;
 use Illuminate\Http\Request;
@@ -22,4 +24,13 @@ Route::scopeBindings()->prefix('hospitals/{hospital}')->group(function () {
     Route::post('staff/{staff}/call-next', [TicketController::class, 'callNext']);
     Route::post('tickets/{ticket}/complete', [TicketController::class, 'complete']);
     Route::get('stats', [StatsController::class, 'index']);
+
+    // จัดเวรแพทย์
+    Route::get('departments/{department}/roster', [RosterController::class, 'show']);
+    Route::post('departments/{department}/roster/generate', [RosterController::class, 'generate']);
+    Route::post('shifts', [RosterController::class, 'store']);
+    Route::delete('shifts/{shift}', [RosterController::class, 'destroy']);
+    Route::get('staff/{staff}/unavailabilities', [RosterController::class, 'unavailabilities']);
+    Route::post('staff/{staff}/unavailabilities', [RosterController::class, 'addUnavailability']);
+    Route::get('staff/{staff}/my-queue', [DoctorQueueController::class, 'show']);
 });

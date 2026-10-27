@@ -19,6 +19,7 @@ export async function api(path, { body, ...options } = {}) {
     if (!res.ok) {
         const error = new Error(data?.message ?? `HTTP ${res.status}`);
         error.status = res.status;
+        error.errors = data?.errors; // ข้อความ validation ของ Laravel (เช่น กติกาเวรที่ผิด)
         throw error;
     }
 
@@ -36,3 +37,23 @@ export const STATUS = {
     called: { label: 'เรียกแล้ว', className: 'bg-violet-100 text-violet-800' },
     completed: { label: 'เสร็จสิ้น', className: 'bg-emerald-100 text-emerald-800' },
 };
+
+// วันที่แบบ YYYY-MM-DD ตามเวลาเครื่อง (ไม่ใช้ toISOString เพราะจะเลื่อนเป็น UTC)
+export function isoDate(date) {
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+export function addDays(iso, days) {
+    const d = new Date(`${iso}T00:00:00`);
+    d.setDate(d.getDate() + days);
+    return isoDate(d);
+}
+
+export function mondayOf(date = new Date()) {
+    const d = new Date(date);
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+    return isoDate(d);
+}
+
+export const errorMessages = (error) => (error?.errors ? Object.values(error.errors).flat() : [error?.message]);
