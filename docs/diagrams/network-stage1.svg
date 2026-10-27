@@ -66,18 +66,24 @@
 <rect x="52" y="490" width="706" height="144" fill="#eef8f8" stroke="#00A4A6" stroke-width="1.6"/>
 <rect x="52" y="490" width="22" height="22" fill="#00A4A6"/>
 <text x="82" y="505.5" font-size="12" font-weight="700" fill="#007d80" text-anchor="start">Private subnet · app · Amazon ECS on Fargate · อย่างน้อย 2 task ต่อ service</text>
-<rect x="108" y="524" width="44" height="44" rx="6" fill="#ED7100"/>
+<rect x="116" y="532" width="44" height="44" rx="6" fill="#ED7100" opacity="0.7" stroke="#fff" stroke-width="2"/>
+<g opacity="0.7"><rect x="126" y="545" width="24" height="18" rx="2" fill="none" stroke="#fff" stroke-width="2"/><path d="M134,545 V563 M142,545 V563" stroke="#fff" stroke-width="1.6"/></g>
+<rect x="108" y="524" width="44" height="44" rx="6" fill="#ED7100" stroke="#fff" stroke-width="2"/>
 <rect x="118" y="537" width="24" height="18" rx="2" fill="none" stroke="#fff" stroke-width="2"/><path d="M126,537 V555 M134,537 V555" stroke="#fff" stroke-width="1.6"/>
-<text x="130" y="584" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">Web × N</text>
-<text x="130" y="599" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">Next.js (SSR)</text>
-<rect x="278" y="524" width="44" height="44" rx="6" fill="#ED7100"/>
+<text x="130" y="592" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">Web × 2</text>
+<text x="130" y="607" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">Next.js · 2 task (AZ ละ 1)</text>
+<rect x="286" y="532" width="44" height="44" rx="6" fill="#ED7100" opacity="0.7" stroke="#fff" stroke-width="2"/>
+<g opacity="0.7"><rect x="296" y="545" width="24" height="18" rx="2" fill="none" stroke="#fff" stroke-width="2"/><path d="M304,545 V563 M312,545 V563" stroke="#fff" stroke-width="1.6"/></g>
+<rect x="278" y="524" width="44" height="44" rx="6" fill="#ED7100" stroke="#fff" stroke-width="2"/>
 <rect x="288" y="537" width="24" height="18" rx="2" fill="none" stroke="#fff" stroke-width="2"/><path d="M296,537 V555 M304,537 V555" stroke="#fff" stroke-width="1.6"/>
-<text x="300" y="584" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">API × N</text>
-<text x="300" y="599" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">Laravel</text>
-<rect x="448" y="524" width="44" height="44" rx="6" fill="#ED7100"/>
+<text x="300" y="592" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">API × 2</text>
+<text x="300" y="607" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">Laravel · 2 task (AZ ละ 1)</text>
+<rect x="456" y="532" width="44" height="44" rx="6" fill="#ED7100" opacity="0.7" stroke="#fff" stroke-width="2"/>
+<g opacity="0.7"><rect x="466" y="545" width="24" height="18" rx="2" fill="none" stroke="#fff" stroke-width="2"/><path d="M474,545 V563 M482,545 V563" stroke="#fff" stroke-width="1.6"/></g>
+<rect x="448" y="524" width="44" height="44" rx="6" fill="#ED7100" stroke="#fff" stroke-width="2"/>
 <rect x="458" y="537" width="24" height="18" rx="2" fill="none" stroke="#fff" stroke-width="2"/><path d="M466,537 V555 M474,537 V555" stroke="#fff" stroke-width="1.6"/>
-<text x="470" y="584" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">WebSocket × N</text>
-<text x="470" y="599" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">Laravel Reverb</text>
+<text x="470" y="592" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">WebSocket × 2</text>
+<text x="470" y="607" font-size="10.5" font-weight="400" fill="#4a587a" text-anchor="middle">Reverb · 2 task (AZ ละ 1)</text>
 <rect x="633" y="524" width="44" height="44" rx="6" fill="#ED7100"/>
 <circle cx="655" cy="546" r="11" fill="none" stroke="#fff" stroke-width="2"/><path d="M655,539 V546 L660,550" fill="none" stroke="#fff" stroke-width="2"/>
 <text x="655" y="584" font-size="11.5" font-weight="700" fill="#1f2a44" text-anchor="middle">Worker + Scheduler</text>
