@@ -107,6 +107,18 @@ class QueueTest extends TestCase
         $this->assertSame(0, QueueTicket::find($first['id'])->priority);
     }
 
+    public function test_lookups_give_the_page_what_it_needs_to_show_numeric_queue_numbers(): void
+    {
+        [$hospital, $opd] = $this->hospitalWithDepartment();
+        $opd->update(['queue_prefix' => 1]);
+        Skill::create(['code' => 'CARD', 'name' => 'อายุรกรรมหัวใจ']);
+        $this->actingAsRole('nurse', $hospital);
+
+        // หน้าเว็บแสดงเลขคิวเป็น queue_prefix + เลข 3 หลัก เช่น 1001
+        $this->getJson("/api/hospitals/{$hospital->id}/departments")->assertOk()->assertJsonPath('0.queue_prefix', 1);
+        $this->getJson('/api/skills')->assertOk()->assertJsonPath('0.name', 'อายุรกรรมหัวใจ');
+    }
+
     public function test_one_hospital_cannot_reach_another_hospitals_data(): void
     {
         [$hospitalA] = $this->hospitalWithDepartment('H001');

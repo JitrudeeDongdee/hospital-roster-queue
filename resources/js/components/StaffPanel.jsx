@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api, PRIORITY } from '../api';
+import { PRIORITY, api, queueNo } from '../api';
 import { byId, useDepartments, useStaff } from '../useLookups';
 import { useAuth } from '../auth';
 
@@ -88,7 +88,7 @@ export default function StaffPanel({ hospitalId }) {
                 <div className="mt-4 rounded-lg border border-slate-200 p-4 text-center">
                     <p className="text-xs text-slate-500">กำลังให้บริการ</p>
                     <p className="font-mono text-4xl font-bold">
-                        {departments[current.department_id]?.code}-{String(current.number).padStart(3, '0')}
+                        {queueNo(departments[current.department_id], current.number)}
                     </p>
                     <p className="mt-1 text-sm">{PRIORITY[current.priority]?.label}</p>
                     <button
@@ -108,7 +108,7 @@ export default function StaffPanel({ hospitalId }) {
                     <ol className="max-h-48 space-y-1 overflow-auto">
                         {myQueue.data.waiting.map((t) => (
                             <li key={t.id} className="flex justify-between">
-                                <span className="font-mono">{departments[member.department_id]?.code}-{String(t.number).padStart(3, '0')}</span>
+                                <span className="font-mono">{queueNo(departments[member.department_id], t.number)}</span>
                                 <span className={`rounded-full px-2 text-xs ${PRIORITY[t.priority].className}`}>{PRIORITY[t.priority].label}</span>
                             </li>
                         ))}

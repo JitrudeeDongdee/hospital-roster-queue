@@ -25,10 +25,10 @@ class SeedDemoQueue extends Command
         $started = microtime(true);
 
         $skills = collect([
-            ['code' => 'GEN', 'name' => 'General practice'],
-            ['code' => 'CARD', 'name' => 'Cardiology'],
-            ['code' => 'PED', 'name' => 'Pediatrics'],
-            ['code' => 'US', 'name' => 'Ultrasound'],
+            ['code' => 'GEN', 'name' => 'เวชปฏิบัติทั่วไป'],
+            ['code' => 'CARD', 'name' => 'อายุรกรรมหัวใจ'],
+            ['code' => 'PED', 'name' => 'กุมารเวชกรรม'],
+            ['code' => 'US', 'name' => 'อัลตราซาวด์'],
         ])->map(fn ($s) => Skill::firstOrCreate(['code' => $s['code']], $s));
 
         $departments = collect();
@@ -39,8 +39,8 @@ class SeedDemoQueue extends Command
         for ($h = 1; $h <= (int) $this->option('hospitals'); $h++) {
             $hospital = Hospital::create(['code' => sprintf('H%03d', $h), 'name' => "Demo Hospital {$h}"]);
 
-            foreach (['OPD' => 'Outpatient', 'LAB' => 'Laboratory', 'XRAY' => 'Radiology'] as $code => $name) {
-                $department = Department::create(['hospital_id' => $hospital->id, 'code' => $code, 'name' => $name]);
+            foreach ([['OPD', 'ผู้ป่วยนอก'], ['LAB', 'ห้องแล็บ'], ['XRAY', 'เอกซเรย์']] as $i => [$code, $name]) {
+                $department = Department::create(['hospital_id' => $hospital->id, 'code' => $code, 'name' => $name, 'queue_prefix' => $i + 1]);
                 $departments->push($department);
 
                 foreach ([['M', 'เวรเช้า', '08:00', '16:00', 2], ['A', 'เวรบ่าย', '16:00', '00:00', 1], ['N', 'เวรดึก', '00:00', '08:00', 1]] as $i => [$tc, $tn, $from, $to, $min]) {

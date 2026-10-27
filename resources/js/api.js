@@ -78,4 +78,8 @@ export function mondayOf(date = new Date()) {
     return isoDate(d);
 }
 
+// เลขคิวที่ผู้ป่วยเห็น: ตัวเลขล้วน หลักแรก = แผนก เช่น ผู้ป่วยนอก 1001 · แล็บ 2001 (ไม่ซ้ำทั้งโรงพยาบาล ผู้สูงอายุอ่านง่าย)
+export const queueNo = (department, number) =>
+    department?.queue_prefix ? `${department.queue_prefix}${String(number).padStart(3, '0')}` : String(number).padStart(3, '0');
+
 export const errorMessages = (error) => (error?.errors ? Object.values(error.errors).flat() : [error?.message]);

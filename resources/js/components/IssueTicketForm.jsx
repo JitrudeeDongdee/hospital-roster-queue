@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { api, PRIORITY } from '../api';
+import { PRIORITY, api, queueNo } from '../api';
 import { useDepartments, useSkills } from '../useLookups';
 import { useAuth } from '../auth';
 
@@ -65,7 +65,7 @@ export default function IssueTicketForm({ hospitalId }) {
             </form>
             {issue.isSuccess && (
                 <p className="mt-3 rounded-md bg-emerald-50 p-3 text-center text-emerald-800">
-                    ได้คิว <span className="font-mono text-lg font-bold">{department?.code}-{String(issue.data.number).padStart(3, '0')}</span>
+                    ได้คิว <span className="font-mono text-lg font-bold">{queueNo(department, issue.data.number)}</span>
                 </p>
             )}
             {issue.isError && <p className="mt-3 text-sm text-red-600">{issue.error.message}</p>}

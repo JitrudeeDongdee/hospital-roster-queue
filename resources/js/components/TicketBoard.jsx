@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { api, errorMessages, isoDate, PRIORITY, STATUS } from '../api';
+import { PRIORITY, STATUS, api, errorMessages, isoDate, queueNo } from '../api';
 import { useAuth } from '../auth';
 import { byId, useDepartments, useSkills } from '../useLookups';
 
@@ -100,7 +100,7 @@ export default function TicketBoard({ hospitalId, date }) {
                             >
                                 {t ? (
                                     <>
-                                        <span className="font-mono font-semibold">{departments[t.department_id]?.code}-{String(t.number).padStart(3, '0')}</span>
+                                        <span className="font-mono font-semibold">{queueNo(departments[t.department_id], t.number)}</span>
                                         <span>{departments[t.department_id]?.name ?? '…'}</span>
                                         {canTriage && t.status === 'waiting' ? (
                                             <>

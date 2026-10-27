@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { Link, NavLink, useSearchParams } from 'react-router';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { addDays, api, isoDate, STATUS } from '../api';
+import { STATUS, addDays, api, isoDate, queueNo } from '../api';
 import { useAuth } from '../auth';
 import { byId, useDepartments } from '../useLookups';
 import TicketBoard, { clock, waitMinutes } from './TicketBoard';
@@ -260,7 +260,7 @@ function DayView({ hospitalId, date, dept }) {
                                 <span key={t.id} title={`ออกบัตร ${clock(t.created_at)} · เรียก ${clock(t.called_at)}${waitMinutes(t) !== null ? ` · รอ ${waitMinutes(t)} นาที` : ''}`}
                                     className="inline-flex items-center gap-1 rounded border border-slate-200 px-1.5 py-0.5 font-mono text-xs">
                                     <span className={`inline-block h-2 w-2 rounded-full ${STATUS_DOT[t.status]}`} />
-                                    {departments[t.department_id]?.code}-{String(t.number).padStart(3, '0')}
+                                    {queueNo(departments[t.department_id], t.number)}
                                     <span className="text-slate-400">{clock(t.created_at)}</span>
                                 </span>
                             ))}

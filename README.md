@@ -49,6 +49,8 @@ Passwordless demo login is available only with `DEMO_LOGIN=true` (off by default
 
 ## Patient queue
 
+- **Numeric queue numbers:** patients see digits only, with the first digit for the department (outpatients 1001, lab 2001, X-ray 3001; `departments.queue_prefix`), so numbers never repeat across a hospital on the same day and are easy for elderly patients to read. Up to 999 tickets per department per day keep the 4-digit form.
+
 - **Issue tickets:** each department runs its own numbers every day. A locked counter row keeps numbers unique when several kiosks issue tickets at the same moment.
 - **Skill-based calling:** staff can only call tickets that need a skill they have, or tickets that need no particular skill. Higher priority goes first, then first come, first served.
 - **Concurrent calling:** `FOR UPDATE SKIP LOCKED` lets several rooms call at once without two rooms getting the same patient.
@@ -191,7 +193,7 @@ Open http://127.0.0.1:8000. To build the GitHub Pages demo instead: `npm run bui
 
 ## Tests
 
-53 feature tests. Triage of a waiting ticket issued by registration. Shift requests: move applied at once, move that leaves a slot short goes to the admin, move into a rule break refused, swap applied when the colleague accepts, swap that breaks a rule waits until the admin clears it, swap that drops a required skill, decline/cancel/one open request per shift, own upcoming shifts only; preferences saved per month and locked once the roster exists; the generator honours wants and avoids, and keeps a doctor free for the slot they asked for. Queue calendar: month from the daily summary + live today, hourly grouping, range limits. Leave: pending vs approved, approval blocked by a shift, reject and re-request, admin-recorded leave, cancel rules, auto-generate skips pending, other hospitals. Authorization: guests, other hospitals, triage, roster management, doctors acting only for themselves, leave days, stats, demo login on/off. Roster: overnight shifts, overlap, minimum rest, weekly hours, leave days,
+54 feature tests. Triage of a waiting ticket issued by registration. Shift requests: move applied at once, move that leaves a slot short goes to the admin, move into a rule break refused, swap applied when the colleague accepts, swap that breaks a rule waits until the admin clears it, swap that drops a required skill, decline/cancel/one open request per shift, own upcoming shifts only; preferences saved per month and locked once the roster exists; the generator honours wants and avoids, and keeps a doctor free for the slot they asked for. Queue calendar: month from the daily summary + live today, hourly grouping, range limits. Leave: pending vs approved, approval blocked by a shift, reject and re-request, admin-recorded leave, cancel rules, auto-generate skips pending, other hospitals. Authorization: guests, other hospitals, triage, roster management, doctors acting only for themselves, leave days, stats, demo login on/off. Roster: overnight shifts, overlap, minimum rest, weekly hours, leave days,
 coverage gaps, auto-generation (a full month within every rule, covers skills, keeps manual
 shifts, leaves gaps it cannot fill), the doctor's own queue and hospital isolation. Queue: numbering, priority,
 skill routing, isolation, cursor pagination, completing, aggregation and purging. CI runs them on

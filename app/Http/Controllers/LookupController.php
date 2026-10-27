@@ -15,7 +15,7 @@ class LookupController extends Controller
 
     public function departments(Hospital $hospital)
     {
-        return $hospital->departments()->orderBy('code')->get(['id', 'code', 'name']);
+        return $hospital->departments()->orderBy('code')->get(['id', 'code', 'name', 'queue_prefix']);
     }
 
     public function staff(Hospital $hospital)

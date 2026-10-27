@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Department extends Model
 {
-    protected $fillable = ['hospital_id', 'code', 'name'];
+    protected $fillable = ['hospital_id', 'code', 'name', 'queue_prefix'];
 
     public function hospital(): BelongsTo
     {

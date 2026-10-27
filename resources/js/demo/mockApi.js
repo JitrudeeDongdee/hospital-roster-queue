@@ -20,10 +20,10 @@ const pick = (list) => list[Math.floor(random() * list.length)];
 
 const db = (() => {
     const skills = [
-        { id: 1, code: 'GEN', name: 'General practice' },
-        { id: 2, code: 'CARD', name: 'Cardiology' },
-        { id: 3, code: 'PED', name: 'Pediatrics' },
-        { id: 4, code: 'US', name: 'Ultrasound' },
+        { id: 1, code: 'GEN', name: 'เวชปฏิบัติทั่วไป' },
+        { id: 2, code: 'CARD', name: 'อายุรกรรมหัวใจ' },
+        { id: 3, code: 'PED', name: 'กุมารเวชกรรม' },
+        { id: 4, code: 'US', name: 'อัลตราซาวด์' },
     ];
     const hospitals = [];
     const templates = [];
@@ -37,8 +37,8 @@ const db = (() => {
     for (let h = 1; h <= 15; h++) {
         hospitals.push({ id: h, code: `H${String(h).padStart(3, '0')}`, name: `Demo Hospital ${h}`, min_rest_hours: 8, max_weekly_hours: 60 });
 
-        for (const [code, name] of [['OPD', 'Outpatient'], ['LAB', 'Laboratory'], ['XRAY', 'Radiology']]) {
-            const department = { id: departments.length + 1, hospital_id: h, code, name };
+        for (const [i, [code, name]] of [['OPD', 'ผู้ป่วยนอก'], ['LAB', 'ห้องแล็บ'], ['XRAY', 'เอกซเรย์']].entries()) {
+            const department = { id: departments.length + 1, hospital_id: h, code, name, queue_prefix: i + 1 };
             departments.push(department);
 
             [['M', 'เวรเช้า', '08:00:00', '16:00:00', 2], ['A', 'เวรบ่าย', '16:00:00', '00:00:00', 1], ['N', 'เวรดึก', '00:00:00', '08:00:00', 1]]
