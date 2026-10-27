@@ -6,6 +6,7 @@ use App\Models\Department;
 use App\Models\QueueTicket;
 use App\Models\Staff;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class QueueService
 {
@@ -55,6 +56,12 @@ class QueueService
         $skillIds = $staff->skills()->pluck('skills.id');
 
         return DB::transaction(function () use ($staff, $skillIds) {
+            // แพทย์หนึ่งคนตรวจได้ทีละคิว: ล็อกแถวของแพทย์ก่อน กันกดเรียกซ้อนสองครั้งพร้อมกัน
+            Staff::whereKey($staff->id)->lockForUpdate()->first();
+            if (QueueTicket::where('staff_id', $staff->id)->where('status', QueueTicket::CALLED)->exists()) {
+                throw ValidationException::withMessages(['ticket' => ['ยังมีคิวที่กำลังตรวจอยู่ กดเสร็จสิ้นก่อนจึงเรียกคิวถัดไปได้']]);
+            }
+
             $ticket = QueueTicket::query()
                 ->where('department_id', $staff->department_id)
                 ->where('service_date', now()->toDateString())

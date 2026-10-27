@@ -49,9 +49,14 @@ class QueueTest extends TestCase
         $elderly = $this->issue($hospital, $opd, ['priority' => 1]);
 
         $url = "/api/hospitals/{$hospital->id}/staff/{$staff->id}/call-next";
+        $done = fn ($id) => $this->postJson("/api/hospitals/{$hospital->id}/tickets/{$id}/complete")->assertOk();
         $this->actingAsDoctor($staff);
         $this->postJson($url)->assertOk()->assertJsonPath('id', $elderly['id']);
+        // ตรวจได้ทีละคิว: ยังไม่กดเสร็จสิ้น เรียกคิวถัดไปไม่ได้
+        $this->postJson($url)->assertUnprocessable()->assertJsonPath('errors.ticket.0', fn ($m) => str_contains($m, 'กดเสร็จสิ้นก่อน'));
+        $done($elderly['id']);
         $this->postJson($url)->assertOk()->assertJsonPath('id', $normal['id']);
+        $done($normal['id']);
         $this->postJson($url)->assertNotFound();
     }
 
@@ -72,6 +77,7 @@ class QueueTest extends TestCase
         $this->actingAsDoctor($pediatrician);
         $this->postJson("/api/hospitals/{$hospital->id}/staff/{$pediatrician->id}/call-next")
             ->assertOk()->assertJsonPath('id', $childCase['id']);
+        $this->postJson("/api/hospitals/{$hospital->id}/tickets/{$childCase['id']}/complete")->assertOk();
         $this->postJson("/api/hospitals/{$hospital->id}/staff/{$pediatrician->id}/call-next")
             ->assertNotFound(); // ไม่เอาเคสหัวใจไปให้กุมารแพทย์
         $this->actingAsDoctor($cardiologist);

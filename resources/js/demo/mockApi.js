@@ -564,6 +564,8 @@ const routes = [
     ['POST', /^\/hospitals\/(\d+)\/staff\/(\d+)\/call-next$/, ([h, s], _q, _b, user) => {
         const member = findIn(db.staff, s, h);
         forbid(user.staff_id !== member.id, 'เรียกคิวได้เฉพาะในชื่อของตัวเอง');
+        // ตรวจได้ทีละคิว — เหมือน QueueService::callNext
+        if (db.tickets.some((t) => t.staff_id === member.id && t.status === 'called')) fail422('ticket', ['ยังมีคิวที่กำลังตรวจอยู่ กดเสร็จสิ้นก่อนจึงเรียกคิวถัดไปได้']);
         const skillIds = member.skills.map((skill) => skill.id);
         // เหมือน QueueService::callNext — คิวที่ไม่ระบุความเชี่ยวชาญหรือที่ตรงกับเจ้าหน้าที่, priority DESC แล้ว id ASC
         const next = db.tickets

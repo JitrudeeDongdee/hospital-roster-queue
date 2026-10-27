@@ -5,6 +5,14 @@
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-10-27
+
+### Fixed
+- แพทย์เรียกคิวถัดไปซ้อนได้ถ้าเรียก API ตรง (หน้าเว็บกันไว้แค่ปุ่ม) — `call-next` ตอบ 422 เมื่อยังมีคิวที่กำลังตรวจ และล็อกแถวของแพทย์กันกดซ้อนพร้อมกัน
+
+### Added
+- เอกสาร architecture ข้อ 6 "หน้าจอเดโม": ภาพหน้าจอ 16 กรณีพร้อมคำอธิบาย (`docs/screenshots/`)
+
 ## [0.7.1] - 2026-10-27
 
 ### Changed
@@ -96,7 +104,8 @@ release แรก — ตัวอย่างระบบจัดเวรแ�
 - ตั้ง timezone เป็น `Asia/Bangkok` — คิวที่ออกช่วง 00:00–07:00 ไม่ถูกนับเป็นวันก่อนหน้าแล้ว
 - หัวตารางเวรไม่มีแถวโผล่ทะลุขึ้นมาตอนเลื่อน
 
-[Unreleased]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.1...HEAD
+[Unreleased]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.2...HEAD
+[0.7.2]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.5.0...v0.6.0
