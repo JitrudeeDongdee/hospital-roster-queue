@@ -11,6 +11,7 @@ MySQL 8.4 and React 19**. It is a practice project for a hospital system that st
 queue view is a supporting feature.
 
 Architecture, BPMN, ER diagram and the scaling and migration plan: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+Large-data techniques with sources (MySQL, Laravel, TanStack, Redis): [docs/LARGE-DATA.md](docs/LARGE-DATA.md)
 
 ## Doctor roster (main feature)
 
