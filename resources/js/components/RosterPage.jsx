@@ -92,6 +92,7 @@ export default function RosterPage({ hospitalId, view }) {
             const p = data.preference_stats;
             setProblems([
                 data.gaps.length ? `สร้างเพิ่ม ${data.created} เวร · ยังเหลือ ${data.gaps.length} ช่องที่จัดไม่ได้โดยไม่ผิดกติกา` : `สร้างเพิ่ม ${data.created} เวร · ครบทุกช่อง`,
+                ...(data.contested?.length ? [`เว้น ${data.contested.length} ช่องที่มีคนอยากลงเกินจำนวนที่ต้องการ ให้หัวหน้าเลือก (กล่องสีส้ม "ต้องเลือก")`] : []),
                 ...(p && p.prefer_total + p.avoid_total > 0
                     ? [`ตรงกับเวรที่แพทย์อยากลง ${p.prefer_met}/${p.prefer_total} ช่อง · ต้องลงช่องที่แพทย์ไม่สะดวก ${p.avoid_used}/${p.avoid_total} ช่อง`]
                     : []),
@@ -126,6 +127,9 @@ export default function RosterPage({ hospitalId, view }) {
         return map;
     }, [roster.data]);
     const staffName = Object.fromEntries(doctors.map((d) => [d.id, d.name]));
+    // ช่องที่มีคนอยากลงเกินจำนวนที่ต้องการ — ระบบไม่เลือกให้ หัวหน้าตัดสินเอง
+    const contested = useMemo(() => Object.fromEntries((roster.data?.contested ?? []).map((c) => [`${c.date}|${c.shift_template_id}`, c])), [roster.data]);
+    const contestedCount = (roster.data?.contested ?? []).filter((c) => c.date >= from && c.date <= to).length;
     // แพทย์ที่มีเวรผิดกติกาแบบเตือนในเดือนนี้ — แผงชั่วโมงแสดงเป็นสีแดง
     const warned = new Set((roster.data?.shifts ?? []).filter((s) => s.warnings?.length && s.shift_date >= from && s.shift_date <= to).map((s) => s.staff_id));
     const hours = useMemo(() => {
@@ -211,6 +215,7 @@ export default function RosterPage({ hospitalId, view }) {
                 {roster.isSuccess && view === 'table' && canManage && wishSummary.prefer + wishSummary.forced > 0 && (
                     <div className="mx-4 mt-2 flex flex-wrap items-center gap-1.5 text-xs">
                         <span className="text-slate-600">ความต้องการของแพทย์:</span>
+                        {contestedCount > 0 && <span className="rounded-md border-2 border-orange-400 bg-orange-50 px-2 py-0.5 font-medium text-orange-900">ต้องเลือก {contestedCount} ช่อง</span>}
                         <span className={`rounded-full px-2 py-0.5 ring-1 ${WISH_STYLE.missed}`}>★ อยากลงแต่ยังไม่ได้ {wishSummary.missed}</span>
                         {wishSummary.forced > 0 && <span className={`rounded-full px-2 py-0.5 ring-1 ${WISH_STYLE.forced}`}>✕ ไม่สะดวกแต่ถูกลง {wishSummary.forced}</span>}
                         <span className={`rounded-full px-2 py-0.5 ring-1 ${WISH_STYLE.met}`}>✓ ได้ตามที่อยากลง {wishSummary.met}/{wishSummary.prefer}</span>
@@ -278,7 +283,25 @@ export default function RosterPage({ hospitalId, view }) {
                                                             <option key={d.id} value={d.id}>{d.name}</option>
                                                         ))}
                                                     </select>}
-                                                    {canManage && <Wishes list={(wishes[key] ?? []).filter((w) => isShown(w.staff_id))} staffName={staffName} assigned={assigned} />}
+                                                    {canManage && contested[key] && (
+                                                        <div className="mt-1 rounded-md border-2 border-orange-400 bg-orange-50 p-1.5 text-[11px] text-orange-900">
+                                                            <p className="mb-1 font-medium">ต้องเลือก: อยากลง {contested[key].staff_ids.length} คน · ต้องการอีก {contested[key].seats} คน</p>
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {contested[key].staff_ids.map((id) => (
+                                                                    <button
+                                                                        key={id}
+                                                                        className="rounded-full bg-white px-2 py-0.5 ring-1 ring-orange-400 hover:bg-orange-500 hover:text-white disabled:opacity-40"
+                                                                        disabled={assign.isPending}
+                                                                        onClick={() => assign.mutate({ staff_id: id, shift_template_id: t.id, date })}
+                                                                        title={`ลง ${staffName[id]} ในเวรนี้`}
+                                                                    >
+                                                                        + {staffName[id]}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    {canManage && !contested[key] && <Wishes list={(wishes[key] ?? []).filter((w) => isShown(w.staff_id))} staffName={staffName} assigned={assigned} />}
                                                     {gaps[key] && <p className="mt-1 text-xs text-red-600">{gaps[key]}</p>}
                                                 </td>
                                             );

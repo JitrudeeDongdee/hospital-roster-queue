@@ -119,6 +119,7 @@ class RosterService
                 'warnings' => $warnings[$s->id] ?? [],
             ])->values(),
             'gaps' => $gaps,
+            'contested' => $this->contested($templates, $bySlot, $preferences),
             // เวรที่แพทย์อยากลง/ไม่สะดวก — ให้แอดมินเห็นในตารางก่อนจัดร่าง
             'preferences' => $preferences->map(fn (ShiftPreference $p) => [
                 'staff_id' => $p->staff_id,
@@ -193,6 +194,15 @@ class RosterService
                 $date = $day->toDateString();
                 foreach ($templates as $template) {
                     $assigned = $slots["{$template->id}|{$date}"] ?? collect();
+
+                    // มีคนอยากลงช่องนี้มากกว่าที่นั่งที่เหลือ = ไม่เลือกให้ ปล่อยให้หัวหน้าตัดสิน (roster() ส่งเป็น contested)
+                    $seats = max(0, $template->min_staff - $assigned->count());
+                    $wanting = $doctors->filter(fn (Staff $d) => ($wish["{$d->id}|{$template->id}|{$date}"] ?? null) === ShiftPreference::PREFER && ! $assigned->contains('id', $d->id));
+                    if ($seats > 0 && $wanting->count() > $seats) {
+                        $slots["{$template->id}|{$date}"] = $assigned;
+
+                        continue;
+                    }
 
                     while ($this->coverageProblem($template, $assigned)) {
                         $needSkill = $template->required_skill_id && ! $this->hasSkill($assigned, $template->required_skill_id);
@@ -289,6 +299,27 @@ class RosterService
         }
 
         return [$errors, $soft];
+    }
+
+    /**
+     * ช่องที่มีคนอยากลงมากกว่าที่นั่งที่ยังว่าง — จัดอัตโนมัติไม่เลือกให้ หัวหน้าต้องตัดสินเอง
+     * ลงครบจำนวนขั้นต่ำแล้ว (จะเลือกคนที่อยากลงหรือคนอื่นก็ตาม) = ตัดสินแล้ว ไม่นับอีก
+     */
+    private function contested(Collection $templates, Collection $bySlot, Collection $preferences): array
+    {
+        $out = [];
+        $byId = $templates->keyBy('id');
+        foreach ($preferences->where('kind', ShiftPreference::PREFER)->groupBy(fn (ShiftPreference $p) => $p->shift_template_id.'|'.$p->date->toDateString()) as $key => $wants) {
+            [$templateId, $date] = explode('|', $key);
+            $assignedIds = ($bySlot[$key] ?? collect())->pluck('staff_id');
+            $seats = max(0, $byId[$templateId]->min_staff - $assignedIds->count());
+            $waiting = $wants->pluck('staff_id')->reject(fn ($id) => $assignedIds->contains($id))->values();
+            if ($seats > 0 && $waiting->count() > $seats) {
+                $out[] = ['date' => $date, 'shift_template_id' => (int) $templateId, 'seats' => $seats, 'staff_ids' => $waiting->all()];
+            }
+        }
+
+        return $out;
     }
 
     /**

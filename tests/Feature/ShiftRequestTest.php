@@ -268,6 +268,30 @@ class ShiftRequestTest extends TestCase
         $this->assertNotSame($this->a->id, $who[$this->evening->id]);
     }
 
+    public function test_generator_leaves_a_slot_wanted_by_more_doctors_than_seats_for_the_head(): void
+    {
+        $this->doctor('Dr. C');
+        foreach ([$this->a, $this->b] as $doctor) {
+            $this->actingAsDoctor($doctor);
+            $this->putJson("/api/hospitals/{$this->hospital->id}/staff/{$doctor->id}/preferences?month=2026-12", ['items' => [
+                ['date' => '2026-12-01', 'shift_template_id' => $this->night->id, 'kind' => 'prefer'],
+            ]])->assertOk();
+        }
+
+        $this->actingAsRole('admin', $this->hospital);
+        $url = "/api/hospitals/{$this->hospital->id}/departments/{$this->opd->id}";
+        $roster = $this->postJson("{$url}/roster/generate", ['from' => '2026-12-01', 'to' => '2026-12-01'])->assertOk()->json();
+
+        // เวรดึกต้องการ 1 คน แต่อยากลง 2 คน → ไม่จัดให้ ส่งให้หัวหน้าเลือก (เวรอื่นจัดตามปกติ)
+        $this->assertFalse(collect($roster['shifts'])->contains('shift_template_id', $this->night->id));
+        $this->assertSame([['date' => '2026-12-01', 'shift_template_id' => $this->night->id, 'seats' => 1, 'staff_ids' => [$this->a->id, $this->b->id]]], $roster['contested']);
+        $this->assertCount(2, collect($roster['shifts'])->whereIn('shift_template_id', [$this->morning->id, $this->evening->id]));
+
+        // หัวหน้าเลือก B → ตัดสินแล้ว ไม่ต้องเลือกอีก
+        $this->postJson("/api/hospitals/{$this->hospital->id}/shifts", ['staff_id' => $this->b->id, 'shift_template_id' => $this->night->id, 'date' => '2026-12-01'])->assertCreated();
+        $this->getJson("{$url}/roster?from=2026-12-01&to=2026-12-01")->assertJsonPath('contested', []);
+    }
+
     public function test_generator_keeps_a_doctor_free_for_the_shift_they_asked_for(): void
     {
         // A อยากลงดึก 2 ธ.ค. (00–08) · เวรเช้า 1 ธ.ค. ไม่ชน แต่เวรบ่าย 1 ธ.ค. (16–24) จะทำให้พักไม่พอ

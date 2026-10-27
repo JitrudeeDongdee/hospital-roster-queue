@@ -236,10 +236,29 @@ function rosterOf(department, from, to) {
         templates,
         shifts: shifts.map((s) => ({ id: s.id, shift_template_id: s.shift_template_id, shift_date: s.shift_date, staff_id: s.staff_id, staff_name: staffOf(s).name, warnings: warningsOf(s, hospital) })),
         gaps,
+        contested: contestedOf(templates, shifts, from, to),
         preferences: db.preferences
             .filter((p) => templates.some((t) => t.id === p.shift_template_id) && p.date >= from && p.date <= to)
             .map(({ staff_id, shift_template_id, date, kind }) => ({ staff_id, shift_template_id, date, kind })),
     };
+}
+
+// ช่องที่มีคนอยากลงมากกว่าที่นั่งที่ยังว่าง — เหมือน RosterService::contested
+function contestedOf(templates, shifts, from, to) {
+    const groups = {};
+    for (const p of db.preferences) {
+        if (p.kind !== 'prefer' || p.date < from || p.date > to || !templates.some((t) => t.id === p.shift_template_id)) continue;
+        (groups[`${p.shift_template_id}|${p.date}`] ??= []).push(p.staff_id);
+    }
+    const out = [];
+    for (const [key, ids] of Object.entries(groups)) {
+        const [templateId, date] = key.split('|');
+        const assignedIds = shifts.filter((s) => s.shift_template_id === Number(templateId) && s.shift_date === date).map((s) => s.staff_id);
+        const seats = Math.max(0, templates.find((t) => t.id === Number(templateId)).min_staff - assignedIds.length);
+        const waiting = ids.filter((id) => !assignedIds.includes(id));
+        if (seats > 0 && waiting.length > seats) out.push({ date, shift_template_id: Number(templateId), seats, staff_ids: waiting });
+    }
+    return out;
 }
 
 // เวรที่ผิดกติกาแบบเตือน (พักไม่พอ / ชั่วโมงต่อสัปดาห์เกิน) — เหมือน RosterService::shiftWarnings
@@ -285,6 +304,10 @@ function generateRoster(department, from, to) {
     for (const date of daysBetween(from, to)) {
         for (const t of templates) {
             const assigned = db.shifts.filter((s) => s.shift_template_id === t.id && s.shift_date === date).map((s) => db.staff.find((m) => m.id === s.staff_id));
+            // คนอยากลงเกินที่นั่งที่เหลือ = ไม่เลือกให้ (หัวหน้าตัดสิน) — เหมือน RosterService::generate
+            const seats = Math.max(0, t.min_staff - assigned.length);
+            const wanting = doctors.filter((d) => wish[`${d.id}|${t.id}|${date}`] === 'prefer' && !assigned.includes(d));
+            if (seats > 0 && wanting.length > seats) continue;
             while (coverageProblem(t, assigned)) {
                 const needSkill = t.required_skill_id && !assigned.some((d) => d.skills.some((k) => k.id === t.required_skill_id));
                 const rank = (d) => [needSkill && !d.skills.some((k) => k.id === t.required_skill_id) ? 1 : 0, wishRank(d, t, date), blocksWish(d, t, date), hours[d.id], d.id];
