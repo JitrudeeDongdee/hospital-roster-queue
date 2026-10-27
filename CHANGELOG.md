@@ -5,6 +5,15 @@
 
 ## [Unreleased]
 
+## [0.7.3] - 2026-10-27
+
+### Changed
+- เอกสาร architecture ข้อ 1: ขึ้นหน้าใหม่ · เอาคำอธิบายสัญลักษณ์และคำอธิบายใต้ผังออก (มีข้อ 6 อธิบายหน้าจอแล้ว) · รวมเงื่อนไขข้อบังคับทั้งหมดเป็นตาราง 1.5
+- ผัง BPMN: ความกว้างเลนตามข้อความ เว้นขอบไม่ให้ชิดเส้น · ป้ายเส้นตัดสินใจเป็นกล่องตัวหนา · กล่องงานสูงตามจำนวนบรรทัด · เส้นย้อนอ้อมกล่องที่อยู่ระหว่างทาง
+
+### Fixed
+- ผัง BPMN ใช้เส้นประข้ามเลน ซึ่งผิดกติกา BPMN (เส้นประ = message flow ใช้ระหว่าง pool เท่านั้น) — ทุกเลนอยู่ใน pool เดียวจึงเปลี่ยนเป็นเส้นทึบ (sequence flow) ทั้งหมด
+
 ## [0.7.2] - 2026-10-27
 
 ### Fixed
@@ -104,7 +113,8 @@ release แรก — ตัวอย่างระบบจัดเวรแ�
 - ตั้ง timezone เป็น `Asia/Bangkok` — คิวที่ออกช่วง 00:00–07:00 ไม่ถูกนับเป็นวันก่อนหน้าแล้ว
 - หัวตารางเวรไม่มีแถวโผล่ทะลุขึ้นมาตอนเลื่อน
 
-[Unreleased]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.2...HEAD
+[Unreleased]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.3...HEAD
+[0.7.3]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.2...v0.7.3
 [0.7.2]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/JitrudeeDongdee/waka-crud/compare/v0.6.0...v0.7.0

@@ -1,69 +1,73 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 1080" width="600" height="1080" font-family="Sarabun, 'Noto Sans Thai', Thonburi, 'Helvetica Neue', sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 608 1080" width="608" height="1080" font-family="Sarabun, 'Noto Sans Thai', Thonburi, 'Helvetica Neue', sans-serif">
 <title>BPMN: วางตารางเวรรายเดือน</title>
 <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3b4a6b"/></marker></defs>
-<rect x="0.5" y="0.5" width="599" height="1079" fill="#fff" stroke="#3b4a6b"/>
-<rect x="0.5" y="0.5" width="199" height="1079" fill="#f4f7fc" stroke="#3b4a6b" stroke-width="0.8"/>
-<rect x="0.5" y="0.5" width="199" height="40" fill="#e3e9f5" stroke="#3b4a6b" stroke-width="0.8"/>
-<text x="100.0" y="25.0" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2a44">แพทย์ (role: doctor)</text>
-<rect x="200.5" y="0.5" width="199" height="1079" fill="#fbfbf6" stroke="#3b4a6b" stroke-width="0.8"/>
-<rect x="200.5" y="0.5" width="199" height="40" fill="#e3e9f5" stroke="#3b4a6b" stroke-width="0.8"/>
-<text x="300.0" y="17.5" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2a44">หัวหน้าแผนก</text>
-<text x="300.0" y="32.5" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2a44">(role: admin)</text>
-<rect x="400.5" y="0.5" width="199" height="1079" fill="#f4faf6" stroke="#3b4a6b" stroke-width="0.8"/>
-<rect x="400.5" y="0.5" width="199" height="40" fill="#e3e9f5" stroke="#3b4a6b" stroke-width="0.8"/>
-<text x="500.0" y="25.0" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2a44">ระบบ</text>
-<path d="M300.0,111.0 V153.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
-<path d="M300.0,203.0 V221.0 H500.0 V237.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
-<path d="M500.0,287.0 V302.0 H300.0 V318.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
-<path d="M300.0,374.0 V405.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
-<text x="305.0" y="387.0" font-size="11" fill="#7a2e2e" text-anchor="start" paint-order="stroke" stroke="#fff" stroke-width="3">ขาด</text>
-<path d="M300.0,455.0 V473.0 H500.0 V489.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
-<path d="M500.0,539.0 V570.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
-<path d="M528.0,598.0 H540.0 V430.0 H387.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
-<text x="532.0" y="592.0" font-size="11" fill="#7a2e2e" text-anchor="start" paint-order="stroke" stroke="#fff" stroke-width="3">ไม่ผ่าน</text>
-<path d="M528.0,598.0 H554.0 V346.0 H328.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
-<text x="532.0" y="612.0" font-size="11" fill="#7a2e2e" text-anchor="start" paint-order="stroke" stroke="#fff" stroke-width="3">ผ่าน</text>
-<path d="M272.0,346.0 H209 V682.0 H213.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
-<text x="213" y="372.0" font-size="11" fill="#7a2e2e" text-anchor="start" paint-order="stroke" stroke="#fff" stroke-width="3">ครบแล้ว</text>
-<path d="M300.0,707.0 V733.0 H500.0 V749.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
-<path d="M500.0,783.0 V817.0 H100.0 V833.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" stroke-dasharray="5 4" marker-end="url(#a)"/>
-<path d="M100.0,867.0 V909.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
-<path d="M100.0,959.0 V1001.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
-<circle cx="300.0" cy="94.0" r="17.0" fill="#eaf7ee" stroke="#2e7d4f" stroke-width="1.6"/><circle cx="300.0" cy="94.0" r="13.0" fill="#fff" stroke="#2e7d4f"/><path d="M300.0,86.0 V94.0 L306.0,97.0" stroke="#2e7d4f" fill="none"/>
-<text x="325.0" y="91.5" font-size="11.5" fill="#1f2a44">ก่อนเริ่ม</text>
-<text x="325.0" y="104.5" font-size="11.5" fill="#1f2a44">เดือนใหม่</text>
-<rect x="213.0" y="153.0" width="174" height="50" rx="9" fill="#fff" stroke="#3b4a6b" stroke-width="1.4"/>
-<text x="300.0" y="175.5" text-anchor="middle" font-size="12" fill="#1f2a44">กดจัดเวรทั้งเดือน</text>
-<text x="300.0" y="189.5" text-anchor="middle" font-size="12" fill="#1f2a44">อัตโนมัติ (ร่าง)</text>
-<rect x="413.0" y="237.0" width="174" height="50" rx="9" fill="#fff" stroke="#3b4a6b" stroke-width="1.4"/>
-<text x="500.0" y="245.5" text-anchor="middle" font-size="12" fill="#1f2a44">เติมเฉพาะช่องว่าง</text>
-<text x="500.0" y="259.5" text-anchor="middle" font-size="12" fill="#1f2a44">เว้นวันลา/คำขอลา</text>
-<text x="500.0" y="273.5" text-anchor="middle" font-size="12" fill="#1f2a44">→ มีทักษะ → อยากลง</text>
-<text x="500.0" y="287.5" text-anchor="middle" font-size="12" fill="#1f2a44">→ ชม.น้อยสุด</text>
-<path d="M300.0,318.0 L328.0,346.0 L300.0,374.0 L272.0,346.0 z" fill="#fff8e6" stroke="#8a6d1d" stroke-width="1.4"/>
-<text x="300.0" y="352.0" text-anchor="middle" font-size="18" fill="#8a6d1d">×</text>
-<text x="318.0" y="320.0" font-size="11.5" font-weight="600" fill="#5c4810" paint-order="stroke" stroke="#fff" stroke-width="3">มีช่องขาด?</text>
-<rect x="213.0" y="405.0" width="174" height="50" rx="9" fill="#fff" stroke="#3b4a6b" stroke-width="1.4"/>
-<text x="300.0" y="434.5" text-anchor="middle" font-size="12" fill="#1f2a44">ลง / ย้ายแพทย์เอง</text>
-<rect x="413.0" y="489.0" width="174" height="50" rx="9" fill="#fff" stroke="#3b4a6b" stroke-width="1.4"/>
-<text x="500.0" y="504.5" text-anchor="middle" font-size="12" fill="#1f2a44">ตรวจสิทธิ์ + กติกา</text>
-<text x="500.0" y="518.5" text-anchor="middle" font-size="12" fill="#1f2a44">เวรซ้อน · พักขั้นต่ำ</text>
-<text x="500.0" y="532.5" text-anchor="middle" font-size="12" fill="#1f2a44">ชม./สัปดาห์ · วันลา</text>
-<path d="M500.0,570.0 L528.0,598.0 L500.0,626.0 L472.0,598.0 z" fill="#fff8e6" stroke="#8a6d1d" stroke-width="1.4"/>
-<text x="500.0" y="604.0" text-anchor="middle" font-size="18" fill="#8a6d1d">×</text>
-<text x="518.0" y="572.0" font-size="11.5" font-weight="600" fill="#5c4810" paint-order="stroke" stroke="#fff" stroke-width="3">ผ่าน?</text>
-<rect x="213.0" y="657.0" width="174" height="50" rx="9" fill="#fff" stroke="#3b4a6b" stroke-width="1.4"/>
-<text x="300.0" y="686.5" text-anchor="middle" font-size="12" fill="#1f2a44">ยืนยันตารางเวร</text>
-<circle cx="500.0" cy="766.0" r="17.0" fill="#fff" stroke="#5b4a9b" stroke-width="1.5"/><circle cx="500.0" cy="766.0" r="13.5" fill="#fff" stroke="#5b4a9b" stroke-width="1.2"/>
-<rect x="492.5" y="761.0" width="15" height="10" fill="#5b4a9b" stroke="#5b4a9b" stroke-width="1.1"/><path d="M492.5,761.0 L500.0,767.0 L507.5,761.0" fill="none" stroke="#fff" stroke-width="1.1"/>
-<text x="475.0" y="763.5" text-anchor="end" font-size="11.5" fill="#1f2a44">แจ้งเตือนแพทย์</text>
-<text x="475.0" y="776.5" text-anchor="end" font-size="11.5" fill="#1f2a44">ที่มีเวรใหม่</text>
-<circle cx="100.0" cy="850.0" r="17.0" fill="#fff" stroke="#5b4a9b" stroke-width="1.5"/><circle cx="100.0" cy="850.0" r="13.5" fill="#fff" stroke="#5b4a9b" stroke-width="1.2"/>
-<rect x="92.5" y="845.0" width="15" height="10" fill="#fff" stroke="#5b4a9b" stroke-width="1.1"/><path d="M92.5,845.0 L100.0,851.0 L107.5,845.0" fill="none" stroke="#5b4a9b" stroke-width="1.1"/>
-<text x="125.0" y="854.0" font-size="11.5" fill="#1f2a44">ได้รับแจ้งเตือน</text>
-<rect x="13.0" y="909.0" width="174" height="50" rx="9" fill="#fff" stroke="#3b4a6b" stroke-width="1.4"/>
-<text x="100.0" y="931.5" text-anchor="middle" font-size="12" fill="#1f2a44">ดูเวรของตัวเอง</text>
-<text x="100.0" y="945.5" text-anchor="middle" font-size="12" fill="#1f2a44">(ปฏิทินรายแพทย์)</text>
-<circle cx="100.0" cy="1018.0" r="17.0" fill="#fdecec" stroke="#a23b3b" stroke-width="3.2"/>
-<text x="125.0" y="1022.0" font-size="11.5" fill="#1f2a44">จบ</text>
+<rect x="0.5" y="0.5" width="607" height="1079" fill="#fff" stroke="#3b4a6b"/>
+<rect x="0.5" y="0.5" width="219" height="1079" fill="#f4f7fc" stroke="#3b4a6b" stroke-width="0.8"/>
+<rect x="0.5" y="0.5" width="219" height="40" fill="#e3e9f5" stroke="#3b4a6b" stroke-width="0.8"/>
+<text x="110.0" y="25.0" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2a44">แพทย์ (role: doctor)</text>
+<rect x="220.5" y="0.5" width="167" height="1079" fill="#fbfbf6" stroke="#3b4a6b" stroke-width="0.8"/>
+<rect x="220.5" y="0.5" width="167" height="40" fill="#e3e9f5" stroke="#3b4a6b" stroke-width="0.8"/>
+<text x="304.0" y="17.5" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2a44">หัวหน้าแผนก</text>
+<text x="304.0" y="32.5" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2a44">(role: admin)</text>
+<rect x="388.5" y="0.5" width="219" height="1079" fill="#f4faf6" stroke="#3b4a6b" stroke-width="0.8"/>
+<rect x="388.5" y="0.5" width="219" height="40" fill="#e3e9f5" stroke="#3b4a6b" stroke-width="0.8"/>
+<text x="498.0" y="25.0" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2a44">ระบบ</text>
+<path d="M304.0,111.0 V153.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M304.0,203.0 V209.0 H498.0 V225.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M498.0,299.0 V302.0 H304.0 V318.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M304.0,374.0 V405.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M304.0,455.0 V468.0 H498.0 V484.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M498.0,544.0 V570.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M526.0,598.0 H599.0 V430.0 H374.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M526.0,598.0 H606.0 V346.0 H332.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M276.0,346.0 H229 V682.0 H234.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M304.0,707.0 V733.0 H498.0 V749.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M498.0,783.0 V817.0 H110.0 V833.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M110.0,867.0 V909.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M110.0,959.0 V1001.0" fill="none" stroke="#3b4a6b" stroke-width="1.3" marker-end="url(#a)"/>
+<circle cx="304.0" cy="94.0" r="17.0" fill="#eaf7ee" stroke="#2e7d4f" stroke-width="1.6"/><circle cx="304.0" cy="94.0" r="13.0" fill="#fff" stroke="#2e7d4f"/><path d="M304.0,86.0 V94.0 L310.0,97.0" stroke="#2e7d4f" fill="none"/>
+<text x="329.0" y="91.5" font-size="11.5" fill="#1f2a44">ก่อนเริ่ม</text>
+<text x="329.0" y="104.5" font-size="11.5" fill="#1f2a44">เดือนใหม่</text>
+<rect x="234.0" y="153.0" width="140" height="50" rx="9" fill="#fff" stroke="#3b4a6b" stroke-width="1.4"/>
+<text x="304.0" y="175.5" text-anchor="middle" font-size="12" fill="#1f2a44">กดจัดเวรทั้งเดือน</text>
+<text x="304.0" y="189.5" text-anchor="middle" font-size="12" fill="#1f2a44">อัตโนมัติ (ร่าง)</text>
+<rect x="402.0" y="225.0" width="192" height="74" rx="9" fill="#fff" stroke="#3b4a6b" stroke-width="1.4"/>
+<text x="498.0" y="245.5" text-anchor="middle" font-size="12" fill="#1f2a44">เติมเฉพาะช่องว่าง</text>
+<text x="498.0" y="259.5" text-anchor="middle" font-size="12" fill="#1f2a44">เว้นวันลา/คำขอลา</text>
+<text x="498.0" y="273.5" text-anchor="middle" font-size="12" fill="#1f2a44">→ มีทักษะ → อยากลง</text>
+<text x="498.0" y="287.5" text-anchor="middle" font-size="12" fill="#1f2a44">→ ชม.น้อยสุด</text>
+<path d="M304.0,318.0 L332.0,346.0 L304.0,374.0 L276.0,346.0 z" fill="#fff8e6" stroke="#8a6d1d" stroke-width="1.4"/>
+<text x="304.0" y="352.0" text-anchor="middle" font-size="18" fill="#8a6d1d">×</text>
+<text x="322.0" y="320.0" font-size="11.5" font-weight="700" fill="#5c4810" paint-order="stroke" stroke="#fff" stroke-width="3">มีช่องขาด?</text>
+<rect x="234.0" y="405.0" width="140" height="50" rx="9" fill="#fff" stroke="#3b4a6b" stroke-width="1.4"/>
+<text x="304.0" y="434.5" text-anchor="middle" font-size="12" fill="#1f2a44">ลง / ย้ายแพทย์เอง</text>
+<rect x="402.0" y="484.0" width="192" height="60" rx="9" fill="#fff" stroke="#3b4a6b" stroke-width="1.4"/>
+<text x="498.0" y="504.5" text-anchor="middle" font-size="12" fill="#1f2a44">ตรวจสิทธิ์ + กติกา</text>
+<text x="498.0" y="518.5" text-anchor="middle" font-size="12" fill="#1f2a44">เวรซ้อน · พักขั้นต่ำ</text>
+<text x="498.0" y="532.5" text-anchor="middle" font-size="12" fill="#1f2a44">ชม./สัปดาห์ · วันลา</text>
+<path d="M498.0,570.0 L526.0,598.0 L498.0,626.0 L470.0,598.0 z" fill="#fff8e6" stroke="#8a6d1d" stroke-width="1.4"/>
+<text x="498.0" y="604.0" text-anchor="middle" font-size="18" fill="#8a6d1d">×</text>
+<text x="516.0" y="572.0" font-size="11.5" font-weight="700" fill="#5c4810" paint-order="stroke" stroke="#fff" stroke-width="3">ผ่าน?</text>
+<rect x="234.0" y="657.0" width="140" height="50" rx="9" fill="#fff" stroke="#3b4a6b" stroke-width="1.4"/>
+<text x="304.0" y="686.5" text-anchor="middle" font-size="12" fill="#1f2a44">ยืนยันตารางเวร</text>
+<circle cx="498.0" cy="766.0" r="17.0" fill="#fff" stroke="#5b4a9b" stroke-width="1.5"/><circle cx="498.0" cy="766.0" r="13.5" fill="#fff" stroke="#5b4a9b" stroke-width="1.2"/>
+<rect x="490.5" y="761.0" width="15" height="10" fill="#5b4a9b" stroke="#5b4a9b" stroke-width="1.1"/><path d="M490.5,761.0 L498.0,767.0 L505.5,761.0" fill="none" stroke="#fff" stroke-width="1.1"/>
+<text x="473.0" y="763.5" text-anchor="end" font-size="11.5" fill="#1f2a44">แจ้งเตือนแพทย์</text>
+<text x="473.0" y="776.5" text-anchor="end" font-size="11.5" fill="#1f2a44">ที่มีเวรใหม่</text>
+<circle cx="110.0" cy="850.0" r="17.0" fill="#fff" stroke="#5b4a9b" stroke-width="1.5"/><circle cx="110.0" cy="850.0" r="13.5" fill="#fff" stroke="#5b4a9b" stroke-width="1.2"/>
+<rect x="102.5" y="845.0" width="15" height="10" fill="#fff" stroke="#5b4a9b" stroke-width="1.1"/><path d="M102.5,845.0 L110.0,851.0 L117.5,845.0" fill="none" stroke="#5b4a9b" stroke-width="1.1"/>
+<text x="135.0" y="854.0" font-size="11.5" fill="#1f2a44">ได้รับแจ้งเตือน</text>
+<rect x="14.0" y="909.0" width="192" height="50" rx="9" fill="#fff" stroke="#3b4a6b" stroke-width="1.4"/>
+<text x="110.0" y="931.5" text-anchor="middle" font-size="12" fill="#1f2a44">ดูเวรของตัวเอง</text>
+<text x="110.0" y="945.5" text-anchor="middle" font-size="12" fill="#1f2a44">(ปฏิทินรายแพทย์)</text>
+<circle cx="110.0" cy="1018.0" r="17.0" fill="#fdecec" stroke="#a23b3b" stroke-width="3.2"/>
+<text x="135.0" y="1022.0" font-size="11.5" fill="#1f2a44">จบ</text>
+<rect x="304.0" y="376.0" width="31.32" height="17" rx="8.5" fill="#fff4e5" stroke="#b45309" stroke-width="1"/>
+<text x="319.66" y="389.0" text-anchor="middle" font-size="11.5" font-weight="700" fill="#7c2d12">ขาด</text>
+<rect x="524.0" y="579.0" width="44.2" height="17" rx="8.5" fill="#fff4e5" stroke="#b45309" stroke-width="1"/>
+<text x="546.1" y="592.0" text-anchor="middle" font-size="11.5" font-weight="700" fill="#7c2d12">ไม่ผ่าน</text>
+<rect x="524.0" y="605.0" width="31.32" height="17" rx="8.5" fill="#fff4e5" stroke="#b45309" stroke-width="1"/>
+<text x="539.66" y="618.0" text-anchor="middle" font-size="11.5" font-weight="700" fill="#7c2d12">ผ่าน</text>
+<rect x="227" y="360.0" width="50.64" height="17" rx="8.5" fill="#fff4e5" stroke="#b45309" stroke-width="1"/>
+<text x="252.32" y="373.0" text-anchor="middle" font-size="11.5" font-weight="700" fill="#7c2d12">ครบแล้ว</text>
 </svg>
