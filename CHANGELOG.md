@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-27
+
 ### Added
 - นัดหมาย (`/appointments`): ลงนัดตามช่วงเวลา 30 นาที ความจุตามแพทย์ที่อยู่เวร × นัดต่อแพทย์ · ระบุแพทย์ได้ · check-in แล้วได้บัตรคิว (ติดป้าย "นัด") · ยกเลิก · ปิดนัดที่ไม่มาทุก 15 นาที (`appointments:mark-no-shows`)
 - ลำดับเรียกคิว: เร่งด่วน → คิวนัดที่ถึงเวลา (ก่อนเวลาไม่เกิน 15 นาที) → มาก่อนได้ก่อน · นัดที่ระบุแพทย์ เฉพาะแพทย์คนนั้นเรียกได้ · มาสายเกิน 30 นาที = walk-in
@@ -14,8 +16,6 @@
 
 ### Changed
 - ลำดับคิวใช้ฟังก์ชันเดียว (`QueueService::eligibleFor`) ทั้งตอนเรียกคิวและตอนแสดงคิวถัดไป
-
-### Changed
 - เปลี่ยนชื่อ repo จาก `waka-crud` เป็น `hospital-roster-queue` · เดโมย้ายไป https://jitrudeedongdee.github.io/hospital-roster-queue/ (base path ของ Pages และลิงก์ในเอกสารเปลี่ยนตาม)
 
 ## [0.7.9] - 2026-10-27
@@ -164,7 +164,8 @@ release แรก — ตัวอย่างระบบจัดเวรแ�
 - ตั้ง timezone เป็น `Asia/Bangkok` — คิวที่ออกช่วง 00:00–07:00 ไม่ถูกนับเป็นวันก่อนหน้าแล้ว
 - หัวตารางเวรไม่มีแถวโผล่ทะลุขึ้นมาตอนเลื่อน
 
-[Unreleased]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.7.9...HEAD
+[Unreleased]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.7.9...v0.8.0
 [0.7.9]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.7.8...v0.7.9
 [0.7.8]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.7.7...v0.7.8
 [0.7.7]: https://github.com/JitrudeeDongdee/hospital-roster-queue/compare/v0.7.6...v0.7.7
