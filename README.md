@@ -86,8 +86,7 @@ Every page has its own URL (React Router), so links can be shared and back/forwa
 |---|---|
 | `/login` | Demo-user picker (after a deep link, returns to that page) |
 | `/roster/table?dept=1&month=2026-11&doctors=1,4` | Roster table, editable by admins, filtered to selected doctors |
-| `/roster/calendar?dept=1&month=2026-11&doctors=1,4` | Month calendar of all shifts, colour per shift, red when a slot is short |
-| `/roster/doctors/5?month=2026-11` | One doctor's month: shifts, leave days, hours per week against the limit |
+| `/roster/calendar?dept=1&month=2026-11&doctors=1,4` | Month calendar filtered by the same doctor picker as the table; colour per shift, red when a slot is short. With exactly one doctor selected (`doctors=5`) it also shows that doctor's leave days and hours per week against the limit. Old `/roster/doctors/5` links redirect here |
 | `/leave?status=pending` | Admin: leave inbox (pending / approved / rejected) · Doctor: request leave and see own requests |
 | `/queue/list?date=2026-10-26&status=waiting&dept=1` | Tickets of a day with issue time, call time and wait (minutes) |
 | `/queue/month?date=2026-10-01` | Month calendar: tickets, completed and average wait per day (heat-shaded); past days from the daily summary table, today live |

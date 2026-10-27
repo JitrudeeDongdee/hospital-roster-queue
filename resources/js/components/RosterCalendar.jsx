@@ -31,10 +31,9 @@ function hoursOf(template) {
     return minutes / 60;
 }
 
-export default function RosterCalendar({ hospitalId, roster, doctors, monthStart, monthEnd, mode, doctorId: doctorFromUrl, onSelectDoctor }) {
+// mode 'all' = ปฏิทินรวม · 'doctor' = แพทย์คนเดียวที่เลือกจากตัวกรอง (doctorId) แสดงวันลาและชั่วโมงต่อสัปดาห์เพิ่ม
+export default function RosterCalendar({ hospitalId, roster, doctors, monthStart, monthEnd, mode, doctorId }) {
     const { user } = useAuth();
-    // ไม่ระบุแพทย์ใน URL → ตัวเอง (ถ้าเป็นแพทย์แผนกนี้) หรือคนแรกของแผนก
-    const doctorId = doctorFromUrl ?? (doctors.some((d) => d.id === user.staff_id) ? user.staff_id : doctors[0]?.id);
     const [gridStart, gridEnd] = calendarRange(monthStart, monthEnd);
     const today = isoDate(new Date());
 
@@ -77,9 +76,7 @@ export default function RosterCalendar({ hospitalId, roster, doctors, monthStart
         <div className="p-4">
             {mode === 'doctor' && (
                 <div className="mb-4 flex flex-wrap items-center gap-3">
-                    <select className="rounded-md border border-slate-300 px-2 py-1.5 text-sm" value={doctorId ?? ''} onChange={(e) => onSelectDoctor(Number(e.target.value))}>
-                        {doctors.map((d) => <option key={d.id} value={d.id}>{d.name}{d.id === user.staff_id ? ' (ฉัน)' : ''}</option>)}
-                    </select>
+                    <span className="font-medium">{doctors.find((d) => d.id === doctorId)?.name}{doctorId === user.staff_id ? ' (ฉัน)' : ''}</span>
                     <div className="flex flex-wrap gap-2 text-sm">
                         <Stat label="เวรในเดือน" value={monthShifts.length} />
                         <Stat label="ชั่วโมงในเดือน" value={monthHours} />

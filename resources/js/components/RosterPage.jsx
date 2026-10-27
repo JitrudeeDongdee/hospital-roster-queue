@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link, NavLink, useNavigate, useParams, useSearchParams } from 'react-router';
+import { Link, NavLink, useSearchParams } from 'react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import RosterCalendar, { calendarRange } from './RosterCalendar';
 import DoctorFilter from './DoctorFilter';
@@ -19,13 +19,12 @@ const lastOfMonth = (iso) => addDays(shiftMonth(iso, 1), -1);
 const monthLabel = (iso) => new Date(`${iso}T00:00:00`).toLocaleDateString('th-TH', { month: 'long', year: 'numeric' });
 const weekday = (iso) => new Date(`${iso}T00:00:00`).getDay();
 
-const VIEWS = [['table', 'ตาราง'], ['calendar', 'ปฏิทินรวม'], ['doctors', 'ปฏิทินรายแพทย์']];
+const VIEWS = [['table', 'ตาราง'], ['calendar', 'ปฏิทิน']];
 
-// view มาจาก URL: /roster/table · /roster/calendar · /roster/doctors/:staffId — ตัวกรองอยู่ใน query (?dept=&month=YYYY-MM)
+// view มาจาก URL: /roster/table · /roster/calendar — ตัวกรองอยู่ใน query (?dept=&month=YYYY-MM&doctors=1,4)
+// ปฏิทินเลือกแพทย์คนเดียว = ดูรายละเอียดรายแพทย์ (วันลา ชั่วโมงต่อสัปดาห์) · หลายคน/ทุกคน = ปฏิทินรวม
 export default function RosterPage({ hospitalId, view }) {
     const queryClient = useQueryClient();
-    const navigate = useNavigate();
-    const { staffId } = useParams();
     const [params, setParams] = useSearchParams();
     const { user, can } = useAuth();
     const canManage = can('roster.manage');
@@ -33,7 +32,8 @@ export default function RosterPage({ hospitalId, view }) {
     const allStaff = useStaff(hospitalId).data ?? [];
     const [problems, setProblems] = useState(null);
 
-    const doctorFromUrl = allStaff.find((s) => s.id === Number(staffId));
+    // ลิงก์ที่มีแค่ ?doctors= (เช่น จากหน้าการลา) — ใช้แผนกของแพทย์คนแรก
+    const doctorFromUrl = allStaff.find((s) => s.id === Number((params.get('doctors') ?? '').split(',')[0]));
     const ownDept = allStaff.find((s) => s.id === user.staff_id)?.department_id;
     const deptId = Number(params.get('dept')) || doctorFromUrl?.department_id || ownDept || departments[0]?.id;
     const monthParam = /^\d{4}-\d{2}$/.test(params.get('month') ?? '') ? params.get('month') : null;
@@ -56,8 +56,7 @@ export default function RosterPage({ hospitalId, view }) {
     const setMonth = (iso) => { setParams(query({ month: iso.slice(0, 7) })); setProblems(null); };
     const setDept = (id) => {
         setProblems(null);
-        if (view === 'doctors') navigate({ pathname: '/roster/doctors', search: `?${query({ dept: id, doctors: null })}` });
-        else setParams(query({ dept: id, doctors: null }));
+        setParams(query({ dept: id, doctors: null }));
     };
     const setSelectedDoctors = (ids) => setParams(query({ doctors: ids.length ? ids.join(',') : null }), { replace: true });
     const viewLink = (value) => ({ pathname: `/roster/${value}`, search: `?${query({ dept: deptId ?? null, month: from.slice(0, 7) })}` });
@@ -171,11 +170,14 @@ export default function RosterPage({ hospitalId, view }) {
                     </ul>
                 )}
 
-                {view !== 'doctors' && doctors.length > 0 && (
+                {doctors.length > 0 && (
                     <div className="mx-4 mt-4">
                         <DoctorFilter doctors={doctors} selected={selectedDoctors} onChange={setSelectedDoctors} highlight={user.staff_id} />
                         {selectedDoctors.length > 0 && (
                             <p className="mt-1 text-xs text-slate-500">แสดงเฉพาะ {selectedDoctors.length} คนที่เลือก · ช่องสีแดงยังคิดจากแพทย์ทุกคนในแผนก</p>
+                        )}
+                        {view === 'calendar' && selectedDoctors.length !== 1 && (
+                            <p className="mt-1 text-xs text-slate-500">เลือกแพทย์คนเดียวเพื่อดูวันลาและชั่วโมงต่อสัปดาห์ของคนนั้น</p>
                         )}
                     </div>
                 )}
@@ -191,13 +193,12 @@ export default function RosterPage({ hospitalId, view }) {
                 {roster.isSuccess && view !== 'table' && (
                     <RosterCalendar
                         hospitalId={hospitalId}
-                        roster={view === 'calendar' ? { ...roster.data, shifts: roster.data.shifts.filter((x) => isShown(x.staff_id)) } : roster.data}
+                        roster={selectedDoctors.length === 1 ? roster.data : { ...roster.data, shifts: roster.data.shifts.filter((x) => isShown(x.staff_id)) }}
                         doctors={doctors}
                         monthStart={from}
                         monthEnd={to}
-                        mode={view === 'doctors' ? 'doctor' : 'all'}
-                        doctorId={view === 'doctors' ? (doctorFromUrl?.department_id === deptId ? doctorFromUrl.id : null) : null}
-                        onSelectDoctor={(id) => navigate({ pathname: `/roster/doctors/${id}`, search: `?${query({})}` })}
+                        mode={selectedDoctors.length === 1 ? 'doctor' : 'all'}
+                        doctorId={selectedDoctors.length === 1 ? selectedDoctors[0] : null}
                     />
                 )}
                 <div className={`max-h-[70vh] overflow-auto px-4 pb-4 ${view === 'table' ? '' : 'hidden'}`}>

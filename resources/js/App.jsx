@@ -41,8 +41,8 @@ export default function App() {
                         <Route element={<RequirePermission allowed={(can) => can('roster.view')} />}>
                             <Route path="roster/table" element={<RosterRoute view="table" />} />
                             <Route path="roster/calendar" element={<RosterRoute view="calendar" />} />
-                            <Route path="roster/doctors" element={<RosterRoute view="doctors" />} />
-                            <Route path="roster/doctors/:staffId" element={<RosterRoute view="doctors" />} />
+                            <Route path="roster/doctors" element={<LegacyDoctorCalendar />} />
+                            <Route path="roster/doctors/:staffId" element={<LegacyDoctorCalendar />} />
                         </Route>
                         <Route element={<RequirePermission allowed={(can) => can('queue.view') || can('ticket.issue')} />}>
                             <Route path="queue" element={<QueueRoute />} />
@@ -141,6 +141,15 @@ function Layout() {
 function RosterRoute({ view }) {
     const { user } = useAuth();
     return <RosterPage hospitalId={user.hospital.id} view={view} />;
+}
+
+// ลิงก์เก่าของปฏิทินรายแพทย์ (/roster/doctors/3) → ปฏิทินเดียวที่กรองแพทย์คนนั้น
+function LegacyDoctorCalendar() {
+    const { staffId } = useParams();
+    const location = useLocation();
+    const params = new URLSearchParams(location.search);
+    if (staffId) params.set('doctors', staffId);
+    return <Navigate to={{ pathname: '/roster/calendar', search: `?${params}` }} replace />;
 }
 
 function LeaveRoute() {
